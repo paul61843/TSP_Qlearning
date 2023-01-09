@@ -9,6 +9,7 @@ from matplotlib.collections import PatchCollection
 from matplotlib.patches import Rectangle
 from scipy.spatial.distance import cdist
 from tqdm.notebook import tqdm
+import constants
 
 plt.style.use("seaborn-v0_8-dark")
 
@@ -23,7 +24,7 @@ def calcDistance(x, y):
     return distance
 
 class QAgent():
-    def __init__(self,states_size,actions_size,epsilon = 1.0,epsilon_min = 0,epsilon_decay = 0.999,gamma = 1,lr = 0.95):
+    def __init__(self,states_size,actions_size,epsilon = 1.0,epsilon_min = 0.01,epsilon_decay = 0.99,gamma = 1,lr = 0.95):
         self.states_size = states_size
         self.actions_size = actions_size
         self.epsilon = epsilon
@@ -59,7 +60,7 @@ class QAgent():
 
 
 class DeliveryEnvironment(object):
-    def __init__(self,n_stops = 100,max_box = 10,method = "distance",**kwargs):
+    def __init__(self,n_stops = 20,max_box = 10,method = "distance",**kwargs):
 
         print(f"Initialized Delivery Environment with {n_stops} random stops")
         print(f"Target metric for optimization is {method}")
@@ -101,10 +102,14 @@ class DeliveryEnvironment(object):
 
         # Generate geographical coordinates
         xy = np.random.rand(self.n_stops,2)*self.max_box
+        # print(xy)
 
 
         self.x = xy[:,0]
         self.y = xy[:,1]
+
+        # self.x = constants.xPoints20
+        # self.y = constants.yPoints20
 
         self.priority_points = np.array(random.sample(list(np.arange(0,self.n_stops)), self.n_stops))
         self.priority_points = self.priority_points[:len(self.priority_points)// 4]
@@ -131,11 +136,11 @@ class DeliveryEnvironment(object):
 
         # Show stops
         ax.scatter(self.x,self.y,c = "red",s = 50)
-        ax.scatter(priority_x,priority_y,c = "yellow",s = 50)
+        # ax.scatter(priority_x,priority_y,c = "yellow",s = 50)
 
 
         # Show START
-        if len(self.stops)>0:
+        if len(self.stops) > 0:
             xy = self._get_xy(initial = True)
             xytext = xy[0]+0.1,xy[1]-0.05
             ax.annotate("START",xy=xy,xytext=xytext,weight = "bold")
@@ -368,6 +373,7 @@ def run_n_episodes(env,agent,name="training.gif",n_episodes=1000,render_each=10,
 
             if distance < minDistance:
                 minDistance = distance
+                print(minDistance)
                 minDistanceImg.append(img)
 
     # Show rewards
