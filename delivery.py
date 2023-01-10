@@ -21,10 +21,13 @@ def calcDistance(x, y):
     distance = 0
     for i in range(len(x) - 1):
         distance += np.sqrt((x[i] - x[i + 1]) ** 2 + (y[i] - y[i + 1]) ** 2)
+    
+    distance += np.sqrt((x[0] - x[-1]) ** 2 + (y[0] - y[-1]) ** 2)
+    
     return distance
 
 class QAgent():
-    def __init__(self,states_size,actions_size,epsilon = 1.0,epsilon_min = 0.01,epsilon_decay = 0.99,gamma = 1,lr = 0.95):
+    def __init__(self,states_size,actions_size,epsilon = 1.0,epsilon_min = 0.1,epsilon_decay = 0.999,gamma = 1,lr = 0.95):
         self.states_size = states_size
         self.actions_size = actions_size
         self.epsilon = epsilon
@@ -104,9 +107,10 @@ class DeliveryEnvironment(object):
         xy = np.random.rand(self.n_stops,2)*self.max_box
         # print(xy)
 
-
         self.x = xy[:,0]
         self.y = xy[:,1]
+        
+        print(self.x, self.y)
 
         # self.x = constants.xPoints20
         # self.y = constants.yPoints20
@@ -136,6 +140,7 @@ class DeliveryEnvironment(object):
 
         # Show stops
         ax.scatter(self.x,self.y,c = "red",s = 50)
+        # 優先節點畫圖
         # ax.scatter(priority_x,priority_y,c = "yellow",s = 50)
 
 
@@ -224,31 +229,14 @@ class DeliveryEnvironment(object):
 
     def _get_reward(self,state,new_state):
         base_reward = self.q_stops[state,new_state]
-
-        if self.method == "distance":
-            return -base_reward
-            # extra_reward = 1000
-            # additional reaward for priority points
-            # print(self.priority_points, new_state, new_state in self.priority_points)
-            # if new_state in self.priority_points:
-            #     return -base_reward + extra_reward
-            # else:
-            #     return -base_reward
-        # elif self.method == "traffic_box":
-
-        #     # Additional reward correspond to slowing down in traffic
-        #     xs,ys = self.x[state],self.y[state]
-        #     xe,ye = self.x[new_state],self.y[new_state]
-        #     intersections = self._calculate_box_intersection(xs,xe,ys,ye,self.box)
-        #     if len(intersections) > 0:
-        #         i1,i2 = intersections
-        #         distance_traffic = np.sqrt((i2[1]-i1[1])**2 + (i2[0]-i1[0])**2)
-        #         additional_reward = distance_traffic * self.traffic_intensity * np.random.rand()
-        #     else:
-        #         additional_reward = np.random.rand()
-
-        #     return base_reward + additional_reward
-
+        return -base_reward
+        # extra_reward = 1000
+        # additional reaward for priority points
+        # print(self.priority_points, new_state, new_state in self.priority_points)
+        # if new_state in self.priority_points:
+        #     return -base_reward + extra_reward
+        # else:
+        #     return -base_reward
 
     @staticmethod
     def _calculate_point(x1,x2,y1,y2,x = None,y = None):
@@ -323,7 +311,7 @@ def run_episode(env,agent,verbose = 1):
 class DeliveryQAgent(QAgent):
 
     def __init__(self,*args,**kwargs):
-        super().__init__(20, 20)
+        super().__init__(100, 100)
         self.reset_memory()
 
     def act(self,s):
@@ -372,6 +360,7 @@ def run_n_episodes(env,agent,name="training.gif",n_episodes=1000,render_each=10,
             imgs.append(img)
 
             if distance < minDistance:
+                print('distance', distance, 'episodes', i)
                 minDistance = distance
                 print(minDistance)
                 minDistanceImg.append(img)
@@ -389,7 +378,7 @@ def run_n_episodes(env,agent,name="training.gif",n_episodes=1000,render_each=10,
 
     return env,agent
 
-env,agent = run_n_episodes(DeliveryEnvironment(20, 20), DeliveryQAgent(QAgent))
+env,agent = run_n_episodes(DeliveryEnvironment(100, 100), DeliveryQAgent(QAgent))
 # Run the episode
 env,agent,episode_reward,distance = run_episode(env,agent,verbose = 0)
 env.render(return_img = False)
