@@ -311,7 +311,7 @@ def run_episode(env,agent,verbose = 1):
 class DeliveryQAgent(QAgent):
 
     def __init__(self,*args,**kwargs):
-        super().__init__(100, 100)
+        super().__init__(50, 50)
         self.reset_memory()
 
     def act(self,s):
@@ -378,7 +378,7 @@ def run_n_episodes(env,agent,name="training.gif",n_episodes=1000,render_each=10,
 
     return env,agent
 
-env,agent = run_n_episodes(DeliveryEnvironment(100, 100), DeliveryQAgent(QAgent))
+env,agent = run_n_episodes(DeliveryEnvironment(50, 50), DeliveryQAgent(QAgent))
 # Run the episode
 env,agent,episode_reward,distance = run_episode(env,agent,verbose = 0)
 env.render(return_img = False)
