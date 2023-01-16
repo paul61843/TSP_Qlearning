@@ -22,12 +22,10 @@ def calcDistance(x, y):
     for i in range(len(x) - 1):
         distance += np.sqrt((x[i] - x[i + 1]) ** 2 + (y[i] - y[i + 1]) ** 2)
     
-    distance += np.sqrt((x[0] - x[-1]) ** 2 + (y[0] - y[-1]) ** 2)
-    
     return distance
 
 class QAgent():
-    def __init__(self,states_size,actions_size,epsilon = 1.0,epsilon_min = 0.1,epsilon_decay = 0.999,gamma = 1,lr = 0.95):
+    def __init__(self,states_size,actions_size,epsilon = 1.0,epsilon_min = 0.05,epsilon_decay = 0.999,gamma = 1,lr = 0.65):
         self.states_size = states_size
         self.actions_size = actions_size
         self.epsilon = epsilon
@@ -105,13 +103,10 @@ class DeliveryEnvironment(object):
 
         # Generate geographical coordinates
         xy = np.random.rand(self.n_stops,2)*self.max_box
-        # print(xy)
 
         self.x = xy[:,0]
         self.y = xy[:,1]
         
-        print(self.x, self.y)
-
         # self.x = constants.xPoints20
         # self.y = constants.yPoints20
 
@@ -120,13 +115,8 @@ class DeliveryEnvironment(object):
 
 
     def _generate_q_values(self,box_size = 0.2):
-
-        # Generate actual Q Values corresponding to time elapsed between two points
-        if self.method in ["distance","traffic_box"]:
-            xy = np.column_stack([self.x,self.y])
-            self.q_stops = cdist(xy,xy)
-        else:
-            raise Exception("Method not recognized")
+        xy = np.column_stack([self.x,self.y])
+        self.q_stops = cdist(xy,xy)
 
 
     def render(self,return_img = False):
@@ -194,7 +184,8 @@ class DeliveryEnvironment(object):
         # Stops placeholder
         self.stops = []
         # Random first stop
-        first_stop = np.random.randint(self.n_stops)
+        # first_stop = np.random.randint(self.n_stops)
+        first_stop = 1
         self.stops.append(first_stop)
 
         return first_stop
@@ -228,8 +219,19 @@ class DeliveryEnvironment(object):
 
 
     def _get_reward(self,state,new_state):
+
+        moveDistance = 0
+
+        for i in range(len(self.stops) - 1):
+            moveDistance = moveDistance + self.q_stops[self.stops[i],self.stops[i+1]]
+        
+        moveReward = 0 if moveDistance < 1000 else -1000
+
+        # print(moveDistance, moveReward)
+
         base_reward = self.q_stops[state,new_state]
-        return -base_reward
+        # print(state, new_state, base_reward)
+        return -base_reward + moveReward
         # extra_reward = 1000
         # additional reaward for priority points
         # print(self.priority_points, new_state, new_state in self.priority_points)
@@ -271,14 +273,14 @@ def run_episode(env,agent,verbose = 1):
     episode_reward = 0
     
     i = 0
-    while i < max_step:
 
+    while i < max_step:
         # Remember the states
         agent.remember_state(s)
 
         # Choose an action
         a = agent.act(s)
-        
+
         # Take the action, and get the reward from environment
         s_next,r,done = env.step(a)
 
@@ -286,7 +288,6 @@ def run_episode(env,agent,verbose = 1):
         
         # Update our knowledge in the Q-table
         agent.train(s,a,r,s_next)
-        
         # Update the caches
         episode_reward += r
         s = s_next
@@ -296,12 +297,7 @@ def run_episode(env,agent,verbose = 1):
         if done:
             break
         
-        x = np.concatenate((env.x[env.stops], [env.x[env.stops[0]]]))
-        y = np.concatenate((env.y[env.stops], [env.y[env.stops[0]]]))
-        distance = calcDistance(x,y)
-
-
-    return env,agent,episode_reward,distance
+    return env,agent,episode_reward
 
 
 
@@ -338,32 +334,30 @@ class DeliveryQAgent(QAgent):
 
 
 
-def run_n_episodes(env,agent,name="training.gif",n_episodes=1000,render_each=10,fps=10):
+def run_n_episodes(env,agent,name="training.gif",n_episodes=100,render_each=10,fps=10):
 
     # Store the rewards
     rewards = []
     # Store the max rewards
-    minDistance = np.inf
+    maxReward = -np.inf
 
-    minDistanceImg = []
+    maxRewardImg = []
 
     imgs = []
     # Experience replay
     for i in tqdm(range(n_episodes)):
 
         # Run the episode
-        env,agent,episode_reward,distance = run_episode(env,agent,verbose = 0)
+        env,agent,episode_reward = run_episode(env,agent,verbose = 0)
         rewards.append(episode_reward)
-        
         if i % render_each == 0:
             img = env.render(return_img = True)
             imgs.append(img)
 
-            if distance < minDistance:
-                print('distance', distance, 'episodes', i)
-                minDistance = distance
-                print(minDistance)
-                minDistanceImg.append(img)
+            if episode_reward > maxReward:
+                maxReward = episode_reward
+                maxRewardImg.append(img)
+                print('maxReward', maxReward, 'index', i)
 
     # Show rewards
     plt.figure(figsize = (15,3))
@@ -373,12 +367,12 @@ def run_n_episodes(env,agent,name="training.gif",n_episodes=1000,render_each=10,
 
     # Save imgs as gif
     imageio.mimsave(name,imgs,fps = fps)
-    imageio.mimsave('result.gif',[minDistanceImg[-1]],fps = fps)
+    imageio.mimsave('result.gif',[maxRewardImg[-1]],fps = fps)
 
 
     return env,agent
 
 env,agent = run_n_episodes(DeliveryEnvironment(50, 50), DeliveryQAgent(QAgent))
 # Run the episode
-env,agent,episode_reward,distance = run_episode(env,agent,verbose = 0)
+env,agent,episode_reward = run_episode(env,agent,verbose = 0)
 env.render(return_img = False)
