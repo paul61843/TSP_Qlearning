@@ -73,6 +73,7 @@ class DeliveryEnvironment(object):
         self.max_box = max_box
         self.stops = []
         self.method = method
+        self.calc_threshold = 50
 
         # Generate stops
         # self._generate_constraints(**kwargs)
@@ -109,9 +110,16 @@ class DeliveryEnvironment(object):
         
         # self.x = constants.xPoints20
         # self.y = constants.yPoints20
-
-        self.priority_points = np.array(random.sample(list(np.arange(0,self.n_stops)), self.n_stops))
-        self.priority_points = self.priority_points[:len(self.priority_points)// 4]
+        
+        # 預設感測器的目前資料量為0
+        self.calc_amount = [0] * self.n_stops
+        
+        # 產生感測器的目前資料量的假資料
+        self.calc_amount = np.random.randint(100, size=self.max_box)
+        
+        
+        # self.priority_points = np.array(random.sample(list(np.arange(0,self.n_stops)), self.n_stops))
+        # self.priority_points = self.priority_points[:len(self.priority_points)// 4]
 
 
     def _generate_q_values(self,box_size = 0.2):
@@ -124,16 +132,15 @@ class DeliveryEnvironment(object):
         fig = plt.figure(figsize=(7,7))
         ax = fig.add_subplot(111)
         ax.set_title("Delivery Stops")
-
-        priority_x = self.x[self.priority_points]
-        priority_y = self.y[self.priority_points]
-
+        
         # Show stops
         ax.scatter(self.x,self.y,c = "red",s = 50)
-        # 優先節點畫圖
-        # ax.scatter(priority_x,priority_y,c = "yellow",s = 50)
 
-
+        # 感測器的資料量大於50，將節點標記為黃色(代表優先節點)
+        for i in range(self.n_stops):
+            if self.calc_amount[i] > self.calc_threshold:
+                ax.scatter(self.x[i], self.y[i], c = "yellow", s = 50)
+            
         # Show START
         if len(self.stops) > 0:
             xy = self._get_xy(initial = True)
@@ -219,19 +226,12 @@ class DeliveryEnvironment(object):
 
 
     def _get_reward(self,state,new_state):
-
-        moveDistance = 0
-
-        for i in range(len(self.stops) - 1):
-            moveDistance = moveDistance + self.q_stops[self.stops[i],self.stops[i+1]]
-        
-        moveReward = 0 if moveDistance < 1000 else -1000
-
-        # print(moveDistance, moveReward)
-
         base_reward = self.q_stops[state,new_state]
-        # print(state, new_state, base_reward)
-        return -base_reward + moveReward
+        has_extra_reward = self.calc_amount[new_state] > self.calc_threshold
+        
+        extra_reward = has_extra_reward * 5
+        
+        return -base_reward + extra_reward
         # extra_reward = 1000
         # additional reaward for priority points
         # print(self.priority_points, new_state, new_state in self.priority_points)
@@ -274,7 +274,7 @@ def run_episode(env,agent,verbose = 1):
     
     i = 0
 
-    while i < max_step:
+    while i < max_step * 2 // 3:
         # Remember the states
         agent.remember_state(s)
 
@@ -334,7 +334,7 @@ class DeliveryQAgent(QAgent):
 
 
 
-def run_n_episodes(env,agent,name="training.gif",n_episodes=100,render_each=10,fps=10):
+def run_n_episodes(env,agent,name="training.gif",n_episodes=500,render_each=10,fps=10):
 
     # Store the rewards
     rewards = []
