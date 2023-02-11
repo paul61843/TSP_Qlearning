@@ -17,6 +17,14 @@ sys.path.append("../")
 
 minDistance = -np.inf
 
+# 設定環境參數
+point_num = 30 # 節點數輛
+maxDistance = 200 # 無人機最大移動距離
+
+
+# 迴圈每次執行的Q-learning參數需不同
+# 先簡單分為前500次與後500次
+
 def calcDistance(x, y):
     distance = 0
     for i in range(len(x) - 1):
@@ -84,22 +92,6 @@ class DeliveryEnvironment(object):
         # Initialize first point
         self.reset()
 
-
-    def _generate_constraints(self,box_size = 0.2,traffic_intensity = 5):
-
-        if self.method == "traffic_box":
-
-            x_left = np.random.rand() * (self.max_box) * (1-box_size)
-            y_bottom = np.random.rand() * (self.max_box) * (1-box_size)
-
-            x_right = x_left + np.random.rand() * box_size * self.max_box
-            y_top = y_bottom + np.random.rand() * box_size * self.max_box
-
-            self.box = (x_left,x_right,y_bottom,y_top)
-            self.traffic_intensity = traffic_intensity 
-
-
-
     def _generate_stops(self):
 
         # Generate geographical coordinates
@@ -152,7 +144,6 @@ class DeliveryEnvironment(object):
             x = np.concatenate((self.x[self.stops], [self.x[self.stops[0]]]))
             y = np.concatenate((self.y[self.stops], [self.y[self.stops[0]]]))
             ax.plot(x, y, c = "blue",linewidth=1,linestyle="--")
-            calcDistance(x, y)
             
             # Annotate END
             xy = self._get_xy(initial = False)
@@ -226,19 +217,19 @@ class DeliveryEnvironment(object):
 
 
     def _get_reward(self,state,new_state):
-        base_reward = self.q_stops[state,new_state]
+        distance_reward = self.q_stops[state,new_state]
         has_extra_reward = self.calc_amount[new_state] > self.calc_threshold
         
-        extra_reward = has_extra_reward * 5
+        extra_reward = has_extra_reward * 1
         
-        return -base_reward + extra_reward
+        return -distance_reward + extra_reward
         # extra_reward = 1000
         # additional reaward for priority points
         # print(self.priority_points, new_state, new_state in self.priority_points)
         # if new_state in self.priority_points:
-        #     return -base_reward + extra_reward
+        #     return -distance_reward + extra_reward
         # else:
-        #     return -base_reward
+        #     return -distance_reward
 
     @staticmethod
     def _calculate_point(x1,x2,y1,y2,x = None,y = None):
@@ -274,7 +265,7 @@ def run_episode(env,agent,verbose = 1):
     
     i = 0
 
-    while i < max_step * 2 // 3:
+    while i < max_step:
         # Remember the states
         agent.remember_state(s)
 
@@ -296,6 +287,20 @@ def run_episode(env,agent,verbose = 1):
         i += 1
         if done:
             break
+
+        distance = calcDistance(env.x[env.stops], env.y[env.stops])
+
+        to_start_distance = 0
+        if i >= 1:
+            to_start_distance = calcDistance(env.x[[env.stops[0], env.stops[-1]]], env.y[[env.stops[0], env.stops[-1]]])
+            
+        distance += to_start_distance
+
+        #  紀錄獎勵最高的圖片
+        # if episode_reward > maxReward:
+        if distance > maxDistance:
+            break
+
         
     return env,agent,episode_reward
 
@@ -307,7 +312,7 @@ def run_episode(env,agent,verbose = 1):
 class DeliveryQAgent(QAgent):
 
     def __init__(self,*args,**kwargs):
-        super().__init__(50, 50)
+        super().__init__(point_num, point_num)
         self.reset_memory()
 
     def act(self,s):
@@ -350,10 +355,13 @@ def run_n_episodes(env,agent,name="training.gif",n_episodes=500,render_each=10,f
         # Run the episode
         env,agent,episode_reward = run_episode(env,agent,verbose = 0)
         rewards.append(episode_reward)
+        distance = calcDistance(env.x[env.stops], env.y[env.stops])
+
         if i % render_each == 0:
             img = env.render(return_img = True)
             imgs.append(img)
 
+            #  紀錄獎勵最高的圖片
             if episode_reward > maxReward:
                 maxReward = episode_reward
                 maxRewardImg.append(img)
@@ -372,7 +380,7 @@ def run_n_episodes(env,agent,name="training.gif",n_episodes=500,render_each=10,f
 
     return env,agent
 
-env,agent = run_n_episodes(DeliveryEnvironment(50, 50), DeliveryQAgent(QAgent))
+env,agent = run_n_episodes(DeliveryEnvironment(point_num, 50), DeliveryQAgent(QAgent))
 # Run the episode
 env,agent,episode_reward = run_episode(env,agent,verbose = 0)
 env.render(return_img = False)
