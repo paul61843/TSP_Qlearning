@@ -18,7 +18,7 @@ sys.path.append("../")
 minDistance = -np.inf
 
 # 設定環境參數
-point_num = 30 # 節點數輛
+point_num = 50 # 節點數輛
 maxDistance = 200 # 無人機最大移動距離
 
 
@@ -33,7 +33,7 @@ def calcDistance(x, y):
     return distance
 
 class QAgent():
-    def __init__(self,states_size,actions_size,epsilon = 1.0,epsilon_min = 0.05,epsilon_decay = 0.999,gamma = 1,lr = 0.65):
+    def __init__(self,states_size,actions_size,epsilon = 1.0,epsilon_min = 0.05,epsilon_decay = 0.999,gamma = 0.65,lr = 0.65):
         self.states_size = states_size
         self.actions_size = actions_size
         self.epsilon = epsilon
@@ -80,8 +80,10 @@ class DeliveryEnvironment(object):
         self.observation_space = self.n_stops
         self.max_box = max_box
         self.stops = []
+        self.red_stops = []
         self.method = method
         self.calc_threshold = 50
+        self.calc_danger_threshold = 75
 
         # Generate stops
         # self._generate_constraints(**kwargs)
@@ -126,12 +128,18 @@ class DeliveryEnvironment(object):
         ax.set_title("Delivery Stops")
         
         # Show stops
-        ax.scatter(self.x,self.y,c = "red",s = 50)
+        ax.scatter(self.x,self.y,c = "black",s = 50)
+        
+        self.red_stops = []
 
         # 感測器的資料量大於50，將節點標記為黃色(代表優先節點)
         for i in range(self.n_stops):
             if self.calc_amount[i] > self.calc_threshold:
                 ax.scatter(self.x[i], self.y[i], c = "yellow", s = 50)
+
+            if self.calc_amount[i] > self.calc_danger_threshold:
+                self.red_stops.append(i)
+                ax.scatter(self.x[i], self.y[i], c = "red", s = 50) 
             
         # Show START
         if len(self.stops) > 0:
@@ -218,11 +226,19 @@ class DeliveryEnvironment(object):
 
     def _get_reward(self,state,new_state):
         distance_reward = self.q_stops[state,new_state]
-        has_extra_reward = self.calc_amount[new_state] > self.calc_threshold
+
+        has_calc_threshold = self.calc_amount[new_state] > self.calc_threshold
+        has_calc_danger_threshold = self.calc_amount[new_state] > self.calc_threshold
+
+        calc_reward = has_calc_threshold * 0.02
+        calc_danger_reward = has_calc_danger_threshold * 5
         
-        extra_reward = has_extra_reward * 1
+        trade_of_factor = 0.001
         
-        return -distance_reward + extra_reward
+        # print(1 - trade_of_factor * distance_reward ** 2)
+        
+        return (1 - trade_of_factor * distance_reward ** 2) + calc_reward + calc_danger_reward
+        # return (1 - trade_of_factor * distance_reward ** 2)
         # extra_reward = 1000
         # additional reaward for priority points
         # print(self.priority_points, new_state, new_state in self.priority_points)
@@ -339,7 +355,8 @@ class DeliveryQAgent(QAgent):
 
 
 
-def run_n_episodes(env,agent,name="training.gif",n_episodes=500,render_each=10,fps=10):
+
+def run_n_episodes(env,agent,name="training.gif",n_episodes=10000,render_each=10,fps=10):
 
     # Store the rewards
     rewards = []
@@ -347,25 +364,38 @@ def run_n_episodes(env,agent,name="training.gif",n_episodes=500,render_each=10,f
     maxReward = -np.inf
 
     maxRewardImg = []
+    
+    max_reward_stop = []
 
     imgs = []
+
     # Experience replay
     for i in tqdm(range(n_episodes)):
 
         # Run the episode
         env,agent,episode_reward = run_episode(env,agent,verbose = 0)
         rewards.append(episode_reward)
-        distance = calcDistance(env.x[env.stops], env.y[env.stops])
 
         if i % render_each == 0:
             img = env.render(return_img = True)
             imgs.append(img)
 
-            #  紀錄獎勵最高的圖片
-            if episode_reward > maxReward:
-                maxReward = episode_reward
-                maxRewardImg.append(img)
-                print('maxReward', maxReward, 'index', i)
+        #  紀錄獎勵最高的圖片
+        if episode_reward > maxReward:
+            maxReward = episode_reward
+            img = env.render(return_img = True)
+            maxRewardImg.append(img)
+            max_reward_stop = env.stops
+            print('maxReward', maxReward, 'index', i)
+                
+
+        # 當執行迴圈到一半時，更改參數
+        if i == (n_episodes // 2):
+            # agent.gamma = 0.45
+            # agent.lr = 0.65
+            # agent.epsilon = 0.1
+            # agent.epsilon_min = 0.1
+            imageio.mimsave('pre_result.gif',[maxRewardImg[-1]],fps = fps)
 
     # Show rewards
     plt.figure(figsize = (15,3))
@@ -374,9 +404,54 @@ def run_n_episodes(env,agent,name="training.gif",n_episodes=500,render_each=10,f
     plt.show()
 
     # Save imgs as gif
-    imageio.mimsave(name,imgs,fps = fps)
-    imageio.mimsave('result.gif',[maxRewardImg[-1]],fps = fps)
+    # imageio.mimsave(name,imgs,fps = fps)
+    imageio.mimsave('qlearning_result.gif',[maxRewardImg[-1]],fps = fps)
 
+    # 2-opt 程式碼
+    def swap(route,i,k):
+        new_route = []
+        for j in range(0,i):
+            new_route.append(route[j])
+        for j in range(k,i-1,-1):
+            new_route.append(route[j])
+        for j in range(k+1,len(route)):
+            new_route.append(route[j])
+        return new_route
+
+    def optimalRoute(route, env, distance):
+        cost = distance
+        for i in range(1000):
+            for j in range(len(route)):
+                for k in range(len(route)):
+                    if j < k:
+                        new_route = swap(route,j,k)
+                        new_cost = calcDistance(env.x[new_route], env.y[new_route])
+                        if new_cost < cost:
+                            route = new_route
+                            cost = new_cost
+        return route,cost
+    # 2-opt 程式碼 end
+    
+    route,cost = optimalRoute(env.red_stops, env, np.Inf)
+    red_stops_distance = calcDistance(env.x[route], env.y[route])
+    
+    print('red_stops', route)
+    print('red_stops_distance', red_stops_distance)
+
+    
+    env.stops = max_reward_stop
+    qlearning_distance = calcDistance(env.x[env.stops], env.y[env.stops])
+    print('stops', max_reward_stop)
+    print('qlearning distance', qlearning_distance)
+    
+    route,cost = optimalRoute(env.stops, env, qlearning_distance)
+    env.stops = route
+    print('2opt stops', route)
+    print('result distance', calcDistance(env.x[env.stops], env.y[env.stops]))
+    
+    
+    twoOpt_img = env.render(return_img = True)
+    imageio.mimsave('result.gif',[twoOpt_img],fps = fps)
 
     return env,agent
 
@@ -384,3 +459,4 @@ env,agent = run_n_episodes(DeliveryEnvironment(point_num, 50), DeliveryQAgent(QA
 # Run the episode
 env,agent,episode_reward = run_episode(env,agent,verbose = 0)
 env.render(return_img = False)
+
