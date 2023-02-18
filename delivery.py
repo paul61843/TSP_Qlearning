@@ -33,7 +33,7 @@ def calcDistance(x, y):
     return distance
 
 class QAgent():
-    def __init__(self,states_size,actions_size,epsilon = 1.0,epsilon_min = 0.05,epsilon_decay = 0.999,gamma = 0.65,lr = 0.65):
+    def __init__(self,states_size,actions_size,epsilon = 1.0,epsilon_min = 0.05,epsilon_decay = 0.9998,gamma = 0.65,lr = 0.65):
         self.states_size = states_size
         self.actions_size = actions_size
         self.epsilon = epsilon
