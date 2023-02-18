@@ -9,7 +9,6 @@ from matplotlib.collections import PatchCollection
 from matplotlib.patches import Rectangle
 from scipy.spatial.distance import cdist
 from tqdm.notebook import tqdm
-import constants
 import multiprocessing as mp
 
 plt.style.use("seaborn-v0_8-dark")
@@ -22,6 +21,7 @@ minDistance = -np.inf
 mutliprocessing_num = 1 # 產生結果數量
 point_num = 50 # 節點數
 max_distance = 200 # 無人機最大移動距離 (單位km)
+show_plt = True
 
 
 # 迴圈每次執行的Q-learning參數需不同
@@ -35,7 +35,7 @@ def calcDistance(x, y):
     return distance
 
 class QAgent():
-    def __init__(self,states_size,actions_size,epsilon = 1.0,epsilon_min = 0.05,epsilon_decay = 0.9998,gamma = 0.65,lr = 0.65):
+    def __init__(self,states_size,actions_size,epsilon = 1.0,epsilon_min = 0.03,epsilon_decay = 0.9998,gamma = 0.65,lr = 0.65):
         self.states_size = states_size
         self.actions_size = actions_size
         self.epsilon = epsilon
@@ -159,16 +159,6 @@ class DeliveryEnvironment(object):
             xy = self._get_xy(initial = False)
             xytext = xy[0]+0.1,xy[1]-0.05
             ax.annotate("END",xy=xy,xytext=xytext,weight = "bold")
-
-
-
-        if hasattr(self,"box"):
-            left,bottom = self.box[0],self.box[2]
-            width = self.box[1] - self.box[0]
-            height = self.box[3] - self.box[2]
-            rect = Rectangle((left,bottom), width, height)
-            collection = PatchCollection([rect],facecolor = "red",alpha = 0.2)
-            ax.add_collection(collection)
 
 
         plt.xticks([])
@@ -352,7 +342,7 @@ class DeliveryQAgent(QAgent):
 
 
 
-def run_n_episodes(env,agent,name="training.gif",n_episodes=6000,render_each=10,fps=10,result_index=1):
+def run_n_episodes(env,agent,name="training.gif",n_episodes=10000,render_each=10,fps=10,result_index=1):
 
     # Store the rewards
     rewards = []
@@ -397,7 +387,8 @@ def run_n_episodes(env,agent,name="training.gif",n_episodes=6000,render_each=10,
     plt.figure(figsize = (15,3))
     plt.title("Rewards over training")
     plt.plot(rewards)
-    plt.show()
+    plt.savefig(f"./result/{result_index}_rewards.png")
+
 
     # Save imgs as gif
     # imageio.mimsave(name,imgs,fps = fps)
@@ -468,18 +459,19 @@ def runMain(index):
     )
     # Run the episode
     env,agent,episode_reward = run_episode(env,agent,verbose = 0)
-    env.render(return_img = False)
+    env.render(return_img = True)
     print(f'run {index} end ========================================')
 
 # mutiprocessing start ================================
-process_list = []
+if __name__ == '__main__':
+    process_list = []
 
-for i in range(mutliprocessing_num):
-    process_list.append(mp.Process(target=runMain, args=(i,)))
-    process_list[i].start()
+    for i in range(mutliprocessing_num):
+        process_list.append(mp.Process(target=runMain, args=(i,)))
+        process_list[i].start()
 
-for i in range(mutliprocessing_num):
-    process_list[i].join()
+    for i in range(mutliprocessing_num):
+        process_list[i].join()
 
 # mutiprocessing end ================================
 
