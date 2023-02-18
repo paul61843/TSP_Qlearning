@@ -21,7 +21,6 @@ minDistance = -np.inf
 mutliprocessing_num = 1 # 產生結果數量
 point_num = 50 # 節點數
 max_distance = 200 # 無人機最大移動距離 (單位km)
-show_plt = True
 
 
 # 迴圈每次執行的Q-learning參數需不同
@@ -173,7 +172,8 @@ class DeliveryEnvironment(object):
             plt.close()
             return image
         else:
-            plt.show()
+            print('render')
+            # plt.show()
 
 
 
