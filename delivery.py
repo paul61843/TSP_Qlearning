@@ -10,21 +10,18 @@ from matplotlib.patches import Rectangle
 from scipy.spatial.distance import cdist
 from tqdm.notebook import tqdm
 import multiprocessing as mp
+import csv_utils
 
 plt.style.use("seaborn-v0_8-dark")
 
 sys.path.append("../")
 
-minDistance = -np.inf
 
 # 設定環境參數
-mutliprocessing_num = 1 # 產生結果數量
+mutliprocessing_num = 10 # 產生結果數量
 point_num = 50 # 節點數
 max_distance = 200 # 無人機最大移動距離 (單位km)
 
-
-# 迴圈每次執行的Q-learning參數需不同
-# 先簡單分為前500次與後500次
 
 def calcDistance(x, y):
     distance = 0
@@ -437,14 +434,19 @@ def run_n_episodes(env,agent,name="training.gif",n_episodes=10000,render_each=10
     print('\n')
     
     route,cost = optimalRoute(env.stops, env, qlearning_distance)
+    opt_distance = calcDistance(env.x[env.stops], env.y[env.stops])
     env.stops = route
     print('======================================')
     print('2opt stops', route)
-    print('result distance', calcDistance(env.x[env.stops], env.y[env.stops]))
+    print('result distance', opt_distance)
     print('======================================')
     print('\n')
     
-    
+    csv_data = csv_utils.read('./result/train_table.csv')
+    csv_data = csv_data + [[red_stops_distance,qlearning_distance,opt_distance]]
+    print('csv_data', csv_data)
+    csv_utils.write('./result/train_table.csv', csv_data)
+
     twoOpt_img = env.render(return_img = True)
     imageio.mimsave(f'./result/{result_index}_result.gif',[twoOpt_img],fps = fps)
 
@@ -462,9 +464,13 @@ def runMain(index):
     env.render(return_img = True)
     print(f'run {index} end ========================================')
 
+
 # mutiprocessing start ================================
 if __name__ == '__main__':
     process_list = []
+    csv_utils.write('./result/train_table.csv', 
+        [['red_distance','q_distance','opt_distance']]
+    )
 
     for i in range(mutliprocessing_num):
         process_list.append(mp.Process(target=runMain, args=(i,)))
@@ -474,5 +480,3 @@ if __name__ == '__main__':
         process_list[i].join()
 
 # mutiprocessing end ================================
-
-
