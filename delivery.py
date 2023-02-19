@@ -18,7 +18,7 @@ sys.path.append("../")
 
 
 # 設定環境參數
-mutliprocessing_num = 10 # 產生結果數量
+mutliprocessing_num = 1 # 產生結果數量
 point_num = 50 # 節點數
 max_distance = 200 # 無人機最大移動距離 (單位km)
 
@@ -416,35 +416,28 @@ def run_n_episodes(env,agent,name="training.gif",n_episodes=10000,render_each=10
         return route,cost
     # 2-opt 程式碼 end
     
+    print('red_stops_distance ======================================')
     route,cost = optimalRoute(env.red_stops, env, np.Inf)
     red_stops_distance = calcDistance(env.x[route], env.y[route])
-    print('======================================')
-    print('red_stops', route)
-    print('red_stops_distance', red_stops_distance)
-    print('======================================')
+    print('red_stops_distance ======================================')
     print('\n')
 
     
+    print('qlearning_distance ======================================')
     env.stops = max_reward_stop
     qlearning_distance = calcDistance(env.x[env.stops], env.y[env.stops])
-    print('======================================')
-    print('stops', max_reward_stop)
-    print('qlearning distance', qlearning_distance)
-    print('======================================')
+    print('qlearning_distance ======================================')
     print('\n')
     
+    print('result distance ======================================')
     route,cost = optimalRoute(env.stops, env, qlearning_distance)
-    opt_distance = calcDistance(env.x[env.stops], env.y[env.stops])
     env.stops = route
-    print('======================================')
-    print('2opt stops', route)
-    print('result distance', opt_distance)
-    print('======================================')
+    opt_distance = calcDistance(env.x[env.stops], env.y[env.stops])
+    print('result distance ======================================')
     print('\n')
     
     csv_data = csv_utils.read('./result/train_table.csv')
     csv_data = csv_data + [[red_stops_distance,qlearning_distance,opt_distance]]
-    print('csv_data', csv_data)
     csv_utils.write('./result/train_table.csv', csv_data)
 
     twoOpt_img = env.render(return_img = True)
