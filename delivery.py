@@ -18,7 +18,7 @@ sys.path.append("../")
 
 
 # 設定環境參數
-mutliprocessing_num = 1 # 產生結果數量
+mutliprocessing_num = 10 # 產生結果數量
 point_num = 50 # 節點數
 max_distance = 200 # 無人機最大移動距離 (單位km)
 
@@ -31,7 +31,7 @@ def calcDistance(x, y):
     return distance
 
 class QAgent():
-    def __init__(self,states_size,actions_size,epsilon = 1.0,epsilon_min = 0.03,epsilon_decay = 0.9998,gamma = 0.65,lr = 0.65):
+    def __init__(self,states_size,actions_size,epsilon = 1.0,epsilon_min = 0.05,epsilon_decay = 0.9998,gamma = 0.65,lr = 0.65):
         self.states_size = states_size
         self.actions_size = actions_size
         self.epsilon = epsilon
