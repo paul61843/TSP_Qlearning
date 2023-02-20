@@ -18,7 +18,7 @@ sys.path.append("../")
 
 
 # 設定環境參數
-mutliprocessing_num = 10 # 產生結果數量
+mutliprocessing_num = 6 # 產生結果數量
 point_num = 50 # 節點數
 max_distance = 200 # 無人機最大移動距離 (單位km)
 
@@ -339,7 +339,16 @@ class DeliveryQAgent(QAgent):
 
 
 
-def run_n_episodes(env,agent,name="training.gif",n_episodes=10000,render_each=10,fps=10,result_index=1):
+def run_n_episodes(
+    env,
+    agent,
+    name="training.gif",
+    n_episodes=10000,
+    render_each=10,
+    fps=10,
+    result_index=1,
+    train_params={},
+):
 
     # Store the rewards
     rewards = []
@@ -384,12 +393,12 @@ def run_n_episodes(env,agent,name="training.gif",n_episodes=10000,render_each=10
     plt.figure(figsize = (15,3))
     plt.title("Rewards over training")
     plt.plot(rewards)
-    plt.savefig(f"./result/{result_index}_rewards.png")
-
+    plt.savefig(f"./result/epsilon_min_{train_params['epsilon_min']}_{result_index}_rewards.png")
+    plt.close('all')
 
     # Save imgs as gif
     # imageio.mimsave(name,imgs,fps = fps)
-    imageio.mimsave(f'./result/{result_index}_qlearning_result.gif',[maxRewardImg[-1]],fps = fps)
+    imageio.mimsave(f"./result/epsilon_min_{train_params['epsilon_min']}_{result_index}_qlearning_result.gif",[maxRewardImg[-1]],fps = fps)
 
     # 2-opt 程式碼
     def swap(route,i,k):
@@ -440,31 +449,47 @@ def run_n_episodes(env,agent,name="training.gif",n_episodes=10000,render_each=10
     csv_utils.write('./result/train_table.csv', csv_data)
 
     twoOpt_img = env.render(return_img = True)
-    imageio.mimsave(f'./result/{result_index}_result.gif',[twoOpt_img],fps = fps)
+    imageio.mimsave(f"./result/epsilon_min_{train_params['epsilon_min']}_{result_index}_result.gif",[twoOpt_img],fps = fps)
 
     return env,agent
 
 def runMain(index):
     print(f'run {index} start ========================================')
-    env,agent = run_n_episodes(
-        DeliveryEnvironment(point_num, 50), 
-        DeliveryQAgent(
-            QAgent(
-                states_size=point_num,
-                actions_size=point_num,
-                epsilon = 1.0,
-                epsilon_min = 0.05,
-                epsilon_decay = 0.9998,
-                gamma = 0.65,
-                lr = 0.65
-            )
-        ),
-        result_index=index
-    )
-    # Run the episode
-    env,agent,episode_reward = run_episode(env,agent,verbose = 0)
-    env.render(return_img = True)
-    print(f'run {index} end ========================================')
+    
+    parmas_arr = [
+        { "epsilon_min": 0.01 },
+        { "epsilon_min": 0.02 },
+        { "epsilon_min": 0.03 },
+        { "epsilon_min": 0.04 },
+        { "epsilon_min": 0.05 },
+        { "epsilon_min": 0.06 },
+        { "epsilon_min": 0.07 },
+        { "epsilon_min": 0.08 },
+        { "epsilon_min": 0.09 },
+        { "epsilon_min": 0.1 },
+    ]
+    
+    for params in parmas_arr:
+        env,agent = run_n_episodes(
+            DeliveryEnvironment(point_num, 50), 
+            DeliveryQAgent(
+                QAgent(
+                    states_size=point_num,
+                    actions_size=point_num,
+                    epsilon = 1.0,
+                    epsilon_min = params["epsilon_min"],
+                    epsilon_decay = 0.9998,
+                    gamma = 0.65,
+                    lr = 0.65
+                )
+            ),
+            result_index=index,
+            train_params=params,
+        )
+        # Run the episode
+        env,agent,episode_reward = run_episode(env,agent,verbose = 0)
+        env.render(return_img = True)
+        print(f'run {index} end ========================================')
 
 
 # mutiprocessing start ================================
