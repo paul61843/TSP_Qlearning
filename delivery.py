@@ -311,7 +311,7 @@ def run_episode(env,agent,verbose = 1):
 class DeliveryQAgent(QAgent):
 
     def __init__(self,*args,**kwargs):
-        super().__init__(point_num, point_num)
+        super().__init__(50, 50)
         self.reset_memory()
 
     def act(self,s):
@@ -448,7 +448,17 @@ def runMain(index):
     print(f'run {index} start ========================================')
     env,agent = run_n_episodes(
         DeliveryEnvironment(point_num, 50), 
-        DeliveryQAgent(QAgent),
+        DeliveryQAgent(
+            QAgent(
+                states_size=point_num,
+                actions_size=point_num,
+                epsilon = 1.0,
+                epsilon_min = 0.05,
+                epsilon_decay = 0.9998,
+                gamma = 0.65,
+                lr = 0.65
+            )
+        ),
         result_index=index
     )
     # Run the episode
