@@ -416,24 +416,23 @@ def run_n_episodes(env,agent,name="training.gif",n_episodes=10000,render_each=10
         return route,cost
     # 2-opt 程式碼 end
     
-    print('red_stops_distance ======================================')
+    # red_stops_distance ======================================
     route,cost = optimalRoute(env.red_stops, env, np.Inf)
     red_stops_distance = calcDistance(env.x[route], env.y[route])
-    print('red_stops_distance ======================================')
-    print('\n')
+    # red_stops_distance ======================================
 
     
-    print('qlearning_distance ======================================')
+    # qlearning_distance ======================================
     env.stops = max_reward_stop
     qlearning_distance = calcDistance(env.x[env.stops], env.y[env.stops])
-    print('qlearning_distance ======================================')
+    # qlearning_distance ======================================
     print('\n')
     
-    print('result distance ======================================')
+    # result distance ======================================
     route,cost = optimalRoute(env.stops, env, qlearning_distance)
     env.stops = route
     opt_distance = calcDistance(env.x[env.stops], env.y[env.stops])
-    print('result distance ======================================')
+    # result distance ======================================
     print('\n')
     
     csv_data = csv_utils.read('./result/train_table.csv')
