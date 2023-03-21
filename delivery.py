@@ -20,6 +20,7 @@ sys.path.append("../")
 # 設定環境參數
 mutliprocessing_num = 1 # 產生結果數量
 point_num = 50 # 節點數
+point_radius = 10 # 節點通訊範圍
 max_distance = 200 # 無人機最大移動距離 (單位km)
 
 
@@ -93,12 +94,22 @@ class DeliveryEnvironment(object):
         self.reset()
 
     def _generate_stops(self):
+        points = np.random.rand(1,2) * self.max_box
+
+        # 隨機生成感測器數量，並確保每個點的通訊範圍內至少有一個點
+        while (len(points) < self.n_stops):
+            x,y = (np.random.rand(1,2) * self.max_box)[0]
+            for p in points:
+                isTrue = any(((x - p[0]) ** 2 + (y - p[1]) ** 2 ) ** 0.5 <= point_radius for p in points)
+                if isTrue:
+                    points = np.append(points, [np.array([x,y])], axis=0)
+                    break
 
         # Generate geographical coordinates
-        xy = np.random.rand(self.n_stops,2)*self.max_box
+        # xy = np.random.rand(self.n_stops,2) * self.max_box
 
-        self.x = xy[:,0]
-        self.y = xy[:,1]
+        self.x = points[:,0]
+        self.y = points[:,1]
         
         # self.x = constants.xPoints20
         # self.y = constants.yPoints20
