@@ -16,14 +16,21 @@ plt.style.use("seaborn-v0_8-dark")
 
 sys.path.append("../")
 
+# 待完成事項
+# 1. 須建立 tree (或是 k-means) 決定，感測器的回傳sink的資料傳輸路徑
+# 2. 跑到每一個點後，需計算無人機剩餘的電量，決定是否添加新的拜訪點
+# 3. 跑完一輪後，節點飄移功能需完成，並且飄移後的節點是否成為斷路的判斷
+# 4. 飄移後的節點，因離開原始位置，無人機需增加搜尋功能，找尋漂離的節點
+# 
 
 # 設定環境參數
 mutliprocessing_num = 1 # 產生結果數量
 point_num = 50 # 節點數
-point_radius = 10 # 節點通訊範圍
-max_distance = 200 # 無人機最大移動距離 (單位km)
+point_radius = 10 # 節點通訊範圍 (單位m)
+max_distance = 200 # 無人機最大移動距離 (單位m)
+drift_distance = 5
 
-n_episodes = 2000 # 訓練次數
+n_episodes = 2 # 訓練次數
 
 def calcDistance(x, y):
     distance = 0
@@ -213,7 +220,11 @@ class DeliveryEnvironment(object):
         done = len(self.stops) == self.n_stops
 
         return new_state,reward,done
-    
+
+    def drift_node(self):
+        for i in range(1, len(self.x)):
+            self.x[i] = self.x[i] + random.uniform(-drift_distance, drift_distance)  # 在-1到1之間的範圍內隨機移動
+            self.y[i] = self.y[i] + random.uniform(-drift_distance, drift_distance)  # 在-1到1之間的範圍內隨機移動
 
     def _get_state(self):
         return self.stops[-1]
@@ -470,7 +481,7 @@ def runMain(index):
     print(f'run {index} start ========================================')
     
     parmas_arr = [
-        { "epsilon_min": 0.01 },
+        # { "epsilon_min": 0.01 },
         # { "epsilon_min": 0.02 },
         # { "epsilon_min": 0.03 },
         # { "epsilon_min": 0.04 },
@@ -500,6 +511,7 @@ def runMain(index):
         # Run the episode
         env,agent,episode_reward = run_episode(env,agent,verbose = 0)
         env.render(return_img = True)
+        env.drift_node()
         print(f'run {index} end ========================================')
 
 
