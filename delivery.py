@@ -24,13 +24,14 @@ sys.path.append("../")
 # 
 
 # 設定環境參數
-mutliprocessing_num = 1 # 產生結果數量
-point_num = 50 # 節點數
-point_radius = 10 # 節點通訊範圍 (單位m)
-max_distance = 200 # 無人機最大移動距離 (單位m)
-drift_distance = 5
+num_processes = 1 # 使用的多核數量 (產生結果數量)
+num_points = 10 # 節點數
+point_range = 10 # 節點通訊範圍 (單位m)
+max_move_distance = 200 # 無人機最大移動距離 (單位m)
+drift_range = 1 # 節點飄移範圍
 
-n_episodes = 2 # 訓練次數
+n_episodes = 1 # 訓練次數
+num_uav_loops = 10 # UAV 拜訪幾輪
 
 def calcDistance(x, y):
     distance = 0
@@ -93,7 +94,6 @@ class DeliveryEnvironment(object):
         self.calc_danger_threshold = 75
 
         # Generate stops
-        # self._generate_constraints(**kwargs)
         self._generate_stops()
         self._generate_q_values()
         self.render()
@@ -108,29 +108,19 @@ class DeliveryEnvironment(object):
         while (len(points) < self.n_stops):
             x,y = (np.random.rand(1,2) * self.max_box)[0]
             for p in points:
-                isTrue = any(((x - p[0]) ** 2 + (y - p[1]) ** 2 ) ** 0.5 <= point_radius for p in points)
+                isTrue = any(((x - p[0]) ** 2 + (y - p[1]) ** 2 ) ** 0.5 <= point_range for p in points)
                 if isTrue:
                     points = np.append(points, [np.array([x,y])], axis=0)
                     break
 
-        # Generate geographical coordinates
-        # xy = np.random.rand(self.n_stops,2) * self.max_box
-
         self.x = points[:,0]
         self.y = points[:,1]
-        
-        # self.x = constants.xPoints20
-        # self.y = constants.yPoints20
         
         # 預設感測器的目前資料量為0
         self.calc_amount = [0] * self.n_stops
         
         # 產生感測器的目前資料量的假資料 max = 100
         self.calc_amount = np.random.randint(100, size=self.max_box)
-        
-        
-        # self.priority_points = np.array(random.sample(list(np.arange(0,self.n_stops)), self.n_stops))
-        # self.priority_points = self.priority_points[:len(self.priority_points)// 4]
 
 
     def _generate_q_values(self,box_size = 0.2):
@@ -198,8 +188,6 @@ class DeliveryEnvironment(object):
 
         # Stops placeholder
         self.stops = []
-        # Random first stop
-        # first_stop = np.random.randint(self.n_stops)
         first_stop = 1
         self.stops.append(first_stop)
 
@@ -223,8 +211,8 @@ class DeliveryEnvironment(object):
 
     def drift_node(self):
         for i in range(1, len(self.x)):
-            self.x[i] = self.x[i] + random.uniform(-drift_distance, drift_distance)  # 在-1到1之間的範圍內隨機移動
-            self.y[i] = self.y[i] + random.uniform(-drift_distance, drift_distance)  # 在-1到1之間的範圍內隨機移動
+            self.x[i] = self.x[i] + random.uniform(-drift_range, drift_range)  # 在-1到1之間的範圍內隨機移動
+            self.y[i] = self.y[i] + random.uniform(-drift_range, drift_range)  # 在-1到1之間的範圍內隨機移動
 
     def _get_state(self):
         return self.stops[-1]
@@ -321,7 +309,7 @@ def run_episode(env,agent,verbose = 1):
             
         distance += to_start_distance
 
-        if distance > max_distance:
+        if distance > max_move_distance:
             break
         # ==============================
 
@@ -494,25 +482,37 @@ def runMain(index):
     ]
     
     for params in parmas_arr:
-        env,agent = run_n_episodes(
-            DeliveryEnvironment(point_num, 50), 
-            DeliveryQAgent(
-                states_size=point_num,
-                actions_size=point_num,
+
+        env = DeliveryEnvironment(num_points, 50)
+        agent = DeliveryQAgent(
+                states_size=num_points,
+                actions_size=num_points,
                 epsilon = 1.0,
                 epsilon_min = params["epsilon_min"],
                 epsilon_decay = 0.9998,
                 gamma = 0.65,
                 lr = 0.65
-            ),
-            result_index=index,
-            train_params=params,
-        )
-        # Run the episode
-        env,agent,episode_reward = run_episode(env,agent,verbose = 0)
-        env.render(return_img = True)
-        env.drift_node()
-        print(f'run {index} end ========================================')
+            )
+
+        # 感測器初始座標 (水下定錨座標)
+        init_X = np.array(env.x)
+        init_Y = np.array(env.y)
+
+        for num in range(num_uav_loops):
+            env,agent = run_n_episodes(
+                env, 
+                agent,
+                result_index=index,
+                train_params=params,
+            )
+            # Run the episode
+            env,agent,episode_reward = run_episode(env,agent,verbose = 0)
+            env.render(return_img = True)
+            env.x = np.array(init_X)
+            env.y = np.array(init_Y)
+
+            env.drift_node()
+            print(f'run {index} end ========================================')
 
 
 # mutiprocessing start ================================
@@ -522,11 +522,11 @@ if __name__ == '__main__':
         [['red_distance','q_distance','opt_distance']]
     )
 
-    for i in range(mutliprocessing_num):
+    for i in range(num_processes):
         process_list.append(mp.Process(target=runMain, args=(i,)))
         process_list[i].start()
 
-    for i in range(mutliprocessing_num):
+    for i in range(num_processes):
         process_list[i].join()
 
 # mutiprocessing end ================================
