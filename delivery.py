@@ -19,7 +19,7 @@ sys.path.append("../")
 # 待完成事項
 # 1. 須建立 tree (或是 k-means) 決定，感測器的回傳sink的資料傳輸路徑
 # 2. 跑到每一個點後，需計算無人機剩餘的電量，決定是否添加新的拜訪點
-# 3. 跑完一輪後，節點飄移功能需完成，並且飄移後的節點是否成為斷路的判斷
+# 3. 跑完一輪後，節點飄移功能需完成，飄移後節點判斷感測器剩餘空間量
 # 4. 飄移後的節點，因離開原始位置，無人機需增加搜尋功能，找尋漂離的節點
 # 
 
@@ -29,6 +29,7 @@ num_points = 10 # 節點數
 point_range = 10 # 節點通訊範圍 (單位m)
 max_move_distance = 200 # 無人機最大移動距離 (單位m)
 drift_range = 1 # 節點飄移範圍
+data_generatation_range = 20 # 節點產生的資料範圍
 
 n_episodes = 1 # 訓練次數
 num_uav_loops = 10 # UAV 拜訪幾輪
@@ -92,6 +93,7 @@ class DeliveryEnvironment(object):
         self.method = method
         self.calc_threshold = 50
         self.calc_danger_threshold = 75
+        self.calc_amount = []
 
         # Generate stops
         self._generate_stops()
@@ -120,8 +122,11 @@ class DeliveryEnvironment(object):
         self.calc_amount = [0] * self.n_stops
         
         # 產生感測器的目前資料量的假資料 max = 100
-        self.calc_amount = np.random.randint(100, size=self.max_box)
+    def generate_data(self):
+        arr1 = self.calc_amount
+        arr2 = np.random.randint(data_generatation_range, size=self.max_box)
 
+        self.calc_amount = [x + y for x, y in zip(arr1, arr2)]
 
     def _generate_q_values(self,box_size = 0.2):
         xy = np.column_stack([self.x,self.y])
@@ -511,7 +516,9 @@ def runMain(index):
             env.x = np.array(init_X)
             env.y = np.array(init_Y)
 
+            # 執行節點飄移
             env.drift_node()
+            env.generate_data()
             print(f'run {index} end ========================================')
 
 
