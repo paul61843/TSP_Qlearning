@@ -363,7 +363,8 @@ def run_n_episodes(
     n_episodes=n_episodes,
     render_each=10,
     fps=10,
-    result_index=1,
+    result_index=0,
+    loop_index=0,
     train_params={},
 ):
 
@@ -395,7 +396,6 @@ def run_n_episodes(
             img = env.render(return_img = True)
             maxRewardImg = [img]
             max_reward_stop = env.stops
-            print('maxReward', maxReward, 'index', i)
 
 
         # 當執行迴圈到一半時，更改參數
@@ -410,12 +410,12 @@ def run_n_episodes(
     plt.figure(figsize = (15,3))
     plt.title("Rewards over training")
     plt.plot(rewards)
-    plt.savefig(f"./result/epsilon_min_{train_params['epsilon_min']}_{result_index}_rewards.png")
+    plt.savefig(f"./result/{result_index}_epsilon_min{train_params['epsilon_min']}_loop_index{loop_index}_rewards.png")
     plt.close('all')
 
     # Save imgs as gif
     # imageio.mimsave(name,imgs,fps = fps)
-    imageio.mimsave(f"./result/epsilon_min_{train_params['epsilon_min']}_{result_index}_qlearning_result.gif",[maxRewardImg[0]],fps = fps)
+    imageio.mimsave(f"./result/{result_index}_epsilon_min{train_params['epsilon_min']}_loop_index{loop_index}_qlearning_result.gif",[maxRewardImg[0]],fps = fps)
 
     # 2-opt 程式碼
     def swap(route,i,k):
@@ -466,7 +466,7 @@ def run_n_episodes(
     csv_utils.write('./result/train_table.csv', csv_data)
 
     twoOpt_img = env.render(return_img = True)
-    imageio.mimsave(f"./result/epsilon_min_{train_params['epsilon_min']}_{result_index}_result.gif",[twoOpt_img],fps = fps)
+    imageio.mimsave(f"./result/{result_index}_epsilon_min{train_params['epsilon_min']}_loop_index{loop_index}_result.gif",[twoOpt_img],fps = fps)
 
     return env,agent
 
@@ -508,6 +508,7 @@ def runMain(index):
                 env, 
                 agent,
                 result_index=index,
+                loop_index=num+1,
                 train_params=params,
             )
             # Run the episode
@@ -519,7 +520,7 @@ def runMain(index):
             # 執行節點飄移
             env.drift_node()
             env.generate_data()
-            print(f'run {index} end ========================================')
+    print(f'run {index} end ========================================')
 
 
 # mutiprocessing start ================================
