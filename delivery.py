@@ -121,12 +121,17 @@ class DeliveryEnvironment(object):
         # 預設感測器的目前資料量為0
         self.calc_amount = [0] * self.n_stops
         
-        # 產生感測器的目前資料量的假資料 max = 100
+    # 產生感測器的目前資料量的假資料 max = 100
     def generate_data(self):
         arr1 = self.calc_amount
         arr2 = np.random.randint(data_generatation_range, size=self.max_box)
 
         self.calc_amount = [x + y for x, y in zip(arr1, arr2)]
+    
+    # 清除無人跡拜訪後的感測器資料
+    def clear_data(self):
+        for i in self.stops:
+            self.calc_amount[i] = 0
 
     def _generate_q_values(self,box_size = 0.2):
         xy = np.column_stack([self.x,self.y])
@@ -514,6 +519,8 @@ def runMain(index):
             # Run the episode
             env,agent,episode_reward = run_episode(env,agent,verbose = 0)
             env.render(return_img = True)
+            env.clear_data()
+
             env.x = np.array(init_X)
             env.y = np.array(init_Y)
 
