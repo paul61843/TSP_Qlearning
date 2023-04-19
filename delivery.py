@@ -17,21 +17,22 @@ plt.style.use("seaborn-v0_8-dark")
 sys.path.append("../")
 
 # 待完成事項
-# 1. 須建立 tree (或是 k-means) 決定，感測器的回傳sink的資料傳輸路徑
+# 1. 須建立 tree (或是 k-means) 決定，感測器的回傳sink的資料傳輸路徑?
+# * 判斷感測器是否為隔離節點的方法，利用 Dijkstra’s 決定節點的傳回sink的路徑，如果沒有回傳路徑則為孤立節點
+# 若孤立節點附近有可連通節點，則將這些節點加入成一個區塊，為孤立區域
 # 2. 跑到每一個點後，需計算無人機剩餘的電量，決定是否添加新的拜訪點
-# 3. 跑完一輪後，節點飄移功能需完成，飄移後節點判斷感測器剩餘空間量
 # 4. 飄移後的節點，因離開原始位置，無人機需增加搜尋功能，找尋漂離的節點
 # 
 
 # 設定環境參數
 num_processes = 1 # 使用的多核數量 (產生結果數量)
-num_points = 10 # 節點數
+num_points = 5 # 節點數
 point_range = 10 # 節點通訊範圍 (單位m)
 max_move_distance = 200 # 無人機最大移動距離 (單位m)
-drift_range = 1 # 節點飄移範圍
-data_generatation_range = 20 # 節點產生的資料範圍
+drift_range = 20 # 節點飄移範圍
+data_generatation_range = 20 # 節點產生的資料量範圍
 
-n_episodes = 1 # 訓練次數
+n_episodes = 10 # 訓練次數
 num_uav_loops = 10 # UAV 拜訪幾輪
 
 def calcDistance(x, y):
@@ -91,13 +92,19 @@ class DeliveryEnvironment(object):
         self.stops = []
         self.red_stops = []
         self.method = method
+
+        # 感測器資料量相關
+        self.calc_amount = []
         self.calc_threshold = 50
         self.calc_danger_threshold = 75
-        self.calc_amount = []
+
+        # 隔離節點
+        self.isolated_node = []
 
         # Generate stops
         self._generate_stops()
         self._generate_q_values()
+        self.set_isolated_node()
         self.render()
 
         # Initialize first point
@@ -120,6 +127,19 @@ class DeliveryEnvironment(object):
         
         # 預設感測器的目前資料量為0
         self.calc_amount = [0] * self.n_stops
+
+    def set_isolated_node(self):
+        self.isolated_node = []
+
+        for i in range(self.n_stops):
+            is_isolated = None
+            for j in range(self.n_stops):
+                if i != j:
+                    is_isolated = ((self.x[i] - self.x[j]) ** 2 + (self.y[i] - self.y[i]) ** 2 ) ** 0.5 > point_range
+                if is_isolated == False: 
+                    break
+            self.isolated_node.append(is_isolated)
+        print('set_isolated_node', self.isolated_node)
         
     # 產生感測器的目前資料量的假資料 max = 100
     def generate_data(self):
@@ -157,11 +177,17 @@ class DeliveryEnvironment(object):
             if self.calc_amount[i] > self.calc_danger_threshold:
                 self.red_stops.append(i)
                 ax.scatter(self.x[i], self.y[i], c = "red", s = 50) 
-            
+        
+        # 將孤立節點標記為灰色
+        print(self.isolated_node)
+        for i, node in enumerate(self.isolated_node):
+            if node == True:
+                ax.scatter(self.x[i], self.y[i], c = "#AAAAAA", s = 50)
+
         # Show START
         if len(self.stops) > 0:
             xy = self._get_xy(initial = True)
-            xytext = xy[0]+0.1,xy[1]-0.05
+            xytext = xy[0] + 0.1, xy[1]-0.05
             ax.annotate("START",xy=xy,xytext=xytext,weight = "bold")
 
         # Show itinerary
@@ -519,7 +545,9 @@ def runMain(index):
             # Run the episode
             env,agent,episode_reward = run_episode(env,agent,verbose = 0)
             env.render(return_img = True)
+            # 清除無人跡拜訪後的感測器資料
             env.clear_data()
+            env.set_isolated_node()
 
             env.x = np.array(init_X)
             env.y = np.array(init_Y)
