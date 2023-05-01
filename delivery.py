@@ -20,13 +20,13 @@ sys.path.append("../")
 # 1. 須建立 tree (或是 k-means) 決定，感測器的回傳sink的資料傳輸路徑?
 # * 判斷感測器是否為隔離節點的方法，利用 Dijkstra’s 決定節點的傳回sink的路徑，如果沒有回傳路徑則為孤立節點
 # 若孤立節點附近有可連通節點，則將這些節點加入成一個區塊，為孤立區域
-# 2. 跑到每一個點後，需計算無人機剩餘的電量，決定是否添加新的拜訪點
+# 2. 跑到每一個點後(必做)，需計算無人機剩餘的電量，決定是否添加新的拜訪點
 # 4. 飄移後的節點，因離開原始位置，無人機需增加搜尋功能，找尋漂離的節點
 # 
 
 # 設定環境參數
 num_processes = 1 # 使用的多核數量 (產生結果數量)
-num_points = 5 # 節點數
+num_points = 50 # 節點數
 point_range = 10 # 節點通訊範圍 (單位m)
 max_move_distance = 200 # 無人機最大移動距離 (單位m)
 drift_range = 20 # 節點飄移範圍
@@ -90,6 +90,7 @@ class DeliveryEnvironment(object):
         self.observation_space = self.n_stops
         self.max_box = max_box
         self.stops = []
+        self.unvisited_stops = []
         self.red_stops = []
         self.method = method
 
@@ -127,7 +128,7 @@ class DeliveryEnvironment(object):
         
         # 預設感測器的目前資料量為0
         self.calc_amount = [0] * self.n_stops
-
+        
     def set_isolated_node(self):
         self.isolated_node = []
 
@@ -179,7 +180,6 @@ class DeliveryEnvironment(object):
                 ax.scatter(self.x[i], self.y[i], c = "red", s = 50) 
         
         # 將孤立節點標記為灰色
-        print(self.isolated_node)
         for i, node in enumerate(self.isolated_node):
             if node == True:
                 ax.scatter(self.x[i], self.y[i], c = "#AAAAAA", s = 50)
@@ -259,7 +259,6 @@ class DeliveryEnvironment(object):
         x = self.x[state]
         y = self.y[state]
         return x,y
-
 
     def _get_reward(self,state,new_state):
         distance_reward = self.q_stops[state,new_state]
@@ -459,7 +458,7 @@ def run_n_episodes(
             new_route.append(route[j])
         return new_route
 
-    def optimalRoute(route, env, distance):
+    def optimal_route(route, env, distance):
         cost = distance
         for i in range(1000):
             for j in range(len(route)):
@@ -472,24 +471,29 @@ def run_n_episodes(
                             cost = new_cost
         return route,cost
     # 2-opt 程式碼 end
+
+    def get_unvisited_stops(route, env):
+        # 使用 set 運算來找出未被包含在 route 中的車站
+        unvisited_stops = set(list(range(0, env.max_box))) - set(route)
+        # 將 set 轉換回 list，方便使用者閱讀
+        return list(unvisited_stops)
     
     # red_stops_distance ======================================
-    route,cost = optimalRoute(env.red_stops, env, np.Inf)
+    route,cost = optimal_route(env.red_stops, env, np.Inf)
     red_stops_distance = calcDistance(env.x[route], env.y[route])
     # red_stops_distance ======================================
 
-    
     # qlearning_distance ======================================
     env.stops = max_reward_stop
     qlearning_distance = calcDistance(env.x[env.stops], env.y[env.stops])
     # qlearning_distance ======================================
     print('\n')
     
-    # result distance ======================================
-    route,cost = optimalRoute(env.stops, env, qlearning_distance)
+    # optimal distance ======================================
+    route,cost = optimal_route(env.stops, env, qlearning_distance)
     env.stops = route
     opt_distance = calcDistance(env.x[env.stops], env.y[env.stops])
-    # result distance ======================================
+    # optimal distance ======================================
     print('\n')
     
     csv_data = csv_utils.read('./result/train_table.csv')
