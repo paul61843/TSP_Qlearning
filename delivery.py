@@ -95,10 +95,11 @@ def run_uav_path(env, init_position):
         drift_cost = calc_drift_cost(
             [init_pos_x[idx],  position_x[idx]], 
             [init_pos_y[idx],  position_y[idx]], 
+            env
         )
 
         # 
-        drift_remain_cost = drift_max_cost - drift_cost
+        drift_remain_cost = env.drift_max_cost - drift_cost
         # 用於搜尋飄移節點中的剩餘能量
         remain_cost = remain_cost + drift_remain_cost
 
@@ -110,7 +111,7 @@ def run_uav_path(env, init_position):
             position_x = env.x[[idx, point, nextPoint]]
             position_y = env.y[[idx, point, nextPoint]]
 
-            cost = calcDistance(position_x, position_y) + drift_max_cost
+            cost = calcDistance(position_x, position_y) + env.drift_max_cost
             if cost < remain_cost:
                 env.stops.insert(idx + 1, point)
                 env.unvisited_stops.remove(point)
@@ -119,14 +120,14 @@ def run_uav_path(env, init_position):
     return env
 
 # 計算 UAV探索飄移節點需要花費的電量
-def calc_drift_cost(position_x, position_y):
+def calc_drift_cost(position_x, position_y, env):
     dript_distance = calcDistance(position_x, position_y)
     print('543', position_x, position_y, dript_distance)
 
     if dript_distance <= point_range:
         return 0
     else:
-        return drift_max_cost
+        return env.drift_max_cost
 
 def runMain(index):
     print(f'run {index} start ========================================')
