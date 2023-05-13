@@ -35,11 +35,10 @@ sys.path.append("../")
 # 設定環境參數
 num_processes = 1 # 使用的多核數量 (產生結果數量)
 num_points = 50 # 節點數
-point_range = 10 # 節點通訊範圍 (單位m)
 
-
-n_episodes = 1000 # 訓練次數
+n_episodes = 10 # 訓練次數
 num_uav_loops = 1 # UAV 拜訪幾輪
+
 
 def calcDistance(x, y):
     distance = 0
@@ -124,7 +123,7 @@ def calc_drift_cost(position_x, position_y, env):
     dript_distance = calcDistance(position_x, position_y)
     print('543', position_x, position_y, dript_distance)
 
-    if dript_distance <= point_range:
+    if dript_distance <= env.point_range:
         return 0
     else:
         return env.drift_max_cost
@@ -169,6 +168,7 @@ def runMain(index):
             env,agent = run_n_episodes(
                 env, 
                 agent,
+                n_episodes=n_episodes,
                 result_index=index,
                 loop_index=num+1,
                 train_params=params,

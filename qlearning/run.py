@@ -6,7 +6,6 @@ from matplotlib import pyplot as plt
 
 import csv_utils
 
-n_episodes = 10 # 訓練次數
 
 def calcDistance(x, y):
     distance = 0
@@ -80,7 +79,7 @@ def run_n_episodes(
     env,
     agent,
     name="training.gif",
-    n_episodes=n_episodes,
+    n_episodes=1000,
     render_each=10,
     fps=10,
     result_index=0,
