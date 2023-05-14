@@ -6,6 +6,7 @@ from matplotlib import pyplot as plt
 
 import csv_utils
 
+from utils.calc import *
 
 def calcDistance(x, y):
     distance = 0
@@ -13,18 +14,6 @@ def calcDistance(x, y):
         distance += np.sqrt((x[i] - x[i + 1]) ** 2 + (y[i] - y[i + 1]) ** 2)
     
     return distance
-
-# 計算移動距離，是否超過最大限制
-def calcRouteDistance(env):
-    cost = calcDistance(env.x[env.stops], env.y[env.stops])
-
-    to_start_distance = 0
-    if cost > 1:
-        to_start_distance = calcDistance(env.x[[env.stops[0], env.stops[-1]]], env.y[[env.stops[0], env.stops[-1]]])
-        
-    cost += to_start_distance
-
-    return cost
 
 
 def run_episode(env,agent,verbose = 1):
@@ -62,10 +51,13 @@ def run_episode(env,agent,verbose = 1):
             break
 
 
+        env.drift_cost_list = len(env.stops) * [env.drift_max_cost]
+
         # 計算移動距離，是否超過最大限制 (移動距離 + 節點飄移最大的距離)
+        # Q learning 跑出的結果 會超過最大移動距離，減 50 避免超過
         # ==============================
-        distance = calcRouteDistance(env) + len(env.stops) * env.drift_max_cost
-        if distance > env.max_move_distance:
+        distance = calcPowerCost(env)
+        if distance > env.max_move_distance - 50:
             break
         # ==============================
 
@@ -111,11 +103,11 @@ def run_n_episodes(
 
         #  紀錄獎勵最高的圖片
         if episode_reward > maxReward:
-            print(i, maxReward)
             maxReward = episode_reward
             img = env.render(return_img = True)
             maxRewardImg = [img]
             max_reward_stop = env.stops
+
 
 
         # 當執行迴圈到一半時，更改參數
@@ -125,6 +117,10 @@ def run_n_episodes(
             # agent.epsilon = 0.1
             # agent.epsilon_min = 0.1
             # imageio.mimsave('pre_result.gif',[maxRewardImg[-1]],fps = fps)
+
+    if maxRewardImg == []:
+        print('no maxRewardImg')
+        return env,agent
 
     # Show rewards
     plt.figure(figsize = (15,3))
@@ -187,6 +183,8 @@ def run_n_episodes(
     print('\n')
 
     env.unvisited_stops = get_unvisited_stops(route, env)
+    env.remain_power = calcPowerCost(env)
+    env.drift_cost_list = len(env.stops) * [env.drift_max_cost]
     
     csv_data = csv_utils.read('./result/train_table.csv')
     csv_data = csv_data + [[red_stops_distance,qlearning_distance,opt_distance]]

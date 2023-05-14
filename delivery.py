@@ -16,6 +16,7 @@ import math
 from deliveryEnvironment.index import *
 from qlearning.agent.deliveryQAgent import *
 from qlearning.run import *
+from utils.calc import *
 
 plt.style.use("seaborn-v0_8-dark")
 
@@ -32,12 +33,14 @@ sys.path.append("../")
 # 5. 飄移後的節點，因離開原始位置，無人機需增加搜尋功能，找尋漂離的節點
 # 
 
+# 5/14 需要畫 UAV 加入附近節點的圖
+
 # 設定環境參數
 num_processes = 1 # 使用的多核數量 (產生結果數量)
 num_points = 50 # 節點數
 
 n_episodes = 10 # 訓練次數
-num_uav_loops = 1 # UAV 拜訪幾輪
+num_uav_loops = 10 # UAV 拜訪幾輪
 
 
 def calcDistance(x, y):
@@ -46,18 +49,6 @@ def calcDistance(x, y):
         distance += np.sqrt((x[i] - x[i + 1]) ** 2 + (y[i] - y[i + 1]) ** 2)
     
     return distance
-
-# 計算移動距離，是否超過最大限制
-def calcRouteDistance(env):
-    cost = calcDistance(env.x[env.stops], env.y[env.stops])
-
-    to_start_distance = 0
-    if cost >= 1:
-        to_start_distance = calcDistance(env.x[[env.stops[0], env.stops[-1]]], env.y[[env.stops[0], env.stops[-1]]])
-        
-    cost += to_start_distance
-
-    return cost
 
 def getMinDistancePoint(env, curr_point):
     min_distance = float('inf')
@@ -75,58 +66,64 @@ def getMinDistancePoint(env, curr_point):
 
     return min_point
 
+# 計算 UAV探索飄移節點需要花費的電量
+def calc_drift_cost(position_x, position_y, env):
+    drift_distance = calcDistance(position_x, position_y)
 
-def run_uav_path(env, init_position):
+    if drift_distance <= env.point_range:
+        return 0
+    else:
+        return env.drift_max_cost
 
-    curr_cost = calcRouteDistance(env)
 
-    # uav 剩餘的電量 (還需要減去 每次保留的飄移節點值)
-    remain_cost = env.max_move_distance - curr_cost
+def run_uav(env, init_position):
 
-    for idx, route in enumerate(env.stops):
+    idx = 0
+
+    while idx < len(env.stops):
+
+        route = env.stops[idx]
 
         init_pos_x, init_pos_y = init_position
 
         position_x = env.x[env.stops]
         position_y = env.y[env.stops]
 
-        # 搜尋飄移節點 所需要的電量消耗 (目前是計算直線距離)
+        # 搜尋飄移節點 所需要的電量消耗
         drift_cost = calc_drift_cost(
-            [init_pos_x[idx],  position_x[idx]], 
-            [init_pos_y[idx],  position_y[idx]], 
+            [init_pos_x[route],  position_x[idx]], 
+            [init_pos_y[route],  position_y[idx]], 
             env
         )
 
-        # 
+        env.drift_cost_list[idx] = drift_cost
+
         drift_remain_cost = env.drift_max_cost - drift_cost
         # 用於搜尋飄移節點中的剩餘能量
-        remain_cost = remain_cost + drift_remain_cost
+        env.remain_power = env.remain_power + drift_remain_cost
 
         point = getMinDistancePoint(env, idx)
+        # print('point', point)
 
         # 還有剩餘電量加入新的節點
         if point is not None:
-            nextPoint = env.stops[-1] if idx == len(env.stops) - 1 else env.stops[idx + 1]
-            position_x = env.x[[idx, point, nextPoint]]
-            position_y = env.y[[idx, point, nextPoint]]
+            oldStops = list(env.stops)
+            oldDrift = list(env.drift_cost_list)
 
-            cost = calcDistance(position_x, position_y) + env.drift_max_cost
-            if cost < remain_cost:
-                env.stops.insert(idx + 1, point)
-                env.unvisited_stops.remove(point)
-                remain_cost = remain_cost - cost
+            env.stops.insert(idx + 1, point)
+            env.drift_cost_list.insert(idx + 1, env.drift_max_cost)
+
+            new_cost = calcPowerCost(env)
+            if new_cost > env.max_move_distance:
+                env.stops = list(oldStops)
+                env.drift_cost_list = list(oldDrift)
+
+            if new_cost <= env.max_move_distance:
+                env.remain_power = new_cost
+
+        idx = idx + 1
 
     return env
-
-# 計算 UAV探索飄移節點需要花費的電量
-def calc_drift_cost(position_x, position_y, env):
-    dript_distance = calcDistance(position_x, position_y)
-    print('543', position_x, position_y, dript_distance)
-
-    if dript_distance <= env.point_range:
-        return 0
-    else:
-        return env.drift_max_cost
 
 def runMain(index):
     print(f'run {index} start ========================================')
@@ -173,12 +170,13 @@ def runMain(index):
                 loop_index=num+1,
                 train_params=params,
             )
-            
-            # reset Q learning
-            env,agent,episode_reward = run_episode(env,agent,verbose = 0)
+
+            if env.stops == []:
+                print('no stops')
+                break
 
             # uav 開始飛行
-            env = run_uav_path(env, init_position)
+            env = run_uav(env, init_position)
 
             # 產生路徑圖
             env.render(return_img = True)

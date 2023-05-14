@@ -12,7 +12,7 @@ class DeliveryEnvironment(object):
 
         # Environment Config
         self.point_range = 10 # 節點通訊範圍 (單位m)
-        self.max_move_distance = 500 # 無人機最大移動距離 (單位m)
+        self.max_move_distance = 200 # 無人機最大移動距離 (單位m)
 
         self.drift_range = 1 # 節點飄移範圍
         self.drift_max_cost = 2 * self.drift_range * math.pi # 無人機探索，飄移節點最大能量消耗
@@ -24,10 +24,12 @@ class DeliveryEnvironment(object):
         self.n_stops = n_stops
         self.action_space = self.n_stops
         self.observation_space = self.n_stops
+        self.remain_power = self.max_move_distance
         self.max_box = max_box
         self.stops = []
         self.unvisited_stops = []
         self.red_stops = []
+        self.drift_cost_list = []
         self.method = method
 
         # 感測器資料量相關
