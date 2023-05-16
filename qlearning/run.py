@@ -177,7 +177,8 @@ def run_n_episodes(
     
     # optimal distance ======================================
     route,cost = optimal_route(env.stops, env, qlearning_distance)
-    env.stops = route
+    startIndex = route.index(1)
+    env.stops =  route[startIndex:] + route[:startIndex]
     opt_distance = calcDistance(env.x[env.stops], env.y[env.stops])
     # optimal distance ======================================
     print('\n')
