@@ -178,8 +178,10 @@ def runMain(index):
             # uav 開始飛行
             env = run_uav(env, init_position)
 
-            # 產生路徑圖
-            env.render(return_img = True)
+            # 產生UAV路徑圖
+            uav_run_img = env.render(return_img = True)
+            imageio.mimsave(f"./result/{index}_epsilon_min{params['epsilon_min']}_loop_index{num+1}_UAV_result.gif",[uav_run_img],fps = 10)
+            print(env.stops)
 
             # 清除無人跡拜訪後的感測器資料
             env.clear_data()
