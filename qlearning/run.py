@@ -54,10 +54,10 @@ def run_episode(env,agent,verbose = 1):
         env.drift_cost_list = len(env.stops) * [env.drift_max_cost]
 
         # 計算移動距離，是否超過最大限制 (移動距離 + 節點飄移最大的距離)
-        # Q learning 跑出的結果 會超過最大移動距離，減 50 避免超過
+        # Q learning 跑出的結果 會超過最大移動距離，減 20 避免超過
         # ==============================
         distance = calcPowerCost(env)
-        if distance > env.max_move_distance - 50:
+        if distance > env.max_move_distance - 20:
             break
         # ==============================
 
@@ -157,12 +157,6 @@ def run_n_episodes(
                             cost = new_cost
         return route,cost
     # 2-opt 程式碼 end
-
-    def get_unvisited_stops(route, env):
-        # 使用 set 運算來找出未被包含在 route 中的車站
-        unvisited_stops = set(list(range(0, env.max_box))) - set(route)
-        # 將 set 轉換回 list，方便使用者閱讀
-        return list(unvisited_stops)
     
     # red_stops_distance ======================================
     route,cost = optimal_route(env.red_stops, env, np.Inf)
@@ -176,19 +170,19 @@ def run_n_episodes(
     print('\n')
     
     # optimal distance ======================================
-    route,cost = optimal_route(env.stops, env, qlearning_distance)
-    startIndex = route.index(1)
-    env.stops =  route[startIndex:] + route[:startIndex]
-    opt_distance = calcDistance(env.x[env.stops], env.y[env.stops])
+    # route,cost = optimal_route(env.stops, env, qlearning_distance)
+    # startIndex = route.index(1)
+    # env.stops =  route[startIndex:] + route[:startIndex]
+    # opt_distance = calcDistance(env.x[env.stops], env.y[env.stops])
     # optimal distance ======================================
     print('\n')
 
-    env.unvisited_stops = get_unvisited_stops(route, env)
+    env.unvisited_stops = env.get_unvisited_stops()
     env.remain_power = calcPowerCost(env)
     env.drift_cost_list = len(env.stops) * [env.drift_max_cost]
     
     csv_data = csv_utils.read('./result/train_table.csv')
-    csv_data = csv_data + [[red_stops_distance,qlearning_distance,opt_distance]]
+    # csv_data = csv_data + [[red_stops_distance,qlearning_distance,opt_distance]]
     csv_utils.write('./result/train_table.csv', csv_data)
 
     twoOpt_img = env.render(return_img = True)

@@ -39,8 +39,8 @@ sys.path.append("../")
 num_processes = 1 # 使用的多核數量 (產生結果數量)
 num_points = 50 # 節點數
 
-n_episodes = 10 # 訓練次數
-num_uav_loops = 10 # UAV 拜訪幾輪
+n_episodes = 100 # 訓練次數
+num_uav_loops = 1 # UAV 拜訪幾輪
 
 
 def calcDistance(x, y):
@@ -82,46 +82,48 @@ def run_uav(env, init_position):
 
     while idx < len(env.stops):
 
-        route = env.stops[idx]
+    route = env.stops[idx]
 
-        init_pos_x, init_pos_y = init_position
+    init_pos_x, init_pos_y = init_position
 
-        position_x = env.x[env.stops]
-        position_y = env.y[env.stops]
+    position_x = env.x[env.stops]
+    position_y = env.y[env.stops]
 
-        # 搜尋飄移節點 所需要的電量消耗
-        drift_cost = calc_drift_cost(
-            [init_pos_x[route],  position_x[idx]], 
-            [init_pos_y[route],  position_y[idx]], 
-            env
-        )
+    # 搜尋飄移節點 所需要的電量消耗
+    drift_cost = calc_drift_cost(
+        [init_pos_x[route],  position_x[idx]], 
+        [init_pos_y[route],  position_y[idx]], 
+        env
+    )
 
-        env.drift_cost_list[idx] = drift_cost
+    env.drift_cost_list[idx] = drift_cost
 
-        drift_remain_cost = env.drift_max_cost - drift_cost
-        # 用於搜尋飄移節點中的剩餘能量
-        env.remain_power = env.remain_power + drift_remain_cost
+    drift_remain_cost = env.drift_max_cost - drift_cost
+    # 用於搜尋飄移節點中的剩餘能量
+    env.remain_power = env.remain_power + drift_remain_cost
 
-        point = getMinDistancePoint(env, idx)
-        # print('point', point)
+    point = getMinDistancePoint(env, idx)
+    # print('point', point)
 
-        # 還有剩餘電量加入新的節點
-        if point is not None:
-            oldStops = list(env.stops)
-            oldDrift = list(env.drift_cost_list)
+    # 還有剩餘電量加入新的節點
+    if point is not None:
+        oldStops = list(env.stops)
+        oldDrift = list(env.drift_cost_list)
 
-            env.stops.insert(idx + 1, point)
-            env.drift_cost_list.insert(idx + 1, env.drift_max_cost)
+        env.stops.insert(idx + 1, point)
+        env.drift_cost_list.insert(idx + 1, env.drift_max_cost)
 
-            new_cost = calcPowerCost(env)
-            if new_cost > env.max_move_distance:
-                env.stops = list(oldStops)
-                env.drift_cost_list = list(oldDrift)
+        new_cost = calcPowerCost(env)
 
-            if new_cost <= env.max_move_distance:
-                env.remain_power = new_cost
+        # 大於能量消耗 就還原節點
+        if new_cost > env.max_move_distance:
+            env.stops = list(oldStops)
+            env.drift_cost_list = list(oldDrift)
 
-        idx = idx + 1
+        if new_cost <= env.max_move_distance:
+            env.remain_power = new_cost
+
+    idx = idx + 1
 
     return env
 
@@ -174,7 +176,7 @@ def runMain(index):
             if env.stops == []:
                 print('no stops')
                 break
-
+                
             # uav 開始飛行
             env = run_uav(env, init_position)
 

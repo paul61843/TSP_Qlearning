@@ -11,8 +11,8 @@ class DeliveryEnvironment(object):
         print(f"Target metric for optimization is {method}")
 
         # Environment Config
-        self.point_range = 10 # 節點通訊範圍 (單位m)
-        self.max_move_distance = 200 # 無人機最大移動距離 (單位m)
+        self.point_range = 20 # 節點通訊範圍 (單位m)
+        self.max_move_distance = 300 # 無人機最大移動距離 (單位m)
 
         self.drift_range = 1 # 節點飄移範圍
         self.drift_max_cost = 2 * self.drift_range * math.pi # 無人機探索，飄移節點最大能量消耗
@@ -85,6 +85,12 @@ class DeliveryEnvironment(object):
         arr2 = np.random.randint(self.data_generatation_range, size=self.max_box)
 
         self.calc_amount = [x + y for x, y in zip(arr1, arr2)]
+
+    def get_unvisited_stops(self):
+        # 使用 set 運算來找出未被包含在 route 中的車站
+        unvisited_stops = set(list(range(0, self.max_box))) - set(self.stops)
+        # 將 set 轉換回 list，方便使用者閱讀
+        return list(unvisited_stops)
     
     # 清除無人跡拜訪後的感測器資料
     def clear_data(self):
