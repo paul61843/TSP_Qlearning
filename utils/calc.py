@@ -1,4 +1,5 @@
 import numpy as np
+import math
 
 def calcDistance(x, y):
     distance = 0
@@ -22,3 +23,15 @@ def calcPowerCost(env):
     cost = distance_cost + drift_cost + to_start_cost
 
     return cost
+    
+def calcNodeToOriginDistance(env):
+    distances = []
+
+    for idx, x in enumerate(env.x):
+        x = env.x[idx]
+        y = env.y[idx]
+        distances.append(x ** 2 +  y ** 2)
+
+    min_distance = min(distances)
+    min_index = distances.index(min_distance)
+    return min_index

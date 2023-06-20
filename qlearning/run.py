@@ -7,13 +7,7 @@ from matplotlib import pyplot as plt
 import csv_utils
 
 from utils.calc import *
-
-def calcDistance(x, y):
-    distance = 0
-    for i in range(len(x) - 1):
-        distance += np.sqrt((x[i] - x[i + 1]) ** 2 + (y[i] - y[i + 1]) ** 2)
-    
-    return distance
+from utils.two_opt import *
 
 
 def run_episode(env,agent,verbose = 1):
@@ -28,11 +22,15 @@ def run_episode(env,agent,verbose = 1):
     i = 0
 
     while i < max_step:
+
         # Remember the states
         agent.remember_state(s)
 
         # Choose an action
-        a = agent.act(s)
+        if i == 0:
+            a = calcNodeToOriginDistance(env)
+        else:
+            a = agent.act(s)
 
         # Take the action, and get the reward from environment
         s_next,r,done = env.step(a)
@@ -132,31 +130,6 @@ def run_n_episodes(
     # Save imgs as gif
     # imageio.mimsave(name,imgs,fps = fps)
     imageio.mimsave(f"./result/{result_index}_epsilon_min{train_params['epsilon_min']}_loop_index{loop_index}_qlearning_result.gif",[maxRewardImg[0]],fps = fps)
-
-    # 2-opt 程式碼
-    def swap(route,i,k):
-        new_route = []
-        for j in range(0,i):
-            new_route.append(route[j])
-        for j in range(k,i-1,-1):
-            new_route.append(route[j])
-        for j in range(k+1,len(route)):
-            new_route.append(route[j])
-        return new_route
-
-    def optimal_route(route, env, distance):
-        cost = distance
-        for i in range(1000):
-            for j in range(len(route)):
-                for k in range(len(route)):
-                    if j < k:
-                        new_route = swap(route,j,k)
-                        new_cost = calcDistance(env.x[new_route], env.y[new_route])
-                        if new_cost < cost:
-                            route = new_route
-                            cost = new_cost
-        return route,cost
-    # 2-opt 程式碼 end
     
     # red_stops_distance ======================================
     route,cost = optimal_route(env.red_stops, env, np.Inf)
@@ -172,7 +145,7 @@ def run_n_episodes(
     # optimal distance ======================================
     # route,cost = optimal_route(env.stops, env, qlearning_distance)
     # startIndex = route.index(1)
-    # env.stops =  route[startIndex:] + route[:startIndex]
+    # env.stops = route[startIndex:] + route[:startIndex]
     # opt_distance = calcDistance(env.x[env.stops], env.y[env.stops])
     # optimal distance ======================================
     print('\n')

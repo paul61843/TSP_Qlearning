@@ -3,6 +3,8 @@ import random
 import numpy as np
 import matplotlib.pyplot as plt
 from scipy.spatial.distance import cdist
+from utils.calc import *
+
 
 class DeliveryEnvironment(object):
     def __init__(self,n_stops = 20,max_box = 10,method = "distance",**kwargs):
@@ -198,7 +200,7 @@ class DeliveryEnvironment(object):
 
 
     def _get_xy(self,initial = False):
-        state = self.stops[0] if initial else self._get_state()
+        state = calcNodeToOriginDistance(self) if initial else self._get_state()
         x = self.x[state]
         y = self.y[state]
         return x,y
@@ -214,6 +216,8 @@ class DeliveryEnvironment(object):
         
         trade_of_factor = 0.001
         
+
+
         return (1 - trade_of_factor * distance_reward ** 2) + calc_reward + calc_danger_reward
         # return (1 - trade_of_factor * distance_reward ** 2)
-        # return -distance_reward ** 2
+        # return -distance_reward

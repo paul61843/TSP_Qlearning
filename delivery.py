@@ -26,29 +26,21 @@ sys.path.append("../")
 # 1. 須建立 tree (或是 k-means) 決定，感測器的回傳sink的資料傳輸路徑?
 # 2 判斷感測器是否為隔離節點的方法，利用 Dijkstra’s 決定節點的傳回sink的路徑，如果沒有回傳路徑則為孤立節點
 # 若孤立節點附近有可連通節點，則將這些節點加入成一個區塊，為孤立區域
-# 3. 跑 Q learning 計算能量消耗，需加上探索飄移節點花費的電量
 
-# ===== 4.5 可能做完完了，需測試
-# 4. 跑到每一個點後(必做)，需計算無人機剩餘的電量，決定是否添加新的拜訪點
-# 5. 飄移後的節點，因離開原始位置，無人機需增加搜尋功能，找尋漂離的節點
+# 使用 2opt 優化 跑UAV加入的節點路徑
 # 
 
-# 5/14 需要畫 UAV 加入附近節點的圖
+# 需要確認 起始點位置，是否在角落
+
+# 使用 batch 改善 Q learning
 
 # 設定環境參數
 num_processes = 1 # 使用的多核數量 (產生結果數量)
-num_points = 50 # 節點數
+num_points = 100 # 節點數
 
-n_episodes = 100 # 訓練次數
+n_episodes = 2000 # 訓練次數
 num_uav_loops = 1 # UAV 拜訪幾輪
 
-
-def calcDistance(x, y):
-    distance = 0
-    for i in range(len(x) - 1):
-        distance += np.sqrt((x[i] - x[i + 1]) ** 2 + (y[i] - y[i + 1]) ** 2)
-    
-    return distance
 
 def getMinDistancePoint(env, curr_point):
     min_distance = float('inf')
@@ -82,48 +74,56 @@ def run_uav(env, init_position):
 
     while idx < len(env.stops):
 
-    route = env.stops[idx]
+        route = env.stops[idx]
 
-    init_pos_x, init_pos_y = init_position
+        init_pos_x, init_pos_y = init_position
 
-    position_x = env.x[env.stops]
-    position_y = env.y[env.stops]
+        position_x = env.x[env.stops]
+        position_y = env.y[env.stops]
 
-    # 搜尋飄移節點 所需要的電量消耗
-    drift_cost = calc_drift_cost(
-        [init_pos_x[route],  position_x[idx]], 
-        [init_pos_y[route],  position_y[idx]], 
-        env
-    )
+        # 搜尋飄移節點 所需要的電量消耗
+        drift_cost = calc_drift_cost(
+            [init_pos_x[route],  position_x[idx]], 
+            [init_pos_y[route],  position_y[idx]], 
+            env
+        )
 
-    env.drift_cost_list[idx] = drift_cost
+        env.drift_cost_list[idx] = drift_cost
 
-    drift_remain_cost = env.drift_max_cost - drift_cost
-    # 用於搜尋飄移節點中的剩餘能量
-    env.remain_power = env.remain_power + drift_remain_cost
+        drift_remain_cost = env.drift_max_cost - drift_cost
+        # 用於搜尋飄移節點中的剩餘能量
+        env.remain_power = env.remain_power + drift_remain_cost
 
-    point = getMinDistancePoint(env, idx)
-    # print('point', point)
+        point = getMinDistancePoint(env, idx)
 
-    # 還有剩餘電量加入新的節點
-    if point is not None:
-        oldStops = list(env.stops)
-        oldDrift = list(env.drift_cost_list)
+        # 還有剩餘電量加入新的節點
+        if point is not None:
+            oldStops = list(env.stops)
+            oldDrift = list(env.drift_cost_list)
 
-        env.stops.insert(idx + 1, point)
-        env.drift_cost_list.insert(idx + 1, env.drift_max_cost)
+            env.stops.insert(idx + 1, point)
+            env.drift_cost_list.insert(idx + 1, env.drift_max_cost)
 
-        new_cost = calcPowerCost(env)
+            new_cost = calcPowerCost(env)
 
-        # 大於能量消耗 就還原節點
-        if new_cost > env.max_move_distance:
-            env.stops = list(oldStops)
-            env.drift_cost_list = list(oldDrift)
+            # 大於能量消耗 就還原節點
+            if new_cost > env.max_move_distance:
+                env.stops = list(oldStops)
+                env.drift_cost_list = list(oldDrift)
 
-        if new_cost <= env.max_move_distance:
-            env.remain_power = new_cost
+            if new_cost <= env.max_move_distance:
+                print('113', env.stops)
+                env.remain_power = new_cost
 
-    idx = idx + 1
+        idx = idx + 1
+
+    
+    print('117', env.stops)
+    distance = calcDistance(env.x[env.stops], env.y[env.stops])
+    route,cost = optimal_route(env.stops, env, distance)
+    startIndex = calcNodeToOriginDistance(env)
+    env.stops = route[startIndex:] + route[:startIndex]
+    print('122', env.stops)
 
     return env
 
@@ -131,16 +131,17 @@ def runMain(index):
     print(f'run {index} start ========================================')
     
     parmas_arr = [
-        # { "epsilon_min": 0.01 },
-        # { "epsilon_min": 0.02 },
-        # { "epsilon_min": 0.03 },
-        # { "epsilon_min": 0.04 },
-        { "epsilon_min": 0.05 },
-        # { "epsilon_min": 0.06 },
-        # { "epsilon_min": 0.07 },
-        # { "epsilon_min": 0.08 },
-        # { "epsilon_min": 0.09 },
-        # { "epsilon_min": 0.1 },
+        { "epsilon_min": 0.05, "gamma": 0.1 },
+        { "epsilon_min": 0.05, "gamma": 0.2 },
+        { "epsilon_min": 0.05, "gamma": 0.3 },
+        { "epsilon_min": 0.05, "gamma": 0.4 },
+        { "epsilon_min": 0.05, "gamma": 0.5 },
+        { "epsilon_min": 0.05, "gamma": 0.6 },
+        { "epsilon_min": 0.05, "gamma": 0.7 },
+        { "epsilon_min": 0.05, "gamma": 0.8 },
+        { "epsilon_min": 0.05, "gamma": 0.9 },
+        { "epsilon_min": 0.05, "gamma": 1.0 },
+
     ]
     
     for params in parmas_arr:
@@ -157,7 +158,7 @@ def runMain(index):
                 epsilon = 1.0,
                 epsilon_min = params["epsilon_min"],
                 epsilon_decay = 0.9998,
-                gamma = 0.65,
+                gamma = params["gamma"],
                 lr = 0.65
             )
 
@@ -182,8 +183,7 @@ def runMain(index):
 
             # 產生UAV路徑圖
             uav_run_img = env.render(return_img = True)
-            imageio.mimsave(f"./result/{index}_epsilon_min{params['epsilon_min']}_loop_index{num+1}_UAV_result.gif",[uav_run_img],fps = 10)
-            print(env.stops)
+            imageio.mimsave(f"./result/{index}_epsilon_min{params['epsilon_min']}_gamma{params['gamma']}_loop_index{num+1}_UAV_result.gif",[uav_run_img],fps = 10)
 
             # 清除無人跡拜訪後的感測器資料
             env.clear_data()
