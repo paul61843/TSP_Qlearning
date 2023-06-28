@@ -93,6 +93,7 @@ def run_uav(env, init_position):
         drift_remain_cost = env.drift_max_cost - drift_cost
         # 用於搜尋飄移節點中的剩餘能量
         env.remain_power = env.remain_power + drift_remain_cost
+        env.unvisited_stops = env.get_unvisited_stops()
 
         point = getMinDistancePoint(env, idx)
 
@@ -112,18 +113,17 @@ def run_uav(env, init_position):
                 env.drift_cost_list = list(oldDrift)
 
             if new_cost <= env.max_move_distance:
-                print('113', env.stops)
                 env.remain_power = new_cost
 
         idx = idx + 1
 
     
-    print('117', env.stops)
+    # print('117', env.stops)
     distance = calcDistance(env.x[env.stops], env.y[env.stops])
     route,cost = optimal_route(env.stops, env, distance)
     startIndex = calcNodeToOriginDistance(env)
     env.stops = route[startIndex:] + route[:startIndex]
-    print('122', env.stops)
+    # print('122', env.stops)
 
     return env
 
@@ -131,17 +131,19 @@ def runMain(index):
     print(f'run {index} start ========================================')
     
     parmas_arr = [
-        { "epsilon_min": 0.05, "gamma": 0.1 },
-        { "epsilon_min": 0.05, "gamma": 0.2 },
-        { "epsilon_min": 0.05, "gamma": 0.3 },
-        { "epsilon_min": 0.05, "gamma": 0.4 },
-        { "epsilon_min": 0.05, "gamma": 0.5 },
-        { "epsilon_min": 0.05, "gamma": 0.6 },
-        { "epsilon_min": 0.05, "gamma": 0.7 },
-        { "epsilon_min": 0.05, "gamma": 0.8 },
-        { "epsilon_min": 0.05, "gamma": 0.9 },
-        { "epsilon_min": 0.05, "gamma": 1.0 },
+        # { "epsilon_min": 0.05, "gamma": 0.62, "lr": 0.60 },
+        # { "epsilon_min": 0.05, "gamma": 0.62, "lr": 0.61 },
+        # { "epsilon_min": 0.05, "gamma": 0.62, "lr": 0.62 },
+        # { "epsilon_min": 0.05, "gamma": 0.62, "lr": 0.63 },
+        # { "epsilon_min": 0.05, "gamma": 0.62, "lr": 0.64 },
+        
+        # 好像不錯
+        { "epsilon_min": 0.08, "gamma": 0.62, "lr": 0.65 },
 
+        # { "epsilon_min": 0.05, "gamma": 0.62, "lr": 0.67 },
+        # { "epsilon_min": 0.05, "gamma": 0.62, "lr": 0.68 },
+        # { "epsilon_min": 0.05, "gamma": 0.62, "lr": 0.69 },
+        # { "epsilon_min": 0.05, "gamma": 0.62, "lr": 0.70 },
     ]
     
     for params in parmas_arr:
@@ -159,7 +161,7 @@ def runMain(index):
                 epsilon_min = params["epsilon_min"],
                 epsilon_decay = 0.9998,
                 gamma = params["gamma"],
-                lr = 0.65
+                lr = params["lr"]
             )
 
         for num in range(num_uav_loops):
@@ -183,13 +185,10 @@ def runMain(index):
 
             # 產生UAV路徑圖
             uav_run_img = env.render(return_img = True)
-            imageio.mimsave(f"./result/{index}_epsilon_min{params['epsilon_min']}_gamma{params['gamma']}_loop_index{num+1}_UAV_result.gif",[uav_run_img],fps = 10)
+            imageio.mimsave(f"./result/{index}_epsilon_min{params['epsilon_min']}_gamma{params['gamma']}_lr{params['lr']}_loop_index{num+1}_UAV_result.gif",[uav_run_img],fps = 10)
 
             # 清除無人跡拜訪後的感測器資料
             env.clear_data()
-
-            # 判斷是否為孤立節點 (需飄移完成再判斷?)
-            env.set_isolated_node()
 
             env.x = np.array(init_X)
             env.y = np.array(init_Y)
@@ -197,6 +196,10 @@ def runMain(index):
             # 執行節點飄移
             env.drift_node()
             env.generate_data()
+
+            # 判斷是否為孤立節點
+            env.set_isolated_node()
+
     print(f'run {index} end ========================================')
 
 # mutiprocessing start ================================
