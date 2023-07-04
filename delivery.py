@@ -24,22 +24,20 @@ sys.path.append("../")
 
 # 待完成事項
 # 1. 須建立 tree (或是 k-means) 決定，感測器的回傳sink的資料傳輸路徑?
-# 2 判斷感測器是否為隔離節點的方法，利用 Dijkstra’s 決定節點的傳回sink的路徑，如果沒有回傳路徑則為孤立節點
-# 若孤立節點附近有可連通節點，則將這些節點加入成一個區塊，為孤立區域
+
+# 獎勵值 可以減去未拜訪的節點數
 
 # 使用 2opt 優化 跑UAV加入的節點路徑
 # 
-
-# 需要確認 起始點位置，是否在角落
 
 # 使用 batch 改善 Q learning
 
 # 設定環境參數
 num_processes = 1 # 使用的多核數量 (產生結果數量)
-num_points = 100 # 節點數
+num_points = 50 # 節點數
 
-n_episodes = 2000 # 訓練次數
-num_uav_loops = 1 # UAV 拜訪幾輪
+n_episodes = 5000 # 訓練次數
+num_uav_loops = 5 # UAV 拜訪幾輪
 
 
 def getMinDistancePoint(env, curr_point):
@@ -121,7 +119,7 @@ def run_uav(env, init_position):
     # print('117', env.stops)
     distance = calcDistance(env.x[env.stops], env.y[env.stops])
     route,cost = optimal_route(env.stops, env, distance)
-    startIndex = calcNodeToOriginDistance(env)
+    startIndex = env.first_point
     env.stops = route[startIndex:] + route[:startIndex]
     # print('122', env.stops)
 
@@ -138,7 +136,7 @@ def runMain(index):
         # { "epsilon_min": 0.05, "gamma": 0.62, "lr": 0.64 },
         
         # 好像不錯
-        { "epsilon_min": 0.08, "gamma": 0.62, "lr": 0.65 },
+        { "epsilon_min": 0.05, "gamma": 0.62, "lr": 0.65 },
 
         # { "epsilon_min": 0.05, "gamma": 0.62, "lr": 0.67 },
         # { "epsilon_min": 0.05, "gamma": 0.62, "lr": 0.68 },
@@ -149,6 +147,7 @@ def runMain(index):
     for params in parmas_arr:
 
         env = DeliveryEnvironment(num_points, num_points)
+
         # 感測器初始座標 (水下定錨座標)
         init_X = np.array(env.x)
         init_Y = np.array(env.y)

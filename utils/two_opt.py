@@ -18,7 +18,6 @@ def optimal_route(route, env, distance):
         new_cost = calcDistance(env.x[new_route], env.y[new_route])
 
         if new_cost < cost:
-            print(i, new_cost)
             route = new_route
             cost = new_cost
         

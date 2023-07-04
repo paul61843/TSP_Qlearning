@@ -4,6 +4,7 @@ import numpy as np
 import matplotlib.pyplot as plt
 from scipy.spatial.distance import cdist
 from utils.calc import *
+from isolated_nodes.index import *
 
 
 class DeliveryEnvironment(object):
@@ -13,11 +14,17 @@ class DeliveryEnvironment(object):
         print(f"Target metric for optimization is {method}")
 
         # Environment Config
-        self.point_range = 20 # 節點通訊範圍 (單位m)
-        self.max_move_distance = 300 # 無人機最大移動距離 (單位m)
+        self.point_range = 5 # 節點通訊範圍 (單位m)
+        self.max_move_distance = 200 # 無人機最大移動距離 (單位m)
 
-        self.drift_range = 1 # 節點飄移範圍
-        self.drift_max_cost = 2 * self.drift_range * math.pi # 無人機探索，飄移節點最大能量消耗
+        # 節點飄移範圍
+        self.drift_range = 2
+
+        # 無人機探索，飄移節點最大能量消耗
+        # 假設無人機只需飛行一圈，即可完整探索感測器飄移可能區域
+        # 故無人機只需以 r/2 為半徑飛行
+        # 公式 2 x 3.14 x (r/2)
+        self.drift_max_cost = 2 * (self.drift_range / 2) * math.pi 
 
         self.data_generatation_range = 20 # 節點產生的資料量範圍
 
@@ -45,10 +52,10 @@ class DeliveryEnvironment(object):
         # Generate stops
         self._generate_stops()
         self._generate_q_values()
-        self.set_isolated_node()
         self.render()
 
         # Initialize first point
+        self.set_first_point()
         self.reset()
 
     def _generate_stops(self):
@@ -70,16 +77,18 @@ class DeliveryEnvironment(object):
         self.calc_amount = [0] * self.n_stops
         
     def set_isolated_node(self):
-        self.isolated_node = []
+        points = []
+        
+        for idx, i in enumerate(self.x):
+            points.append((self.x[idx], self.y[idx]))
+        first_point = calcNodeToOriginDistance(self)
 
-        for i in range(self.n_stops):
-            is_isolated = None
-            for j in range(self.n_stops):
-                if i != j:
-                    is_isolated = ((self.x[i] - self.x[j]) ** 2 + (self.y[i] - self.y[i]) ** 2 ) ** 0.5 > self.point_range
-                if is_isolated == False: 
-                    break
-            self.isolated_node.append(is_isolated)
+        self.isolated_node = find_isolated_nodes(
+            points, 
+            self.point_range, 
+            (self.x[first_point], self.y[first_point])
+        )
+
         
     # 產生感測器的目前資料量的假資料 max = 100
     def generate_data(self):
@@ -115,7 +124,11 @@ class DeliveryEnvironment(object):
         
         self.red_stops = []
 
-        # 感測器的資料量大於50，將節點標記為黃色(代表優先節點)
+        # 將孤立節點標記為灰色
+        for i in self.isolated_node:
+            ax.scatter(self.x[i], self.y[i], c = "#AAAAAA", s = 50)
+
+        # 感測器的資料量大於50，將節點標記為黃色、紅色(代表優先節點)
         for i in range(self.n_stops):
             if self.calc_amount[i] > self.calc_threshold:
                 ax.scatter(self.x[i], self.y[i], c = "yellow", s = 50)
@@ -123,11 +136,6 @@ class DeliveryEnvironment(object):
             if self.calc_amount[i] > self.calc_danger_threshold:
                 self.red_stops.append(i)
                 ax.scatter(self.x[i], self.y[i], c = "red", s = 50) 
-        
-        # 將孤立節點標記為灰色
-        for i, node in enumerate(self.isolated_node):
-            if node == True:
-                ax.scatter(self.x[i], self.y[i], c = "#AAAAAA", s = 50)
 
         # Show START
         if len(self.stops) > 0:
@@ -139,7 +147,7 @@ class DeliveryEnvironment(object):
         if len(self.stops) > 1:
             x = np.concatenate((self.x[self.stops], [self.x[self.stops[0]]]))
             y = np.concatenate((self.y[self.stops], [self.y[self.stops[0]]]))
-            ax.plot(x, y, c = "blue",linewidth=1,linestyle="--")
+            ax.plot(x, y, c = "blue",linewidth=1,linestyle="solid")
             
             # Annotate END
             xy = self._get_xy(initial = False)
@@ -169,11 +177,11 @@ class DeliveryEnvironment(object):
 
         # Stops placeholder
         self.stops = []
-        first_stop = 1
-        self.stops.append(first_stop)
+        self.stops.append(self.first_point)
 
-        return first_stop
 
+    def set_first_point(self):
+        self.first_point = calcNodeToOriginDistance(self)
 
     def step(self,destination):
 
@@ -192,32 +200,44 @@ class DeliveryEnvironment(object):
 
     def drift_node(self):
         for i in range(1, len(self.x)):
-            self.x[i] = self.x[i] + random.uniform(-self.drift_range, self.drift_range)  # 在-1到1之間的範圍內隨機移動
-            self.y[i] = self.y[i] + random.uniform(-self.drift_range, self.drift_range)  # 在-1到1之間的範圍內隨機移動
+            if i != self.first_point:
+                self.x[i] = self.x[i] + random.uniform(-self.drift_range, self.drift_range)
+                self.x[i] >=0 if self.x[i] else 0
+
+                self.y[i] = self.y[i] + random.uniform(-self.drift_range, self.drift_range)
+                self.y[i] >=0 if self.y[i] else 0
 
     def _get_state(self):
         return self.stops[-1]
 
 
     def _get_xy(self,initial = False):
-        state = calcNodeToOriginDistance(self) if initial else self._get_state()
+        state = self.first_point if initial else self._get_state()
         x = self.x[state]
         y = self.y[state]
         return x,y
 
     def _get_reward(self,state,new_state):
-        distance_reward = self.q_stops[state,new_state]
+        trade_of_factor = 0.001
+
+        distance = self.q_stops[state,new_state]
+        distance_reward = (1 - trade_of_factor * distance ** 2)
 
         has_calc_threshold = self.calc_amount[new_state] > self.calc_threshold
-        has_calc_danger_threshold = self.calc_amount[new_state] > self.calc_threshold
+        has_calc_danger_threshold = self.calc_amount[new_state] > self.calc_danger_threshold
 
-        calc_reward = has_calc_threshold * 0.02
-        calc_danger_reward = has_calc_danger_threshold * 6
-        
-        trade_of_factor = 0.001
+        yellow_reward = has_calc_threshold * 1
+        danger_reward = has_calc_danger_threshold * 6
         
 
+        # 新增 孤立節點獎勵值
 
-        return (1 - trade_of_factor * distance_reward ** 2) + calc_reward + calc_danger_reward
-        # return (1 - trade_of_factor * distance_reward ** 2)
-        # return -distance_reward
+        is_isolated_node = new_state in self.isolated_node
+        isolated_reward = 2 if is_isolated_node else 0
+
+
+        return distance_reward + yellow_reward + danger_reward + isolated_reward
+        # return (1 - trade_of_factor * distance ** 2)
+        # return -(distance ** 2)
+        # return -distance
+

@@ -12,7 +12,8 @@ from utils.two_opt import *
 
 def run_episode(env,agent,verbose = 1):
 
-    s = env.reset()
+    env.reset()
+    s = env.first_point
     agent.reset_memory()
 
     max_step = env.n_stops
@@ -27,10 +28,7 @@ def run_episode(env,agent,verbose = 1):
         agent.remember_state(s)
 
         # Choose an action
-        if i == 0:
-            a = calcNodeToOriginDistance(env)
-        else:
-            a = agent.act(s)
+        a = agent.act(s)
 
         # Take the action, and get the reward from environment
         s_next,r,done = env.step(a)
@@ -124,12 +122,12 @@ def run_n_episodes(
     plt.figure(figsize = (15,3))
     plt.title("Rewards over training")
     plt.plot(rewards)
-    plt.savefig(f"./result/{result_index}_epsilon_min{train_params['epsilon_min']}_loop_index{loop_index}_rewards.png")
+    plt.savefig(f"./result/{result_index}_epsilon_min{train_params['epsilon_min']}_gamma{train_params['gamma']}_lr{train_params['lr']}_loop_index{loop_index}_rewards.png")
     plt.close('all')
 
     # Save imgs as gif
     # imageio.mimsave(name,imgs,fps = fps)
-    imageio.mimsave(f"./result/{result_index}_epsilon_min{train_params['epsilon_min']}_loop_index{loop_index}_qlearning_result.gif",[maxRewardImg[0]],fps = fps)
+    imageio.mimsave(f"./result/{result_index}_epsilon_min{train_params['epsilon_min']}_gamma{train_params['gamma']}_lr{train_params['lr']}_loop_index{loop_index}_qlearning_result.gif",[maxRewardImg[0]],fps = fps)
     
     # red_stops_distance ======================================
     route,cost = optimal_route(env.red_stops, env, np.Inf)
@@ -144,7 +142,7 @@ def run_n_episodes(
     
     # optimal distance ======================================
     # route,cost = optimal_route(env.stops, env, qlearning_distance)
-    # startIndex = route.index(1)
+    # startIndex = env.first_point
     # env.stops = route[startIndex:] + route[:startIndex]
     # opt_distance = calcDistance(env.x[env.stops], env.y[env.stops])
     # optimal distance ======================================
@@ -159,6 +157,6 @@ def run_n_episodes(
     csv_utils.write('./result/train_table.csv', csv_data)
 
     twoOpt_img = env.render(return_img = True)
-    imageio.mimsave(f"./result/{result_index}_epsilon_min{train_params['epsilon_min']}_loop_index{loop_index}_result.gif",[twoOpt_img],fps = fps)
+    imageio.mimsave(f"./result/{result_index}_epsilon_min{train_params['epsilon_min']}_gamma{train_params['gamma']}_lr{train_params['lr']}_loop_index{loop_index}_result.gif",[twoOpt_img],fps = fps)
 
     return env,agent

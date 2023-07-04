@@ -1,4 +1,6 @@
 import numpy as np
+import random
+import math
 
 from qlearning.agent.qAgent import *
 
@@ -17,7 +19,14 @@ class DeliveryQAgent(QAgent):
         q[self.states_memory] = -np.inf
 
         if np.random.rand() > self.epsilon:
-            a = np.argmax(q)
+            # tau = 1.0  # 溫度參數
+            # probabilities = np.exp(q / tau) / np.sum(np.exp(q / tau))
+
+            # if np.isnan(q).any():
+            #     # 使用Boltzmann Exploration選擇行動
+            #     a = np.random.choice(range(len(q)), p=probabilities )
+            # else: 
+                a = np.argmax(q)
         else:
             a = np.random.choice([x for x in range(self.actions_size) if x not in self.states_memory])
 
