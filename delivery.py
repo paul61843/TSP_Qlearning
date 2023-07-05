@@ -33,8 +33,9 @@ sys.path.append("../")
 # 使用 batch 改善 Q learning
 
 # 設定環境參數
-num_processes = 1 # 使用的多核數量 (產生結果數量)
-num_points = 50 # 節點數
+num_processes = 1 # 同時執行數量 (產生結果數量)
+num_points = 100 # 節點數
+max_box = 1000 # 場景大小
 
 n_episodes = 5000 # 訓練次數
 num_uav_loops = 5 # UAV 拜訪幾輪

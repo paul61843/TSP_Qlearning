@@ -2,15 +2,6 @@ import random
 import math
 from collections import defaultdict, deque
 
-# 生成节点的随机坐标
-def generate_node_coordinates(num_nodes):
-    coordinates = []
-    for _ in range(num_nodes):
-        x = random.randint(0, 100)
-        y = random.randint(0, 100)
-        coordinates.append((x, y))
-    return coordinates
-
 # 计算两个节点之间的欧氏距离
 def calculate_distance(node1, node2):
     x1, y1 = node1

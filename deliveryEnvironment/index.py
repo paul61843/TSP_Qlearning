@@ -14,8 +14,8 @@ class DeliveryEnvironment(object):
         print(f"Target metric for optimization is {method}")
 
         # Environment Config
-        self.point_range = 5 # 節點通訊範圍 (單位m)
-        self.max_move_distance = 200 # 無人機最大移動距離 (單位m)
+        self.point_range = 20 # 節點通訊半徑範圍 (單位m)
+        self.max_move_distance = 1000 # 無人機最大移動距離 (單位m)
 
         # 節點飄移範圍
         self.drift_range = 2
@@ -147,7 +147,7 @@ class DeliveryEnvironment(object):
         if len(self.stops) > 1:
             x = np.concatenate((self.x[self.stops], [self.x[self.stops[0]]]))
             y = np.concatenate((self.y[self.stops], [self.y[self.stops[0]]]))
-            ax.plot(x, y, c = "blue",linewidth=1,linestyle="solid")
+            ax.plot(x, y, c = "blue",linewidth=1,linestyle="--")
             
             # Annotate END
             xy = self._get_xy(initial = False)
