@@ -154,7 +154,9 @@ def runMain(index):
         init_Y = np.array(env.y)
         init_position = [init_X, init_Y]
 
-        agent = DeliveryQAgent(
+        for num in range(num_uav_loops):
+
+            agent = DeliveryQAgent(
                 states_size=num_points,
                 actions_size=num_points,
                 epsilon = 1.0,
@@ -163,8 +165,6 @@ def runMain(index):
                 gamma = params["gamma"],
                 lr = params["lr"]
             )
-
-        for num in range(num_uav_loops):
 
             # 跑 Q learning
             env,agent = run_n_episodes(
