@@ -23,23 +23,27 @@ plt.style.use("seaborn-v0_8-dark")
 sys.path.append("../")
 
 # 待完成事項
-# 1. 須建立 tree (或是 k-means) 決定，感測器的回傳sink的資料傳輸路徑?
 
 # 獎勵值 可以減去未拜訪的節點數
 
-# 使用 2opt 優化 跑UAV加入的節點路徑
-# 
-
 # 使用 batch 改善 Q learning
+
+# 比較對象
+# 1.	單純的multi-hop transmission
+# 2.	UAV拜訪所有匯聚點（不考慮飄浮）
+# 3.	Multi-hop transmission + UAV拜訪無法透過multi-hop transmission回傳資料的匯聚點（不考慮飄浮）
+# 4.	Multi-hop transmission + UAV拜訪無法透過multi-hop transmission回傳資料的匯聚點（考慮飄浮，以繞圓形的方式拜訪匯聚點之飄浮範圍）
+# 5.	我們的方法1：Multi-hop transmission + UAV拜訪無法透過multi-hop transmission回傳資料的匯聚點（考慮飄浮，有飄浮節點最後的gps座標資訊，以繞扇形的方式拜訪匯聚點之飄浮範圍）
+# 6.	我們的方法2：將方法1納入load-balance考量（i.e. 納入電量消耗較大的節點做為拜訪點）
+
 
 # 設定環境參數
 num_processes = 1 # 同時執行數量 (產生結果數量)
 num_points = 100 # 節點數
 max_box = 1000 # 場景大小
 
-n_episodes = 5000 # 訓練次數
-num_uav_loops = 5 # UAV 拜訪幾輪
-
+n_episodes = 2000 # 訓練次數
+num_uav_loops = 10 # UAV 拜訪幾輪
 
 def getMinDistancePoint(env, curr_point):
     min_distance = float('inf')
@@ -195,10 +199,15 @@ def runMain(index):
 
             # 執行節點飄移
             env.drift_node()
+
+            # 隨機產生資料
             env.generate_data()
 
             # 判斷是否為孤立節點
             env.set_isolated_node()
+            
+            # 感測器儲存的資料，減去mutihop幫傳的資料
+            env.subtract_mutihop_data()
 
     print(f'run {index} end ========================================')
 

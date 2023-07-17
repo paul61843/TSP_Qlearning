@@ -8,6 +8,22 @@ def calcDistance(x, y):
     
     return distance
 
+def calcAvg(curr_pos, unvisited_stops, env):
+    curr_x = env.x[curr_pos]
+    curr_y = env.y[curr_pos]
+
+    distance = 0
+
+    for i in range(len(unvisited_stops)):
+        distance += np.sqrt(
+            (curr_x - env.x[i]) ** 2 + 
+            (curr_y - env.y[i]) ** 2
+        )
+
+    avg = distance / len(unvisited_stops)
+
+    return avg
+
 # 計算移動距離，是否超過最大限制
 def calcPowerCost(env):
     distance_cost = calcDistance(env.x[env.stops], env.y[env.stops])

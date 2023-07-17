@@ -23,7 +23,6 @@ def run_episode(env,agent,verbose = 1):
     i = 0
 
     while i < max_step:
-
         # Remember the states
         agent.remember_state(s)
 

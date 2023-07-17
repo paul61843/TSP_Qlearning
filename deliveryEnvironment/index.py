@@ -14,8 +14,8 @@ class DeliveryEnvironment(object):
         print(f"Target metric for optimization is {method}")
 
         # Environment Config
-        self.point_range = 20 # 節點通訊半徑範圍 (單位m)
-        self.max_move_distance = 1000 # 無人機最大移動距離 (單位m)
+        self.point_range = 10 # 節點通訊半徑範圍 (單位m)
+        self.max_move_distance = 300 # 無人機最大移動距離 (單位m)
 
         # 節點飄移範圍
         self.drift_range = 2
@@ -26,7 +26,8 @@ class DeliveryEnvironment(object):
         # 公式 2 x 3.14 x (r/2)
         self.drift_max_cost = 2 * (self.drift_range / 2) * math.pi 
 
-        self.data_generatation_range = 20 # 節點產生的資料量範圍
+        self.data_generatation_range = 20 # 節點資料從 1 ~ 20 數字中隨機增加
+        self.mutihop_transmission = 5 # 透過muti-hop方式 減少的資料量
 
 
         # Initialization
@@ -90,12 +91,21 @@ class DeliveryEnvironment(object):
         )
 
         
-    # 產生感測器的目前資料量的假資料 max = 100
+    # 加上隨機產生感測器的資料量 max = 100
     def generate_data(self):
         arr1 = self.calc_amount
         arr2 = np.random.randint(self.data_generatation_range, size=self.max_box)
 
         self.calc_amount = [x + y for x, y in zip(arr1, arr2)]
+
+    # 減去 muti hop 傳輸的資料
+    def subtract_mutihop_data(self):
+        arr = self.calc_amount
+        for i, data in enumerate(arr):
+            not_isolated_node = i not in self.isolated_node
+            if not_isolated_node:
+                arr[i] = max(arr[i] - self.mutihop_transmission, 0)
+        return arr
 
     def get_unvisited_stops(self):
         # 使用 set 運算來找出未被包含在 route 中的車站
@@ -235,9 +245,13 @@ class DeliveryEnvironment(object):
         is_isolated_node = new_state in self.isolated_node
         isolated_reward = 2 if is_isolated_node else 0
 
+        unvisited_stops = self.get_unvisited_stops()
+        calcAvg(new_state, unvisited_stops, self)
 
         return distance_reward + yellow_reward + danger_reward + isolated_reward
         # return (1 - trade_of_factor * distance ** 2)
         # return -(distance ** 2)
         # return -distance
+        # return Theta_one * distance + 
+        #        (1 - Theta_one) * Theta_two / 
 
