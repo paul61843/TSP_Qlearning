@@ -18,6 +18,12 @@ from qlearning.agent.deliveryQAgent import *
 from qlearning.run import *
 from utils.calc import *
 
+from method.greedy_UAV import *
+from method.only_multihop import *
+from method.method1 import *
+from method.method2 import *
+
+
 plt.style.use("seaborn-v0_8-dark")
 
 sys.path.append("../")
@@ -90,7 +96,7 @@ def run_uav(env, init_position):
             [init_pos_y[route],  position_y[idx]], 
             env
         )
-
+        print(env.drift_cost_list, idx)
         env.drift_cost_list[idx] = drift_cost
 
         drift_remain_cost = env.drift_max_cost - drift_cost
@@ -160,32 +166,41 @@ def runMain(index):
 
         for num in range(num_uav_loops):
 
-            agent = DeliveryQAgent(
-                states_size=num_points,
-                actions_size=num_points,
-                epsilon = 1.0,
-                epsilon_min = params["epsilon_min"],
-                epsilon_decay = 0.9998,
-                gamma = params["gamma"],
-                lr = params["lr"]
-            )
+            # agent = DeliveryQAgent(
+            #     states_size=num_points,
+            #     actions_size=num_points,
+            #     epsilon = 1.0,
+            #     epsilon_min = params["epsilon_min"],
+            #     epsilon_decay = 0.9998,
+            #     gamma = params["gamma"],
+            #     lr = params["lr"]
+            # )
 
-            # 跑 Q learning
-            env,agent = run_n_episodes(
+            # # 跑 Q learning
+            # env,agent = run_n_episodes(
+            #     env, 
+            #     agent,
+            #     n_episodes=n_episodes,
+            #     result_index=index,
+            #     loop_index=num+1,
+            #     train_params=params,
+            # )
+
+            # # uav 開始飛行
+            # env = run_uav(env, init_position)
+
+            if env.stops == []:
+                print('no stops')
+                break
+
+            # 跑 uav greedy
+            env = run_n_greedy(
                 env, 
-                agent,
                 n_episodes=n_episodes,
                 result_index=index,
                 loop_index=num+1,
                 train_params=params,
             )
-
-            if env.stops == []:
-                print('no stops')
-                break
-                
-            # uav 開始飛行
-            env = run_uav(env, init_position)
 
             # 產生UAV路徑圖
             uav_run_img = env.render(return_img = True)

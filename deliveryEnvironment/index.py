@@ -43,7 +43,7 @@ class DeliveryEnvironment(object):
         self.method = method
 
         # 感測器資料量相關
-        self.calc_amount = [] # 感測器儲存的資料量
+        self.data_amount_list = [] # 感測器儲存的資料量
         self.calc_threshold = 50
         self.calc_danger_threshold = 75
 
@@ -75,7 +75,7 @@ class DeliveryEnvironment(object):
         self.y = points[:,1]
         
         # 預設感測器的目前資料量為0
-        self.calc_amount = [0] * self.n_stops
+        self.data_amount_list = [0] * self.n_stops
         
     def set_isolated_node(self):
         points = []
@@ -93,14 +93,14 @@ class DeliveryEnvironment(object):
         
     # 加上隨機產生感測器的資料量 max = 100
     def generate_data(self):
-        arr1 = self.calc_amount
+        arr1 = self.data_amount_list
         arr2 = np.random.randint(self.data_generatation_range, size=self.max_box)
 
-        self.calc_amount = [x + y for x, y in zip(arr1, arr2)]
+        self.data_amount_list = [x + y for x, y in zip(arr1, arr2)]
 
     # 減去 muti hop 傳輸的資料
     def subtract_mutihop_data(self):
-        arr = self.calc_amount
+        arr = self.data_amount_list
         for i, data in enumerate(arr):
             not_isolated_node = i not in self.isolated_node
             if not_isolated_node:
@@ -116,7 +116,7 @@ class DeliveryEnvironment(object):
     # 清除無人跡拜訪後的感測器資料
     def clear_data(self):
         for i in self.stops:
-            self.calc_amount[i] = 0
+            self.data_amount_list[i] = 0
 
     def _generate_q_values(self,box_size = 0.2):
         xy = np.column_stack([self.x,self.y])
@@ -140,10 +140,10 @@ class DeliveryEnvironment(object):
 
         # 感測器的資料量大於50，將節點標記為黃色、紅色(代表優先節點)
         for i in range(self.n_stops):
-            if self.calc_amount[i] > self.calc_threshold:
+            if self.data_amount_list[i] > self.calc_threshold:
                 ax.scatter(self.x[i], self.y[i], c = "yellow", s = 50)
 
-            if self.calc_amount[i] > self.calc_danger_threshold:
+            if self.data_amount_list[i] > self.calc_danger_threshold:
                 self.red_stops.append(i)
                 ax.scatter(self.x[i], self.y[i], c = "red", s = 50) 
 
@@ -233,8 +233,8 @@ class DeliveryEnvironment(object):
         distance = self.q_stops[state,new_state]
         distance_reward = (1 - trade_of_factor * distance ** 2)
 
-        has_calc_threshold = self.calc_amount[new_state] > self.calc_threshold
-        has_calc_danger_threshold = self.calc_amount[new_state] > self.calc_danger_threshold
+        has_calc_threshold = self.data_amount_list[new_state] > self.calc_threshold
+        has_calc_danger_threshold = self.data_amount_list[new_state] > self.calc_danger_threshold
 
         yellow_reward = has_calc_threshold * 1
         danger_reward = has_calc_danger_threshold * 6
