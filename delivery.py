@@ -162,8 +162,9 @@ def runMain(index):
 
         env = DeliveryEnvironment(num_points, num_points)
 
-        env_Q = copy.deepcopy(env)
+        env_mutihop = copy.deepcopy(env)
         env_greedy = copy.deepcopy(env)
+        env_Q = copy.deepcopy(env)
 
         # 感測器初始座標 (水下定錨座標)
         init_X = np.array(env.x)
@@ -172,10 +173,12 @@ def runMain(index):
 
         for num in range(num_uav_loops):
 
-            env_Q.x = np.array(env.x)
-            env_Q.y = np.array(env.y)
+            env_mutihop.x = np.array(env.x)
+            env_mutihop.y = np.array(env.y)
             env_greedy.x = np.array(env.x)
             env_greedy.y = np.array(env.y)
+            env_Q.x = np.array(env.x)
+            env_Q.y = np.array(env.y)
 
             # # =============== Q learning ===============
 
@@ -229,6 +232,10 @@ def runMain(index):
 
             # =============== greedy end ===========
 
+            # =============== mutihop ===============
+            uav_run_img = env_mutihop.render(return_img = True)
+            imageio.mimsave(f"./result/only_mutihop/{index}_loop_index{num+1}_UAV_result.gif",[uav_run_img],fps = 10)
+            # =============== mutihop end ===============
 
 
             # 清除無人跡拜訪後的感測器資料
@@ -245,6 +252,7 @@ def runMain(index):
             add_data = np.random.randint(env.data_generatation_range, size=env.max_box)
 
             env.generate_data(add_data)
+            env_mutihop.generate_data(add_data)
             env_Q.generate_data(add_data)
             env_greedy.generate_data(add_data)
 
@@ -252,7 +260,9 @@ def runMain(index):
             env.set_isolated_node()
             
             # 感測器儲存的資料，減去mutihop幫傳的資料
-            env.subtract_mutihop_data()
+            env_mutihop.subtract_mutihop_data()
+            env_greedy.subtract_mutihop_data()
+            env_Q.subtract_mutihop_data()
 
     print(f'run {index} end ========================================')
 
