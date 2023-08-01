@@ -31,6 +31,7 @@ def run_n_greedy(
 ):
     # reset stops
     env.stops = []
+    env.stops.append(env.first_point)
 
     for i in env.x:
         env.unvisited_stops = env.get_unvisited_stops()

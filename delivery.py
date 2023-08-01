@@ -9,9 +9,11 @@ from matplotlib.collections import PatchCollection
 from matplotlib.patches import Rectangle
 from scipy.spatial.distance import cdist
 from tqdm.notebook import tqdm
+
 import multiprocessing as mp
 import csv_utils
 import math
+import copy
 
 from deliveryEnvironment.index import *
 from qlearning.agent.deliveryQAgent import *
@@ -42,6 +44,8 @@ sys.path.append("../")
 # 5.	我們的方法1：Multi-hop transmission + UAV拜訪無法透過multi-hop transmission回傳資料的匯聚點（考慮飄浮，有飄浮節點最後的gps座標資訊，以繞扇形的方式拜訪匯聚點之飄浮範圍）
 # 6.	我們的方法2：將方法1納入load-balance考量（i.e. 納入電量消耗較大的節點做為拜訪點）
 
+# Q learning 參數
+# 要使用 基因演算法 比較有依據
 
 # 設定環境參數
 num_processes = 1 # 同時執行數量 (產生結果數量)
@@ -96,7 +100,6 @@ def run_uav(env, init_position):
             [init_pos_y[route],  position_y[idx]], 
             env
         )
-        print(env.drift_cost_list, idx)
         env.drift_cost_list[idx] = drift_cost
 
         drift_remain_cost = env.drift_max_cost - drift_cost
@@ -159,12 +162,22 @@ def runMain(index):
 
         env = DeliveryEnvironment(num_points, num_points)
 
+        env_Q = copy.deepcopy(env)
+        env_greedy = copy.deepcopy(env)
+
         # 感測器初始座標 (水下定錨座標)
         init_X = np.array(env.x)
         init_Y = np.array(env.y)
         init_position = [init_X, init_Y]
 
         for num in range(num_uav_loops):
+
+            env_Q.x = np.array(env.x)
+            env_Q.y = np.array(env.y)
+            env_greedy.x = np.array(env.x)
+            env_greedy.y = np.array(env.y)
+
+            # # =============== Q learning ===============
 
             # agent = DeliveryQAgent(
             #     states_size=num_points,
@@ -177,8 +190,8 @@ def runMain(index):
             # )
 
             # # 跑 Q learning
-            # env,agent = run_n_episodes(
-            #     env, 
+            # env_Q,agent = run_n_episodes(
+            #     env_Q, 
             #     agent,
             #     n_episodes=n_episodes,
             #     result_index=index,
@@ -186,16 +199,24 @@ def runMain(index):
             #     train_params=params,
             # )
 
-            # # uav 開始飛行
+            # # 產生UAV路徑圖
+            # uav_run_img = env_Q.render(return_img = True)
+            # imageio.mimsave(f"./result/{index}_epsilon_min{params['epsilon_min']}_gamma{params['gamma']}_lr{params['lr']}_loop_index{num+1}_UAV_result.gif",[uav_run_img],fps = 10)
+
+            # # # uav 開始飛行
             # env = run_uav(env, init_position)
+
+            # # =============== Q learning end ===========
 
             if env.stops == []:
                 print('no stops')
                 break
 
+            # =============== greedy ===============
+
             # 跑 uav greedy
-            env = run_n_greedy(
-                env, 
+            env_greedy = run_n_greedy(
+                env_greedy, 
                 n_episodes=n_episodes,
                 result_index=index,
                 loop_index=num+1,
@@ -203,11 +224,16 @@ def runMain(index):
             )
 
             # 產生UAV路徑圖
-            uav_run_img = env.render(return_img = True)
-            imageio.mimsave(f"./result/{index}_epsilon_min{params['epsilon_min']}_gamma{params['gamma']}_lr{params['lr']}_loop_index{num+1}_UAV_result.gif",[uav_run_img],fps = 10)
+            uav_run_img = env_greedy.render(return_img = True)
+            imageio.mimsave(f"./result/greedy/{index}_loop_index{num+1}_UAV_result.gif",[uav_run_img],fps = 10)
+
+            # =============== greedy end ===========
+
+
 
             # 清除無人跡拜訪後的感測器資料
             env.clear_data()
+            env_greedy.clear_data()
 
             env.x = np.array(init_X)
             env.y = np.array(init_Y)
@@ -216,7 +242,11 @@ def runMain(index):
             env.drift_node()
 
             # 隨機產生資料
-            env.generate_data()
+            add_data = np.random.randint(env.data_generatation_range, size=env.max_box)
+
+            env.generate_data(add_data)
+            env_Q.generate_data(add_data)
+            env_greedy.generate_data(add_data)
 
             # 判斷是否為孤立節點
             env.set_isolated_node()

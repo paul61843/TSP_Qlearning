@@ -92,9 +92,9 @@ class DeliveryEnvironment(object):
 
         
     # 加上隨機產生感測器的資料量 max = 100
-    def generate_data(self):
+    def generate_data(self, add_data):
         arr1 = self.data_amount_list
-        arr2 = np.random.randint(self.data_generatation_range, size=self.max_box)
+        arr2 = add_data
 
         self.data_amount_list = [x + y for x, y in zip(arr1, arr2)]
 
