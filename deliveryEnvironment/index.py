@@ -5,6 +5,7 @@ import matplotlib.pyplot as plt
 from scipy.spatial.distance import cdist
 from utils.calc import *
 from isolated_nodes.index import *
+from constants import *
 
 
 class DeliveryEnvironment(object):
@@ -60,20 +61,25 @@ class DeliveryEnvironment(object):
         self.reset()
 
     def _generate_stops(self):
+        use_fake_data = True
+
         points = np.random.rand(1,2) * self.max_box
 
         # 隨機生成感測器數量，並確保每個點的通訊範圍內至少有一個點
-        while (len(points) < self.n_stops):
-            x,y = (np.random.rand(1,2) * self.max_box)[0]
-            for p in points:
-                isTrue = any(((x - p[0]) ** 2 + (y - p[1]) ** 2 ) ** 0.5 <= self.point_range for p in points)
-                if isTrue:
-                    points = np.append(points, [np.array([x,y])], axis=0)
-                    break
+        if use_fake_data:
+            self.x = xPoints 
+            self.y = yPoints
+        else:
+            while (len(points) < self.n_stops):
+                x,y = (np.random.rand(1,2) * self.max_box)[0]
+                for p in points:
+                    isTrue = any(((x - p[0]) ** 2 + (y - p[1]) ** 2 ) ** 0.5 <= self.point_range for p in points)
+                    if isTrue:
+                        points = np.append(points, [np.array([x,y])], axis=0)
+                        break
+            self.x = points[:,0]
+            self.y = points[:,1]
 
-        self.x = points[:,0]
-        self.y = points[:,1]
-        
         # 預設感測器的目前資料量為0
         self.data_amount_list = [0] * self.n_stops
         
