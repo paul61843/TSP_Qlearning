@@ -216,6 +216,7 @@ class DeliveryEnvironment(object):
 
                 self.y[i] = self.y[i] + random.uniform(-self.drift_range, self.drift_range)
                 self.y[i] >=0 if self.y[i] else 0
+        
 
     def _get_state(self):
         return self.stops[-1]
