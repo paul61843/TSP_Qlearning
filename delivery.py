@@ -161,7 +161,8 @@ def runMain(index):
 
         env_mutihop = copy.deepcopy(env)
         env_greedy = copy.deepcopy(env)
-        env_greedy_not_drift = copy.deepcopy(env)
+        env_greedy_and_mutihop = copy.deepcopy(env)
+        env_drift_greedy_and_mutihop = copy.deepcopy(env)
         env_Q = copy.deepcopy(env)
 
         # 感測器初始座標 (水下定錨座標)
@@ -172,10 +173,12 @@ def runMain(index):
         for num in range(num_uav_loops):
             env_mutihop.x = np.array(init_X)
             env_mutihop.y = np.array(init_Y)
-            env_greedy.x = np.array(env.x)
-            env_greedy.y = np.array(env.y)
-            env_greedy_not_drift.x = np.array(init_X)
-            env_greedy_not_drift.y = np.array(init_Y)
+            env_greedy.x = np.array(init_X)
+            env_greedy.y = np.array(init_Y)
+            env_greedy_and_mutihop.x = np.array(init_X)
+            env_greedy_and_mutihop.y = np.array(init_Y)
+            env_drift_greedy_and_mutihop.x = np.array(env.x)
+            env_drift_greedy_and_mutihop.y = np.array(env.y)
             env_Q.x = np.array(env.x)
             env_Q.y = np.array(env.y)
 
@@ -208,13 +211,18 @@ def runMain(index):
             # # # uav 開始飛行
             # env = run_uav(env, init_position)
 
-            # # =============== Q learning end ===========
+            # =============== Q learning end ===========
 
             if env.stops == []:
                 print('no stops')
                 break
 
-            # =============== greedy ===============
+            # =============== mutihop ===============
+            uav_run_img = env_mutihop.render(return_img = True)
+            imageio.mimsave(f"./result/mutihop/{index}_loop_index{num+1}_UAV_result.gif",[uav_run_img],fps = 10)
+            # =============== mutihop end ===============
+
+            # =============== env_greedy ===============
 
             # 跑 uav greedy
             env_greedy = run_n_greedy(
@@ -229,12 +237,9 @@ def runMain(index):
             uav_run_img = env_greedy.render(return_img = True)
             imageio.mimsave(f"./result/greedy/{index}_loop_index{num+1}_UAV_result.gif",[uav_run_img],fps = 10)
 
-            # =============== greedy end ===========
-
-            # =============== greedy not drift ===============
-            # 跑 uav greedy
-            env_greedy_not_drift = run_n_greedy(
-                env_greedy_not_drift, 
+            # =============== greedy and mutihop ===========
+            env_greedy_and_mutihop = run_n_greedy(
+                env_greedy_and_mutihop, 
                 n_episodes=n_episodes,
                 result_index=index,
                 loop_index=num+1,
@@ -242,21 +247,33 @@ def runMain(index):
             )
 
             # 產生UAV路徑圖
-            uav_run_img = env_greedy_not_drift.render(return_img = True)
-            imageio.mimsave(f"./result/greedy_not_drift/{index}_loop_index{num+1}_UAV_result.gif",[uav_run_img],fps = 10)
+            uav_run_img = env_greedy_and_mutihop.render(return_img = True)
+            imageio.mimsave(f"./result/greedy_and_mutihop/{index}_loop_index{num+1}_UAV_result.gif",[uav_run_img],fps = 10)
 
-            # =============== greedy  not drift end ===============
+            # =============== greedy and mutihop ===============
 
-            # =============== mutihop ===============
-            uav_run_img = env_mutihop.render(return_img = True)
-            imageio.mimsave(f"./result/only_mutihop/{index}_loop_index{num+1}_UAV_result.gif",[uav_run_img],fps = 10)
-            # =============== mutihop end ===============
+            # =============== drift greedy and mutihop ===============
+            # 跑 uav greedy
+            env_drift_greedy_and_mutihop = run_n_greedy(
+                env_drift_greedy_and_mutihop, 
+                n_episodes=n_episodes,
+                result_index=index,
+                loop_index=num+1,
+                train_params=params,
+            )
+
+            # 產生UAV路徑圖
+            uav_run_img = env_drift_greedy_and_mutihop.render(return_img = True)
+            imageio.mimsave(f"./result/drift_greedy_and_mutihop/{index}_loop_index{num+1}_UAV_result.gif",[uav_run_img],fps = 10)
+
+            # =============== drift greedy and mutihop ===============
 
 
             # 清除無人跡拜訪後的感測器資料
-            env.clear_data()
+            env_Q.clear_data()
             env_greedy.clear_data()
-            env_greedy_not_drift.clear_data()
+            env_greedy_and_mutihop.clear_data()
+            env_drift_greedy_and_mutihop.clear_data()
 
             env.x = np.array(init_X)
             env.y = np.array(init_Y)
@@ -269,17 +286,18 @@ def runMain(index):
 
             env.generate_data(add_data)
             env_mutihop.generate_data(add_data)
-            env_Q.generate_data(add_data)
             env_greedy.generate_data(add_data)
-            env_greedy_not_drift.generate_data(add_data)
+            env_greedy_and_mutihop.generate_data(add_data)
+            env_drift_greedy_and_mutihop.generate_data(add_data)
+            env_Q.generate_data(add_data)
 
             # 判斷是否為孤立節點
             env.set_isolated_node()
             
             # 感測器儲存的資料，減去mutihop幫傳的資料
             env_mutihop.subtract_mutihop_data()
-            env_greedy.subtract_mutihop_data()
-            env_greedy_not_drift.subtract_mutihop_data()
+            env_greedy_and_mutihop.subtract_mutihop_data()
+            env_drift_greedy_and_mutihop.subtract_mutihop_data()
             env_Q.subtract_mutihop_data()
 
     print(f'run {index} end ========================================')
