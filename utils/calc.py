@@ -8,6 +8,15 @@ def calcDistance(x, y):
     
     return distance
 
+# 計算 UAV探索飄移節點需要花費的電量
+def calc_drift_cost(position_x, position_y, env):
+    drift_distance = calcDistance(position_x, position_y)
+
+    if drift_distance <= env.point_range:
+        return 0
+    else:
+        return env.drift_max_cost
+
 def calcAvg(curr_pos, unvisited_stops, env):
     curr_x = env.x[curr_pos]
     curr_y = env.y[curr_pos]

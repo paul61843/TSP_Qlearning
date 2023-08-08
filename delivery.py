@@ -51,7 +51,7 @@ num_processes = 1 # 同時執行數量 (產生結果數量)
 num_points = 100 # 節點數
 max_box = 1000 # 場景大小
 
-n_episodes = 2000 # 訓練次數
+n_episodes = 5000 # 訓練次數
 num_uav_loops = 10 # UAV 拜訪幾輪
 
 def getMinDistancePoint(env, curr_point):
@@ -70,14 +70,6 @@ def getMinDistancePoint(env, curr_point):
 
     return min_point
 
-# 計算 UAV探索飄移節點需要花費的電量
-def calc_drift_cost(position_x, position_y, env):
-    drift_distance = calcDistance(position_x, position_y)
-
-    if drift_distance <= env.point_range:
-        return 0
-    else:
-        return env.drift_max_cost
 
 
 def run_uav(env, init_position):
@@ -99,6 +91,7 @@ def run_uav(env, init_position):
             [init_pos_y[route],  position_y[idx]], 
             env
         )
+
         env.drift_cost_list[idx] = drift_cost
 
         drift_remain_cost = env.drift_max_cost - drift_cost
@@ -182,34 +175,34 @@ def runMain(index):
             env_Q.x = np.array(env.x)
             env_Q.y = np.array(env.y)
 
-            # # =============== Q learning ===============
+            # =============== Q learning ===============
 
-            # agent = DeliveryQAgent(
-            #     states_size=num_points,
-            #     actions_size=num_points,
-            #     epsilon = 1.0,
-            #     epsilon_min = params["epsilon_min"],
-            #     epsilon_decay = 0.9998,
-            #     gamma = params["gamma"],
-            #     lr = params["lr"]
-            # )
+            agent = DeliveryQAgent(
+                states_size=num_points,
+                actions_size=num_points,
+                epsilon = 1.0,
+                epsilon_min = params["epsilon_min"],
+                epsilon_decay = 0.9998,
+                gamma = params["gamma"],
+                lr = params["lr"]
+            )
 
-            # # 跑 Q learning
-            # env_Q,agent = run_n_episodes(
-            #     env_Q, 
-            #     agent,
-            #     n_episodes=n_episodes,
-            #     result_index=index,
-            #     loop_index=num+1,
-            #     train_params=params,
-            # )
+            # 跑 Q learning
+            env_Q,agent = run_n_episodes(
+                env_Q, 
+                agent,
+                n_episodes=n_episodes,
+                result_index=index,
+                loop_index=num+1,
+                train_params=params,
+            )
 
-            # # 產生UAV路徑圖
-            # uav_run_img = env_Q.render(return_img = True)
-            # imageio.mimsave(f"./result/{index}_epsilon_min{params['epsilon_min']}_gamma{params['gamma']}_lr{params['lr']}_loop_index{num+1}_UAV_result.gif",[uav_run_img],fps = 10)
+            # # uav 開始飛行
+            env_Q = run_uav(env_Q, init_position)
 
-            # # # uav 開始飛行
-            # env = run_uav(env, init_position)
+            # 產生UAV路徑圖
+            uav_run_img = env_Q.render(return_img = True)
+            imageio.mimsave(f"./result/Q_learning/{index}_epsilon_min{params['epsilon_min']}_gamma{params['gamma']}_lr{params['lr']}_loop_index{num+1}_UAV_result.gif",[uav_run_img],fps = 10)
 
             # =============== Q learning end ===========
 
@@ -254,12 +247,13 @@ def runMain(index):
 
             # =============== drift greedy and mutihop ===============
             # 跑 uav greedy
-            env_drift_greedy_and_mutihop = run_n_greedy(
+            env_drift_greedy_and_mutihop = run_n_greedy_drift(
                 env_drift_greedy_and_mutihop, 
                 n_episodes=n_episodes,
                 result_index=index,
                 loop_index=num+1,
                 train_params=params,
+                init_position=init_position
             )
 
             # 產生UAV路徑圖

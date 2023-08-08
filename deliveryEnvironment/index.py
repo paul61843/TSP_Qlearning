@@ -193,6 +193,7 @@ class DeliveryEnvironment(object):
 
         # Stops placeholder
         self.stops = []
+        self.drift_cost_list = len(self.stops) * [self.drift_max_cost]
         self.stops.append(self.first_point)
 
 
