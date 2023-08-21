@@ -43,6 +43,10 @@ class DeliveryEnvironment(object):
         self.drift_cost_list = []
         self.method = method
 
+        # 資料
+        self.uav_data = 0
+        self.sum_mutihop_data = 0
+
         # 感測器資料量相關
         self.data_amount_list = [] # 感測器儲存的資料量
         self.calc_threshold = 50
@@ -106,12 +110,15 @@ class DeliveryEnvironment(object):
 
     # 減去 muti hop 傳輸的資料
     def subtract_mutihop_data(self):
-        arr = self.data_amount_list
+        arr = np.array(self.data_amount_list)
+
         for i, data in enumerate(arr):
             not_isolated_node = i not in self.isolated_node
             if not_isolated_node:
+                self.sum_mutihop_data = self.sum_mutihop_data + (arr[i] - max(arr[i] - self.mutihop_transmission, 0))
                 arr[i] = max(arr[i] - self.mutihop_transmission, 0)
-        return arr
+
+        self.data_amount_list = arr
 
     def get_unvisited_stops(self):
         # 使用 set 運算來找出未被包含在 route 中的車站
@@ -122,6 +129,7 @@ class DeliveryEnvironment(object):
     # 清除無人跡拜訪後的感測器資料
     def clear_data(self):
         for i in self.stops:
+            self.uav_data = self.uav_data + self.data_amount_list[i]
             self.data_amount_list[i] = 0
 
     def _generate_q_values(self,box_size = 0.2):

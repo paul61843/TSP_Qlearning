@@ -66,7 +66,6 @@ def swap(route, first, second) :
 def optimal_route(route, env, distance):
     cost = distance
     for i in range(opt_max_times):
-        print('69', i)
         for j in range(len(route)-2):
             for k in range(len(route)-1):
                 new_route = swap(route,j,k)

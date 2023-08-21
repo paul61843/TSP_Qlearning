@@ -79,7 +79,6 @@ def run_n_greedy_drift(
             env
         )
 
-        print(init_pos_x[a], env.x[a])
 
         distance = calcDistance(env.x[env.stops], env.y[env.stops])
 
@@ -87,7 +86,6 @@ def run_n_greedy_drift(
         y = env.y[[env.stops[0], env.stops[-1]]]
         to_start_cost = calcDistance(x, y)
 
-        print(drift_cost)
         distance = distance + to_start_cost + drift_cost
 
         if distance > env.max_move_distance:

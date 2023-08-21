@@ -46,13 +46,42 @@ sys.path.append("../")
 # Q learning 參數
 # 要使用 基因演算法 比較有依據
 
+
+# 爆掉的資料量
+
+# 封包抵達率
+# UAV代收的資料量 
+# overflow 
+
+# 時間 1000 單位
+
+# 至少六張圖
+
+# 感測器的資料經過計算後 回傳成功 (感測器的資料經過計算後 回傳失敗 (斷路且飛機找不到))
+# 感測器的資料來不及計算導致 overflow (飛機找不到 飛機來不及到)
+
+# 節點飄移距離參數改變
+# 無人機電池電量 
+# 感測器 buffer 大小改變
+
+# 2 x 3 
+
+# 找現成的感測器 buffer 大小
+
+
+
 # 設定環境參數
 num_processes = 1 # 同時執行數量 (產生結果數量)
 num_points = 100 # 節點數
 max_box = 1000 # 場景大小
 
-n_episodes = 5000 # 訓練次數
-num_uav_loops = 10 # UAV 拜訪幾輪
+n_episodes = 2000 # 訓練次數
+num_uav_loops = 2 # UAV 拜訪幾輪
+
+# 比較參數
+total_data = 0
+sensor_data = 0
+uav_data = 0
 
 def getMinDistancePoint(env, curr_point):
     min_distance = float('inf')
@@ -131,6 +160,9 @@ def run_uav(env, init_position):
 
 def runMain(index):
     print(f'run {index} start ========================================')
+
+    # 
+    total_data = 0
     
     parmas_arr = [
         # { "epsilon_min": 0.05, "gamma": 0.62, "lr": 0.60 },
@@ -174,6 +206,17 @@ def runMain(index):
             env_drift_greedy_and_mutihop.y = np.array(env.y)
             env_Q.x = np.array(env.x)
             env_Q.y = np.array(env.y)
+
+            # 隨機產生資料
+            add_data = np.random.randint(env.data_generatation_range, size=env.max_box)
+            total_data = total_data + sum(add_data)
+
+            env.generate_data(add_data)
+            env_mutihop.generate_data(add_data)
+            env_greedy.generate_data(add_data)
+            env_greedy_and_mutihop.generate_data(add_data)
+            env_drift_greedy_and_mutihop.generate_data(add_data)
+            env_Q.generate_data(add_data)
 
             # =============== Q learning ===============
 
@@ -261,13 +304,46 @@ def runMain(index):
             imageio.mimsave(f"./result/drift_greedy_and_mutihop/{index}_loop_index{num+1}_UAV_result.gif",[uav_run_img],fps = 10)
 
             # =============== drift greedy and mutihop ===============
-
+            print('296', sum(env_greedy.data_amount_list))
 
             # 清除無人跡拜訪後的感測器資料
-            env_Q.clear_data()
             env_greedy.clear_data()
             env_greedy_and_mutihop.clear_data()
             env_drift_greedy_and_mutihop.clear_data()
+            env_Q.clear_data()
+
+            print('304', sum(env_greedy.data_amount_list))
+
+
+            # 感測器儲存的資料，減去mutihop幫傳的資料
+            env_mutihop.subtract_mutihop_data()
+            env_greedy_and_mutihop.subtract_mutihop_data()
+            env_drift_greedy_and_mutihop.subtract_mutihop_data()
+            env_Q.subtract_mutihop_data()
+
+            g_mutihop_data = env_greedy.sum_mutihop_data
+            gam_mutihop_data = env_greedy_and_mutihop.sum_mutihop_data
+            dgam_mutihop_data = env_drift_greedy_and_mutihop.sum_mutihop_data
+            q_mutihop_data = env_Q.sum_mutihop_data
+            m_mutihop_data = env_mutihop.sum_mutihop_data
+
+            g_sensor_data = sum(env_greedy.data_amount_list)
+            gam_sensor_data = sum(env_greedy_and_mutihop.data_amount_list)
+            dgam_sensor_data = sum(env_drift_greedy_and_mutihop.data_amount_list)
+            q_sensor_data = sum(env_Q.data_amount_list)
+            m_sensor_data = sum(env_mutihop.data_amount_list)
+
+            csv_utils.write('./result/train_table.csv', 
+                [
+                    # 系統產生的總資料量、感測器內的資料量、UAV幫助的資料量
+                    [''.ljust(30),                        'total_data'.ljust(20)    ,  'mutihop'.ljust(20)               ,  'sensor_data'.ljust(20)                 ,   'uav_data'.ljust(20)                                 , 'sum'.ljust(20)                                                                               ],
+                    ['greedy'.ljust(30) ,                  str(total_data).ljust(20),  str(g_mutihop_data).ljust(20)     ,   str(g_sensor_data).ljust(20)           ,   str(env_greedy.uav_data).ljust(20)                   ,  str(g_sensor_data + env_greedy.uav_data).ljust(20)                                           ],
+                    ['greedy_and_mutihop'.ljust(30),       str(total_data).ljust(20),  str(gam_mutihop_data).ljust(20)   ,   str(gam_sensor_data).ljust(20)         ,   str(env_greedy_and_mutihop.uav_data).ljust(20)       ,  str(gam_mutihop_data + gam_sensor_data + env_greedy_and_mutihop.uav_data).ljust(20)          ],
+                    ['drift_greedy_and_mutihop'.ljust(30), str(total_data).ljust(20),  str(dgam_mutihop_data).ljust(20)  ,   str(dgam_sensor_data).ljust(20)        ,   str(env_drift_greedy_and_mutihop.uav_data).ljust(20) ,  str(dgam_mutihop_data + dgam_sensor_data + env_drift_greedy_and_mutihop.uav_data).ljust(20)  ],
+                    ['Q_learning'.ljust(30),               str(total_data).ljust(20),  str(q_mutihop_data).ljust(20)     ,   str(q_sensor_data).ljust(20)           ,   str(env_Q.uav_data).ljust(20)                        ,  str(q_mutihop_data + q_sensor_data + env_Q.uav_data).ljust(20)                               ],
+                    ['mutihop'.ljust(30),                  str(total_data).ljust(20),  str(m_mutihop_data).ljust(20)     ,   str(m_sensor_data).ljust(20)           ,   str(env_mutihop.uav_data).ljust(20)                  ,  str(m_mutihop_data + m_sensor_data + env_mutihop.uav_data).ljust(20)                         ],
+                ]
+            )
 
             env.x = np.array(init_X)
             env.y = np.array(init_Y)
@@ -275,33 +351,14 @@ def runMain(index):
             # 執行節點飄移
             env.drift_node()
 
-            # 隨機產生資料
-            add_data = np.random.randint(env.data_generatation_range, size=env.max_box)
-
-            env.generate_data(add_data)
-            env_mutihop.generate_data(add_data)
-            env_greedy.generate_data(add_data)
-            env_greedy_and_mutihop.generate_data(add_data)
-            env_drift_greedy_and_mutihop.generate_data(add_data)
-            env_Q.generate_data(add_data)
-
             # 判斷是否為孤立節點
             env.set_isolated_node()
-            
-            # 感測器儲存的資料，減去mutihop幫傳的資料
-            env_mutihop.subtract_mutihop_data()
-            env_greedy_and_mutihop.subtract_mutihop_data()
-            env_drift_greedy_and_mutihop.subtract_mutihop_data()
-            env_Q.subtract_mutihop_data()
 
     print(f'run {index} end ========================================')
 
 # mutiprocessing start ================================
 if __name__ == '__main__':
     process_list = []
-    csv_utils.write('./result/train_table.csv', 
-        [['red_distance','q_distance','opt_distance']]
-    )
 
     for i in range(num_processes):
         process_list.append(mp.Process(target=runMain, args=(i,)))
