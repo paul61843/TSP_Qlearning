@@ -303,10 +303,10 @@ def runMain(index):
             print('296', sum(env_greedy.data_amount_list))
 
             # 清除無人跡拜訪後的感測器資料
-            env_greedy.clear_data(init_position)
-            env_greedy_and_mutihop.clear_data(init_position)
-            env_drift_greedy_and_mutihop.clear_data(init_position)
-            env_Q.clear_data(init_position)
+            env_greedy.clear_data(init_position, False)
+            env_greedy_and_mutihop.clear_data(init_position, False)
+            env_drift_greedy_and_mutihop.clear_data(init_position, True)
+            env_Q.clear_data(init_position, True)
 
             print('304', sum(env_greedy.data_amount_list))
 
@@ -334,10 +334,10 @@ def runMain(index):
                     # 系統產生的總資料量、感測器內的資料量、UAV幫助的資料量
                     [''.ljust(30),                        'total_data'.ljust(20)    ,  'mutihop'.ljust(20)               ,  'sensor_data'.ljust(20)                 ,   'uav_data'.ljust(20)                                 , 'sum'.ljust(20)                                                                               ],
                     ['greedy'.ljust(30) ,                  str(total_data).ljust(20),  str(g_mutihop_data).ljust(20)     ,   str(g_sensor_data).ljust(20)           ,   str(env_greedy.uav_data).ljust(20)                   ,  str(g_sensor_data + env_greedy.uav_data).ljust(20)                                           ],
+                    ['mutihop'.ljust(30),                  str(total_data).ljust(20),  str(m_mutihop_data).ljust(20)     ,   str(m_sensor_data).ljust(20)           ,   str(env_mutihop.uav_data).ljust(20)                  ,  str(m_mutihop_data + m_sensor_data + env_mutihop.uav_data).ljust(20)                         ],
                     ['greedy_and_mutihop'.ljust(30),       str(total_data).ljust(20),  str(gam_mutihop_data).ljust(20)   ,   str(gam_sensor_data).ljust(20)         ,   str(env_greedy_and_mutihop.uav_data).ljust(20)       ,  str(gam_mutihop_data + gam_sensor_data + env_greedy_and_mutihop.uav_data).ljust(20)          ],
                     ['drift_greedy_and_mutihop'.ljust(30), str(total_data).ljust(20),  str(dgam_mutihop_data).ljust(20)  ,   str(dgam_sensor_data).ljust(20)        ,   str(env_drift_greedy_and_mutihop.uav_data).ljust(20) ,  str(dgam_mutihop_data + dgam_sensor_data + env_drift_greedy_and_mutihop.uav_data).ljust(20)  ],
                     ['Q_learning'.ljust(30),               str(total_data).ljust(20),  str(q_mutihop_data).ljust(20)     ,   str(q_sensor_data).ljust(20)           ,   str(env_Q.uav_data).ljust(20)                        ,  str(q_mutihop_data + q_sensor_data + env_Q.uav_data).ljust(20)                               ],
-                    ['mutihop'.ljust(30),                  str(total_data).ljust(20),  str(m_mutihop_data).ljust(20)     ,   str(m_sensor_data).ljust(20)           ,   str(env_mutihop.uav_data).ljust(20)                  ,  str(m_mutihop_data + m_sensor_data + env_mutihop.uav_data).ljust(20)                         ],
                 ]
             )
 

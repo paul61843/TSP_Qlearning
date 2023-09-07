@@ -12,7 +12,7 @@ def calcDistance(x, y):
 def calc_drift_cost(position_x, position_y, env):
     drift_distance = calcDistance(position_x, position_y)
 
-    if drift_distance <= env.point_range:
+    if drift_distance <= env.uav_range:
         return 0
     else:
         return env.drift_max_cost

@@ -15,9 +15,10 @@ class DeliveryEnvironment(object):
         print(f"Target metric for optimization is {method}")
 
         # Environment Config
-        self.point_range = 10 # 節點通訊半徑範圍 (單位m)
+        self.point_range = 5 # 節點通訊半徑範圍 (單位m)
+        self.uav_range = 10 # 無人機通訊半徑範圍 (單位m)
+        self.drift_range = 5 # 節點飄移範圍 (單位m)
         self.max_move_distance = 300 # 無人機最大移動距離 (單位m)
-        self.drift_range = 10 # 節點飄移範圍
 
         # 無人機探索，飄移節點最大能量消耗
         # 假設無人機只需飛行一圈，即可完整探索感測器飄移可能區域
@@ -124,12 +125,11 @@ class DeliveryEnvironment(object):
         return list(unvisited_stops)
     
     # 清除無人跡拜訪後的感測器資料
-    def clear_data(self, init_position):
+    def clear_data(self, init_position, drift_consider):
         [init_x, init_y] = init_position
         for i in self.stops:
             drift_distance = np.sqrt((self.x[i] - init_x[i]) ** 2 + (self.y[i] - init_y[i]) ** 2)
-            print(drift_distance, self.point_range, drift_distance <= self.point_range)
-            if drift_distance <= self.point_range:
+            if (drift_distance <= self.point_range) or drift_consider:
                 self.uav_data = self.uav_data + self.data_amount_list[i]
                 self.data_amount_list[i] = 0
 
