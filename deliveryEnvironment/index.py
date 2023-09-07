@@ -17,15 +17,12 @@ class DeliveryEnvironment(object):
         # Environment Config
         self.point_range = 10 # 節點通訊半徑範圍 (單位m)
         self.max_move_distance = 300 # 無人機最大移動距離 (單位m)
-
-        # 節點飄移範圍
-        self.drift_range = 2
+        self.drift_range = 10 # 節點飄移範圍
 
         # 無人機探索，飄移節點最大能量消耗
         # 假設無人機只需飛行一圈，即可完整探索感測器飄移可能區域
         # 故無人機只需以 r/2 為半徑飛行
-        # 公式 2 x 3.14 x (r/2)
-        self.drift_max_cost = 2 * (self.drift_range / 2) * math.pi 
+        self.drift_max_cost = 2 * (self.drift_range / 2) * math.pi  # 公式 2 x 3.14 x (r/2)
 
         self.data_generatation_range = 20 # 節點資料從 1 ~ 20 數字中隨機增加
         self.mutihop_transmission = 5 # 透過muti-hop方式 減少的資料量
@@ -127,10 +124,14 @@ class DeliveryEnvironment(object):
         return list(unvisited_stops)
     
     # 清除無人跡拜訪後的感測器資料
-    def clear_data(self):
+    def clear_data(self, init_position):
+        [init_x, init_y] = init_position
         for i in self.stops:
-            self.uav_data = self.uav_data + self.data_amount_list[i]
-            self.data_amount_list[i] = 0
+            drift_distance = np.sqrt((self.x[i] - init_x[i]) ** 2 + (self.y[i] - init_y[i]) ** 2)
+            print(drift_distance, self.point_range, drift_distance <= self.point_range)
+            if drift_distance <= self.point_range:
+                self.uav_data = self.uav_data + self.data_amount_list[i]
+                self.data_amount_list[i] = 0
 
     def _generate_q_values(self,box_size = 0.2):
         xy = np.column_stack([self.x,self.y])

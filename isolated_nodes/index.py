@@ -46,7 +46,6 @@ def find_isolated_nodes(nodes, sensing_range, sink):
     graph = build_graph(nodes, sensing_range)
     isolated_nodes = []
     for idx, node in enumerate(nodes):
-    # for node in nodes:
         if bfs(graph, node, sink, sensing_range) is None:
             isolated_nodes.append(idx)
 

@@ -16,9 +16,6 @@ def getMostDataOfSensor(data_amount_list, unvisited_stops):
 
     return max_node
 
-
-
-
 def run_n_greedy(
     env,
     name="training.gif",
@@ -28,6 +25,7 @@ def run_n_greedy(
     result_index=0,
     loop_index=0,
     train_params={},
+    init_position=[],
 ):
     # reset stops
     env.stops = []
@@ -78,7 +76,6 @@ def run_n_greedy_drift(
             [init_pos_y[a],  env.y[a]], 
             env
         )
-
 
         distance = calcDistance(env.x[env.stops], env.y[env.stops])
 

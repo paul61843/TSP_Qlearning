@@ -31,9 +31,8 @@ sys.path.append("../")
 
 # 待完成事項
 
-# 獎勵值 可以減去未拜訪的節點數
+# 無人機 不具備飄移探索能力
 
-# 使用 batch 改善 Q learning
 
 # 比較對象
 # 1.	單純的multi-hop transmission
@@ -42,10 +41,6 @@ sys.path.append("../")
 # 4.	Multi-hop transmission + UAV拜訪無法透過multi-hop transmission回傳資料的匯聚點（考慮飄浮，以繞圓形的方式拜訪匯聚點之飄浮範圍）
 # 5.	我們的方法1：Multi-hop transmission + UAV拜訪無法透過multi-hop transmission回傳資料的匯聚點（考慮飄浮，有飄浮節點最後的gps座標資訊，以繞扇形的方式拜訪匯聚點之飄浮範圍）
 # 6.	我們的方法2：將方法1納入load-balance考量（i.e. 納入電量消耗較大的節點做為拜訪點）
-
-# Q learning 參數
-# 要使用 基因演算法 比較有依據
-
 
 # 爆掉的資料量
 
@@ -76,7 +71,7 @@ num_points = 100 # 節點數
 max_box = 1000 # 場景大小
 
 n_episodes = 2000 # 訓練次數
-num_uav_loops = 2 # UAV 拜訪幾輪
+num_uav_loops = 10 # UAV 拜訪幾輪
 
 # 比較參數
 total_data = 0
@@ -196,12 +191,12 @@ def runMain(index):
         init_position = [init_X, init_Y]
 
         for num in range(num_uav_loops):
-            env_mutihop.x = np.array(init_X)
-            env_mutihop.y = np.array(init_Y)
-            env_greedy.x = np.array(init_X)
-            env_greedy.y = np.array(init_Y)
-            env_greedy_and_mutihop.x = np.array(init_X)
-            env_greedy_and_mutihop.y = np.array(init_Y)
+            env_mutihop.x = np.array(env.x)
+            env_mutihop.y = np.array(env.y)
+            env_greedy.x = np.array(env.x)
+            env_greedy.y = np.array(env.y)
+            env_greedy_and_mutihop.x = np.array(env.x)
+            env_greedy_and_mutihop.y = np.array(env.y)
             env_drift_greedy_and_mutihop.x = np.array(env.x)
             env_drift_greedy_and_mutihop.y = np.array(env.y)
             env_Q.x = np.array(env.x)
@@ -267,6 +262,7 @@ def runMain(index):
                 result_index=index,
                 loop_index=num+1,
                 train_params=params,
+                init_position=init_position
             )
 
             # 產生UAV路徑圖
@@ -307,10 +303,10 @@ def runMain(index):
             print('296', sum(env_greedy.data_amount_list))
 
             # 清除無人跡拜訪後的感測器資料
-            env_greedy.clear_data()
-            env_greedy_and_mutihop.clear_data()
-            env_drift_greedy_and_mutihop.clear_data()
-            env_Q.clear_data()
+            env_greedy.clear_data(init_position)
+            env_greedy_and_mutihop.clear_data(init_position)
+            env_drift_greedy_and_mutihop.clear_data(init_position)
+            env_Q.clear_data(init_position)
 
             print('304', sum(env_greedy.data_amount_list))
 
