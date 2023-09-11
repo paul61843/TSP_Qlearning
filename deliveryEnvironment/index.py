@@ -126,9 +126,8 @@ class DeliveryEnvironment(object):
         self.data_amount_list = arr
 
     def get_unvisited_stops(self):
-        # 使用 set 運算來找出未被包含在 route 中的車站
-        unvisited_stops = set(list(range(0, self.max_box))) - set(self.stops)
-        # 將 set 轉換回 list，方便使用者閱讀
+        # 使用 set 運算來找出未被包含在 route 中的節點
+        unvisited_stops = set(list(range(0, self.n_stops))) - set(self.stops)
         return list(unvisited_stops)
     
     # 清除無人跡拜訪後的感測器資料
@@ -269,8 +268,8 @@ class DeliveryEnvironment(object):
         is_isolated_node = new_state in self.isolated_node
         isolated_reward = 2 if is_isolated_node else 0
 
-        unvisited_stops = self.get_unvisited_stops()
-        calcAvg(new_state, unvisited_stops, self)
+        # unvisited_stops = self.get_unvisited_stops()
+        # calcAvg(new_state, unvisited_stops, self)
 
         return distance_reward + yellow_reward + danger_reward + isolated_reward
         # return (1 - trade_of_factor * distance ** 2)
