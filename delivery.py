@@ -1,4 +1,5 @@
 import sys
+import time
 import random
 import imageio
 import matplotlib.pyplot as plt
@@ -214,6 +215,8 @@ def runMain(index):
             env_Q.generate_data(add_data)
 
             # =============== Q learning ===============
+            print('Q learning start')
+            start = time.time()
 
             agent = DeliveryQAgent(
                 states_size=num_points,
@@ -241,7 +244,8 @@ def runMain(index):
             # 產生UAV路徑圖
             uav_run_img = env_Q.render(return_img = True)
             imageio.mimsave(f"./result/Q_learning/{index}_epsilon_min{params['epsilon_min']}_gamma{params['gamma']}_lr{params['lr']}_loop_index{num+1}_UAV_result.gif",[uav_run_img],fps = 10)
-
+            end = time.time()
+            print('Q learning end', end - start)
             # =============== Q learning end ===========
 
             if env.stops == []:
@@ -254,6 +258,8 @@ def runMain(index):
             # =============== mutihop end ===============
 
             # =============== env_greedy ===============
+            print('env_greedy start')
+            start = time.time()
 
             # 跑 uav greedy
             env_greedy = run_n_greedy(
@@ -268,8 +274,15 @@ def runMain(index):
             # 產生UAV路徑圖
             uav_run_img = env_greedy.render(return_img = True)
             imageio.mimsave(f"./result/greedy/{index}_loop_index{num+1}_UAV_result.gif",[uav_run_img],fps = 10)
+            end = time.time()
+            
+            print('env_greedy end', end - start)
 
             # =============== greedy and mutihop ===========
+            print('greedy and mutihop start')
+            start = time.time()
+
+
             env_greedy_and_mutihop = run_n_greedy(
                 env_greedy_and_mutihop, 
                 n_episodes=n_episodes,
@@ -281,10 +294,15 @@ def runMain(index):
             # 產生UAV路徑圖
             uav_run_img = env_greedy_and_mutihop.render(return_img = True)
             imageio.mimsave(f"./result/greedy_and_mutihop/{index}_loop_index{num+1}_UAV_result.gif",[uav_run_img],fps = 10)
-
+            
+            end = time.time()
+            print('greedy and mutihop end', end - start)
             # =============== greedy and mutihop ===============
 
             # =============== drift greedy and mutihop ===============
+            print('drift greedy and mutihop start')
+            start = time.time()
+
             # 跑 uav greedy
             env_drift_greedy_and_mutihop = run_n_greedy_drift(
                 env_drift_greedy_and_mutihop, 
@@ -298,6 +316,9 @@ def runMain(index):
             # 產生UAV路徑圖
             uav_run_img = env_drift_greedy_and_mutihop.render(return_img = True)
             imageio.mimsave(f"./result/drift_greedy_and_mutihop/{index}_loop_index{num+1}_UAV_result.gif",[uav_run_img],fps = 10)
+            
+            end = time.time()
+            print('drift greedy and mutihop end', end - start)
 
             # =============== drift greedy and mutihop ===============
             print('296', sum(env_greedy.data_amount_list))

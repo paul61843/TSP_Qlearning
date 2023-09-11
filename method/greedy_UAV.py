@@ -34,6 +34,10 @@ def run_n_greedy(
     for i in env.x:
         env.unvisited_stops = env.get_unvisited_stops()
         a = getMostDataOfSensor(env.data_amount_list, env.unvisited_stops)
+
+        if a == None:
+            break
+        
         env.stops.append(a)
 
         distance = calcDistance(env.x[env.stops], env.y[env.stops])
@@ -68,6 +72,9 @@ def run_n_greedy_drift(
     for i in env.x:
         env.unvisited_stops = env.get_unvisited_stops()
         a = getMostDataOfSensor(env.data_amount_list, env.unvisited_stops)
+        if a == None:
+            break
+
         env.stops.append(a)
 
         init_pos_x, init_pos_y = init_position
