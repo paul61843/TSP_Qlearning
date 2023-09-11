@@ -69,7 +69,7 @@ sys.path.append("../")
 # 設定環境參數
 num_processes = 1 # 同時執行數量 (產生結果數量)
 num_points = 100 # 節點數
-max_box = 3000 # 場景大小
+max_box = 1000 # 場景大小
 
 n_episodes = 2000 # 訓練次數
 num_uav_loops = 10 # UAV 拜訪幾輪
@@ -214,39 +214,39 @@ def runMain(index):
             env_drift_greedy_and_mutihop.generate_data(add_data)
             env_Q.generate_data(add_data)
 
-            # =============== Q learning ===============
-            print('Q learning start')
-            start = time.time()
+            # # =============== Q learning ===============
+            # print('Q learning start')
+            # start = time.time()
 
-            agent = DeliveryQAgent(
-                states_size=num_points,
-                actions_size=num_points,
-                epsilon = 1.0,
-                epsilon_min = params["epsilon_min"],
-                epsilon_decay = 0.9998,
-                gamma = params["gamma"],
-                lr = params["lr"]
-            )
+            # agent = DeliveryQAgent(
+            #     states_size=num_points,
+            #     actions_size=num_points,
+            #     epsilon = 1.0,
+            #     epsilon_min = params["epsilon_min"],
+            #     epsilon_decay = 0.9998,
+            #     gamma = params["gamma"],
+            #     lr = params["lr"]
+            # )
 
-            # 跑 Q learning
-            env_Q,agent = run_n_episodes(
-                env_Q, 
-                agent,
-                n_episodes=n_episodes,
-                result_index=index,
-                loop_index=num+1,
-                train_params=params,
-            )
+            # # 跑 Q learning
+            # env_Q,agent = run_n_episodes(
+            #     env_Q, 
+            #     agent,
+            #     n_episodes=n_episodes,
+            #     result_index=index,
+            #     loop_index=num+1,
+            #     train_params=params,
+            # )
 
-            # # uav 開始飛行
-            env_Q = run_uav(env_Q, init_position)
+            # # # uav 開始飛行
+            # env_Q = run_uav(env_Q, init_position)
 
-            # 產生UAV路徑圖
-            uav_run_img = env_Q.render(return_img = True)
-            imageio.mimsave(f"./result/Q_learning/{index}_epsilon_min{params['epsilon_min']}_gamma{params['gamma']}_lr{params['lr']}_loop_index{num+1}_UAV_result.gif",[uav_run_img],fps = 10)
-            end = time.time()
-            print('Q learning end', end - start)
-            # =============== Q learning end ===========
+            # # 產生UAV路徑圖
+            # uav_run_img = env_Q.render(return_img = True)
+            # imageio.mimsave(f"./result/Q_learning/{index}_epsilon_min{params['epsilon_min']}_gamma{params['gamma']}_lr{params['lr']}_loop_index{num+1}_UAV_result.gif",[uav_run_img],fps = 10)
+            # end = time.time()
+            # print('Q learning end', end - start)
+            # # =============== Q learning end ===========
 
             if env.stops == []:
                 print('no stops')
@@ -321,15 +321,12 @@ def runMain(index):
             print('drift greedy and mutihop end', end - start)
 
             # =============== drift greedy and mutihop ===============
-            print('296', sum(env_greedy.data_amount_list))
 
             # 清除無人跡拜訪後的感測器資料
             env_greedy.clear_data(init_position, False)
             env_greedy_and_mutihop.clear_data(init_position, False)
             env_drift_greedy_and_mutihop.clear_data(init_position, True)
             env_Q.clear_data(init_position, True)
-
-            print('304', sum(env_greedy.data_amount_list))
 
 
             # 感測器儲存的資料，減去mutihop幫傳的資料

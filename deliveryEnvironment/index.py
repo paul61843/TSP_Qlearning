@@ -22,9 +22,9 @@ class DeliveryEnvironment(object):
         self.uav_range = 30 # 無人機通訊半徑範圍 (單位m)
         self.uav_speed = 5 # 無人機移動速度 (單位 m/s)
         self.uav_energy = 100 * 1000 # 無人機電量 (單位w)
-        self.uav_energy_consumption = 100 # 無人機每秒消耗電量 (單位w)
+        self.uav_energy_consumption = 200 # 無人機每秒消耗電量 (單位w)
         self.uav_flyTime = self.uav_energy / self.uav_energy_consumption # 無人機可飛行時間 1000秒 (單位s)
-        self.max_move_distance = 5000 # 無人機最大移動距離 (單位m)
+        self.max_move_distance = 1500 # 無人機最大移動距離 (單位m)
         
 
         # 無人機探索，飄移節點最大能量消耗
@@ -82,12 +82,18 @@ class DeliveryEnvironment(object):
             while (len(points) < self.n_stops):
                 x,y = (np.random.rand(1,2) * self.max_box)[0]
                 for p in points:
-                    isTrue = any(((x - p[0]) ** 2 + (y - p[1]) ** 2 ) ** 0.5 <= self.point_range for p in points)
+                    isTrue = any(
+                        (((x - p[0]) ** 2 + (y - p[1]) ** 2 ) ** 0.5 <= self.point_range) and 
+                        (((x - p[0]) ** 2 + (y - p[1]) ** 2 ) ** 0.5 >= self.point_range / 2) 
+                        for p in points
+                    )
                     if isTrue:
                         points = np.append(points, [np.array([x,y])], axis=0)
+                        print(len(points))
                         break
             self.x = points[:,0]
             self.y = points[:,1]
+            print(points)
 
         # 預設感測器的目前資料量為0
         self.data_amount_list = [0] * self.n_stops
@@ -147,47 +153,49 @@ class DeliveryEnvironment(object):
     def render(self,return_img = False):
         
         fig = plt.figure(figsize=(7,7))
-        ax = fig.add_subplot(111)
-        ax.set_title("Delivery Stops")
+        ax = plt.axes()
+        plt.title("Delivery Stops")
+        plt.xlabel("x axis")
+        plt.ylabel("y axis")
         
         # Show stops
-        ax.scatter(self.x,self.y,c = "black",s = 50)
+        plt.scatter(self.x,self.y,c = "black",s = 50)
         
         self.red_stops = []
 
         # 將孤立節點標記為灰色
         for i in self.isolated_node:
-            ax.scatter(self.x[i], self.y[i], c = "#AAAAAA", s = 50)
+            plt.scatter(self.x[i], self.y[i], c = "#AAAAAA", s = 50)
 
         # 感測器的資料量大於50，將節點標記為黃色、紅色(代表優先節點)
         for i in range(self.n_stops):
             if self.data_amount_list[i] > self.calc_threshold:
-                ax.scatter(self.x[i], self.y[i], c = "yellow", s = 50)
+                plt.scatter(self.x[i], self.y[i], c = "yellow", s = 50)
 
             if self.data_amount_list[i] > self.calc_danger_threshold:
                 self.red_stops.append(i)
-                ax.scatter(self.x[i], self.y[i], c = "red", s = 50) 
+                plt.scatter(self.x[i], self.y[i], c = "red", s = 50) 
 
         # Show START
         if len(self.stops) > 0:
             xy = self._get_xy(initial = True)
             xytext = xy[0] + 0.1, xy[1]-0.05
-            ax.annotate("START",xy=xy,xytext=xytext,weight = "bold")
+            plt.annotate("START",xy=xy,xytext=xytext,weight = "bold")
 
         # Show itinerary
         if len(self.stops) > 1:
             x = np.concatenate((self.x[self.stops], [self.x[self.stops[0]]]))
             y = np.concatenate((self.y[self.stops], [self.y[self.stops[0]]]))
-            ax.plot(x, y, c = "blue",linewidth=1,linestyle="--")
+            plt.plot(x, y, c = "blue",linewidth=1,linestyle="--")
             
             # Annotate END
             xy = self._get_xy(initial = False)
             xytext = xy[0]+0.1,xy[1]-0.05
-            ax.annotate("END",xy=xy,xytext=xytext,weight = "bold")
+            plt.annotate("END",xy=xy,xytext=xytext,weight = "bold")
 
 
-        plt.xticks([])
-        plt.yticks([])
+        plt.xticks(list(range(0, self.max_box + 1, 100)))
+        plt.yticks(list(range(0, self.max_box + 1, 100)))
         
         if return_img:
             # From https://ndres.me/post/matplotlib-animated-gifs-easily/
