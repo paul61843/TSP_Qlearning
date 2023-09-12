@@ -54,7 +54,7 @@ class DeliveryEnvironment(object):
 
         # 感測器資料量相關
         self.data_amount_list = [] # 感測器儲存的資料量
-        self.buffer_size = 100 # 感測器儲存資料的最大量
+        self.buffer_size = 50 # 感測器儲存資料的最大量
         self.calc_threshold = self.buffer_size * 50 # 感測器資料量超過 50% 門檻
         self.calc_danger_threshold = self.buffer_size * 75 # 感測器資料量超過 75% 門檻
 
@@ -90,11 +90,9 @@ class DeliveryEnvironment(object):
                     )
                     if isTrue:
                         points = np.append(points, [np.array([x,y])], axis=0)
-                        print(len(points))
                         break
             self.x = points[:,0]
             self.y = points[:,1]
-            print(points)
 
         # 預設感測器的目前資料量為0
         self.data_amount_list = [0] * self.n_stops
@@ -117,6 +115,9 @@ class DeliveryEnvironment(object):
     def generate_data(self, add_data):
         arr1 = self.data_amount_list
         arr2 = add_data
+        
+        added_data = [ x + y for x, y in zip(arr1, arr2) ]
+        added_data = [ x if x <= self.buffer_size else self.buffer_size for x in added_data ]
 
         self.data_amount_list = [x + y for x, y in zip(arr1, arr2)]
 
