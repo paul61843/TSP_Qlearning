@@ -15,16 +15,16 @@ class DeliveryEnvironment(object):
         print(f"Target metric for optimization is {method}")
 
         # Environment Config
-        self.point_range = 5 # 節點通訊半徑範圍 (單位 10m)
-        self.drift_range = 10 # 節點飄移範圍 (單位 10m)
+        self.point_range = 10 # 節點通訊半徑範圍 (單位 10m)
+        self.drift_range = 5 # 節點飄移範圍 (單位 10m)
         
         # UAV Config
-        self.uav_range = 10 # 無人機通訊半徑範圍 (單位 10m)
+        self.uav_range = 5 # 無人機通訊半徑範圍 (單位 10m)
         self.uav_speed = 0.5 # 無人機移動速度 (單位 10m/s)
         self.uav_energy = 100 * 1000 # 無人機電量 (單位w)
         self.uav_energy_consumption = 200 # 無人機每秒消耗電量 (單位w)
         self.uav_flyTime = self.uav_energy / self.uav_energy_consumption # 無人機可飛行時間 (單位s)
-        self.max_move_distance = 300 # 無人機最大移動距離 (單位 10m)
+        self.max_move_distance = 500 # 無人機最大移動距離 (單位 10m)
         
 
         # 無人機探索，飄移節點最大能量消耗
@@ -181,7 +181,13 @@ class DeliveryEnvironment(object):
             xy = self._get_xy(initial = True)
             xytext = xy[0] + 0.1, xy[1]-0.05
             plt.annotate("SINK",xy=xy,xytext=xytext,weight = "bold")
-
+            
+        # Show itinerary
+        if len(self.stops) > 1:
+            x = np.concatenate((self.x[self.stops], [self.x[self.stops[0]]]))
+            y = np.concatenate((self.y[self.stops], [self.y[self.stops[0]]]))
+            plt.plot(x, y, c = "blue",linewidth=1,linestyle="--")
+            
         plt.xticks(list(range(0, self.max_box + 20, 10)))
         plt.yticks(list(range(0, self.max_box + 20, 10)))
         
