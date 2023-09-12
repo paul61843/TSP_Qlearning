@@ -206,6 +206,7 @@ def runMain(index):
             # 隨機產生資料
             add_data = np.random.randint(env.data_generatation_range, size=env.max_box)
             total_data = total_data + sum(add_data)
+            print('209', total_data)
 
             env.generate_data(add_data)
             env_mutihop.generate_data(add_data)
@@ -213,40 +214,41 @@ def runMain(index):
             env_greedy_and_mutihop.generate_data(add_data)
             env_drift_greedy_and_mutihop.generate_data(add_data)
             env_Q.generate_data(add_data)
+            
 
-            # =============== Q learning ===============
-            print('Q learning start')
-            start = time.time()
+            # # =============== Q learning ===============
+            # print('Q learning start')
+            # start = time.time()
 
-            agent = DeliveryQAgent(
-                states_size=num_points,
-                actions_size=num_points,
-                epsilon = 1.0,
-                epsilon_min = params["epsilon_min"],
-                epsilon_decay = 0.9998,
-                gamma = params["gamma"],
-                lr = params["lr"]
-            )
+            # agent = DeliveryQAgent(
+            #     states_size=num_points,
+            #     actions_size=num_points,
+            #     epsilon = 1.0,
+            #     epsilon_min = params["epsilon_min"],
+            #     epsilon_decay = 0.9998,
+            #     gamma = params["gamma"],
+            #     lr = params["lr"]
+            # )
 
-            # 跑 Q learning
-            env_Q,agent = run_n_episodes(
-                env_Q, 
-                agent,
-                n_episodes=n_episodes,
-                result_index=index,
-                loop_index=num+1,
-                train_params=params,
-            )
+            # # 跑 Q learning
+            # env_Q,agent = run_n_episodes(
+            #     env_Q, 
+            #     agent,
+            #     n_episodes=n_episodes,
+            #     result_index=index,
+            #     loop_index=num+1,
+            #     train_params=params,
+            # )
 
-            # # uav 開始飛行
-            env_Q = run_uav(env_Q, init_position)
+            # # # uav 開始飛行
+            # env_Q = run_uav(env_Q, init_position)
 
-            # 產生UAV路徑圖
-            uav_run_img = env_Q.render(return_img = True)
-            imageio.mimsave(f"./result/Q_learning/{index}_epsilon_min{params['epsilon_min']}_gamma{params['gamma']}_lr{params['lr']}_loop_index{num+1}_UAV_result.gif",[uav_run_img],fps = 10)
-            end = time.time()
-            print('Q learning end', end - start)
-            # =============== Q learning end ===========
+            # # 產生UAV路徑圖
+            # uav_run_img = env_Q.render(return_img = True)
+            # imageio.mimsave(f"./result/Q_learning/{index}_epsilon_min{params['epsilon_min']}_gamma{params['gamma']}_lr{params['lr']}_loop_index{num+1}_UAV_result.gif",[uav_run_img],fps = 10)
+            # end = time.time()
+            # print('Q learning end', end - start)
+            # # =============== Q learning end ===========
 
             if env.stops == []:
                 print('no stops')
@@ -347,15 +349,21 @@ def runMain(index):
             q_sensor_data = sum(env_Q.data_amount_list)
             m_sensor_data = sum(env_mutihop.data_amount_list)
 
+            g_sensor_lost = total_data - (g_sensor_data + env_greedy.uav_data)
+            gam_sensor_lost = total_data - (gam_mutihop_data + gam_sensor_data + env_greedy_and_mutihop.uav_data)
+            dgam_sensor_lost = total_data - (dgam_mutihop_data + dgam_sensor_data + env_drift_greedy_and_mutihop.uav_data)
+            q_sensor_lost = total_data - (q_mutihop_data + q_sensor_data + env_Q.uav_data)
+            m_sensor_lost = total_data - (m_mutihop_data + m_sensor_data + env_mutihop.uav_data)
+
             csv_utils.write('./result/train_table.csv', 
                 [
                     # 系統產生的總資料量、感測器內的資料量、UAV幫助的資料量
-                    [''.ljust(30),                        'total_data'.ljust(20)    ,  'mutihop'.ljust(20)               ,  'sensor_data'.ljust(20)                 ,   'uav_data'.ljust(20)                                 , 'sum'.ljust(20)                                                                               ],
-                    ['greedy'.ljust(30) ,                  str(total_data).ljust(20),  str(g_mutihop_data).ljust(20)     ,   str(g_sensor_data).ljust(20)           ,   str(env_greedy.uav_data).ljust(20)                   ,  str(g_sensor_data + env_greedy.uav_data).ljust(20)                                           ],
-                    ['mutihop'.ljust(30),                  str(total_data).ljust(20),  str(m_mutihop_data).ljust(20)     ,   str(m_sensor_data).ljust(20)           ,   str(env_mutihop.uav_data).ljust(20)                  ,  str(m_mutihop_data + m_sensor_data + env_mutihop.uav_data).ljust(20)                         ],
-                    ['greedy_and_mutihop'.ljust(30),       str(total_data).ljust(20),  str(gam_mutihop_data).ljust(20)   ,   str(gam_sensor_data).ljust(20)         ,   str(env_greedy_and_mutihop.uav_data).ljust(20)       ,  str(gam_mutihop_data + gam_sensor_data + env_greedy_and_mutihop.uav_data).ljust(20)          ],
-                    ['drift_greedy_and_mutihop'.ljust(30), str(total_data).ljust(20),  str(dgam_mutihop_data).ljust(20)  ,   str(dgam_sensor_data).ljust(20)        ,   str(env_drift_greedy_and_mutihop.uav_data).ljust(20) ,  str(dgam_mutihop_data + dgam_sensor_data + env_drift_greedy_and_mutihop.uav_data).ljust(20)  ],
-                    ['Q_learning'.ljust(30),               str(total_data).ljust(20),  str(q_mutihop_data).ljust(20)     ,   str(q_sensor_data).ljust(20)           ,   str(env_Q.uav_data).ljust(20)                        ,  str(q_mutihop_data + q_sensor_data + env_Q.uav_data).ljust(20)                               ],
+                    [''.ljust(30),                        'total_data'.ljust(15)    ,  'mutihop'.ljust(15)               ,  'sensor_data'.ljust(15)                 ,   'uav_data'.ljust(15),                                 'lost_data'.ljust(15),             'sum'.ljust(15)                                                                               ],
+                    ['greedy'.ljust(30) ,                  str(total_data).ljust(15),  str(g_mutihop_data).ljust(15)     ,   str(g_sensor_data).ljust(15)           ,   str(env_greedy.uav_data).ljust(15),                   str(g_sensor_lost).ljust(15),      str(g_sensor_data + env_greedy.uav_data).ljust(15)                                           ],
+                    ['mutihop'.ljust(30),                  str(total_data).ljust(15),  str(m_mutihop_data).ljust(15)     ,   str(m_sensor_data).ljust(15)           ,   str(env_mutihop.uav_data).ljust(15),                  str(m_sensor_lost).ljust(15),      str(m_mutihop_data + m_sensor_data + env_mutihop.uav_data).ljust(15)                         ],
+                    ['greedy_and_mutihop'.ljust(30),       str(total_data).ljust(15),  str(gam_mutihop_data).ljust(15)   ,   str(gam_sensor_data).ljust(15)         ,   str(env_greedy_and_mutihop.uav_data).ljust(15),       str(gam_sensor_lost).ljust(15),    str(gam_mutihop_data + gam_sensor_data + env_greedy_and_mutihop.uav_data).ljust(15)          ],
+                    ['drift_greedy_and_mutihop'.ljust(30), str(total_data).ljust(15),  str(dgam_mutihop_data).ljust(15)  ,   str(dgam_sensor_data).ljust(15)        ,   str(env_drift_greedy_and_mutihop.uav_data).ljust(15), str(dgam_sensor_lost).ljust(15),   str(dgam_mutihop_data + dgam_sensor_data + env_drift_greedy_and_mutihop.uav_data).ljust(15)  ],
+                    ['Q_learning'.ljust(30),               str(total_data).ljust(15),  str(q_mutihop_data).ljust(15)     ,   str(q_sensor_data).ljust(15)           ,   str(env_Q.uav_data).ljust(15),                        str(q_sensor_lost).ljust(15),      str(q_mutihop_data + q_sensor_data + env_Q.uav_data).ljust(15)                               ],
                 ]
             )
 

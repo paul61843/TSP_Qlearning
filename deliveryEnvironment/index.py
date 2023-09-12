@@ -117,9 +117,7 @@ class DeliveryEnvironment(object):
         arr2 = add_data
         
         added_data = [ x + y for x, y in zip(arr1, arr2) ]
-        added_data = [ x if x <= self.buffer_size else self.buffer_size for x in added_data ]
-
-        self.data_amount_list = [x + y for x, y in zip(arr1, arr2)]
+        self.data_amount_list = [ x if x <= self.buffer_size else self.buffer_size for x in added_data ]
 
     # 減去 muti hop 傳輸的資料
     def subtract_mutihop_data(self):
