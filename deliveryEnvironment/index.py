@@ -15,16 +15,16 @@ class DeliveryEnvironment(object):
         print(f"Target metric for optimization is {method}")
 
         # Environment Config
-        self.point_range = 20 # 節點通訊半徑範圍 (單位m)
-        self.drift_range = 30 # 節點飄移範圍 (單位m)
+        self.point_range = 5 # 節點通訊半徑範圍 (單位 10m)
+        self.drift_range = 10 # 節點飄移範圍 (單位 10m)
         
         # UAV Config
-        self.uav_range = 30 # 無人機通訊半徑範圍 (單位m)
-        self.uav_speed = 5 # 無人機移動速度 (單位 m/s)
+        self.uav_range = 10 # 無人機通訊半徑範圍 (單位 10m)
+        self.uav_speed = 0.5 # 無人機移動速度 (單位 10m/s)
         self.uav_energy = 100 * 1000 # 無人機電量 (單位w)
         self.uav_energy_consumption = 200 # 無人機每秒消耗電量 (單位w)
-        self.uav_flyTime = self.uav_energy / self.uav_energy_consumption # 無人機可飛行時間 1000秒 (單位s)
-        self.max_move_distance = 1500 # 無人機最大移動距離 (單位m)
+        self.uav_flyTime = self.uav_energy / self.uav_energy_consumption # 無人機可飛行時間 (單位s)
+        self.max_move_distance = 300 # 無人機最大移動距離 (單位 10m)
         
 
         # 無人機探索，飄移節點最大能量消耗

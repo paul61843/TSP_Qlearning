@@ -69,7 +69,7 @@ sys.path.append("../")
 # 設定環境參數
 num_processes = 1 # 同時執行數量 (產生結果數量)
 num_points = 100 # 節點數
-max_box = 1000 # 場景大小
+max_box = 100  # 場景大小 單位 (10m)
 
 n_episodes = 2000 # 訓練次數
 num_uav_loops = 10 # UAV 拜訪幾輪
