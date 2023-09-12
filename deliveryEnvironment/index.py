@@ -180,22 +180,10 @@ class DeliveryEnvironment(object):
         if len(self.stops) > 0:
             xy = self._get_xy(initial = True)
             xytext = xy[0] + 0.1, xy[1]-0.05
-            plt.annotate("START",xy=xy,xytext=xytext,weight = "bold")
+            plt.annotate("SINK",xy=xy,xytext=xytext,weight = "bold")
 
-        # Show itinerary
-        if len(self.stops) > 1:
-            x = np.concatenate((self.x[self.stops], [self.x[self.stops[0]]]))
-            y = np.concatenate((self.y[self.stops], [self.y[self.stops[0]]]))
-            plt.plot(x, y, c = "blue",linewidth=1,linestyle="--")
-            
-            # Annotate END
-            xy = self._get_xy(initial = False)
-            xytext = xy[0]+0.1,xy[1]-0.05
-            plt.annotate("END",xy=xy,xytext=xytext,weight = "bold")
-
-
-        plt.xticks(list(range(0, self.max_box + 1, 100)))
-        plt.yticks(list(range(0, self.max_box + 1, 100)))
+        plt.xticks(list(range(0, self.max_box + 20, 10)))
+        plt.yticks(list(range(0, self.max_box + 20, 10)))
         
         if return_img:
             # From https://ndres.me/post/matplotlib-animated-gifs-easily/
@@ -242,10 +230,11 @@ class DeliveryEnvironment(object):
         for i in range(1, len(self.x)):
             if i != self.first_point:
                 self.x[i] = self.x[i] + random.uniform(-self.drift_range, self.drift_range)
-                self.x[i] >=0 if self.x[i] else 0
-
+                self.x[i] = 0 if self.x[i] <= 0 else self.max_box if self.x[i] >= self.max_box else self.x[i]
+                
                 self.y[i] = self.y[i] + random.uniform(-self.drift_range, self.drift_range)
-                self.y[i] >=0 if self.y[i] else 0
+                self.y[i] = 0 if self.y[i] <= 0 else self.max_box if self.y[i] >= self.max_box else self.y[i]
+                
         
 
     def _get_state(self):
