@@ -16,7 +16,7 @@ class DeliveryEnvironment(object):
 
         # Environment Config
         self.point_range = 10 # 節點通訊半徑範圍 (單位 10m)
-        self.drift_range = 5 # 節點飄移範圍 (單位 10m)
+        self.drift_range = 6 # 節點飄移範圍 (單位 10m)
         
         # UAV Config
         self.uav_range = 5 # 無人機通訊半徑範圍 (單位 10m)
@@ -159,22 +159,22 @@ class DeliveryEnvironment(object):
         plt.ylabel("y axis")
         
         # Show stops
-        plt.scatter(self.x,self.y,c = "black",s = 50)
+        plt.scatter(self.x,self.y,c = "black",s = 30)
         
         self.red_stops = []
 
         # 將孤立節點標記為灰色
         for i in self.isolated_node:
-            plt.scatter(self.x[i], self.y[i], c = "#AAAAAA", s = 50)
+            plt.scatter(self.x[i], self.y[i], c = "#AAAAAA", s = 30)
 
         # 感測器的資料量大於50，將節點標記為黃色、紅色(代表優先節點)
         for i in range(self.n_stops):
             if self.data_amount_list[i] > self.calc_threshold:
-                plt.scatter(self.x[i], self.y[i], c = "yellow", s = 50)
+                plt.scatter(self.x[i], self.y[i], c = "yellow", s = 30)
 
             if self.data_amount_list[i] > self.calc_danger_threshold:
                 self.red_stops.append(i)
-                plt.scatter(self.x[i], self.y[i], c = "red", s = 50) 
+                plt.scatter(self.x[i], self.y[i], c = "red", s = 30) 
 
         # Show START
         if len(self.stops) > 0:
