@@ -191,6 +191,7 @@ def runMain(index):
         init_Y = np.array(env.y)
         init_position = [init_X, init_Y]
 
+        num_uav_loops = int(env.system_time // env.max_move_distance)
         for num in range(num_uav_loops):
             env_mutihop.x = np.array(env.x)
             env_mutihop.y = np.array(env.y)
@@ -205,15 +206,15 @@ def runMain(index):
 
             # 隨機產生資料
             add_data = np.random.randint(env.data_generatation_range, size=env.max_box)
-            total_data = total_data + sum(add_data)
-            print('209', total_data)
+            print(add_data)
+            # total_data = total_data + sum(add_data)
 
-            env.generate_data(add_data)
-            env_mutihop.generate_data(add_data)
-            env_greedy.generate_data(add_data)
-            env_greedy_and_mutihop.generate_data(add_data)
-            env_drift_greedy_and_mutihop.generate_data(add_data)
-            env_Q.generate_data(add_data)
+            # env.generate_data(add_data)
+            # env_mutihop.generate_data(add_data)
+            # env_greedy.generate_data(add_data)
+            # env_greedy_and_mutihop.generate_data(add_data)
+            # env_drift_greedy_and_mutihop.generate_data(add_data)
+            # env_Q.generate_data(add_data)
             
 
             # # =============== Q learning ===============
@@ -312,7 +313,8 @@ def runMain(index):
                 result_index=index,
                 loop_index=num+1,
                 train_params=params,
-                init_position=init_position
+                init_position=init_position,
+                total_data=total_data,
             )
 
             # 產生UAV路徑圖
@@ -355,6 +357,7 @@ def runMain(index):
             q_sensor_lost = total_data - (q_mutihop_data + q_sensor_data + env_Q.uav_data)
             m_sensor_lost = total_data - (m_mutihop_data + m_sensor_data + env_mutihop.uav_data)
 
+            csv_utils.writeDataToCSV('./result/drift_greedy_and_mutihop/drift_greedy_and_mutihop.csv', env_drift_greedy_and_mutihop.result)
             csv_utils.write('./result/train_table.csv', 
                 [
                     # 系統產生的總資料量、感測器內的資料量、UAV幫助的資料量

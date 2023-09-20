@@ -1,4 +1,6 @@
 import csv
+import numpy as np
+import copy
 
 
 def write(path='./result/train_table.csv', content = []):
@@ -20,3 +22,24 @@ def read(path='./result/train_table.csv'):
         csv_content = [row for row in reader]
 
     return csv_content
+
+def writeDataToCSV(path, data):
+    new_row = np.array([[
+        'run_time'.ljust(15), 
+        'total_data'.ljust(15),  
+        'mutihop'.ljust(15), 
+        'sensor_data'.ljust(15),   
+        'uav_data'.ljust(15),
+        'lost_data'.ljust(15),
+    ]])
+    data = np.array(copy.deepcopy(data))
+    
+    for (x,y), value in np.ndenumerate(data):
+        data[x][y] = str(data[x][y]).ljust(15)
+    
+    print(data)
+    
+    concatArr = np.concatenate((new_row, data), axis=0)
+    
+    
+    write(path, concatArr)

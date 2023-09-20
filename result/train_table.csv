@@ -1,2 +1,6 @@
-red_distance,q_distance,opt_distance
-0,334.99646756857635,131.2112760014008
+                              ,total_data     ,mutihop        ,sensor_data    ,uav_data       ,lost_data      ,sum            
+greedy                        ,0              ,0              ,0              ,0              ,0              ,0              
+mutihop                       ,0              ,0              ,0              ,0              ,0              ,0              
+greedy_and_mutihop            ,0              ,0              ,0              ,0              ,0              ,0              
+drift_greedy_and_mutihop      ,0              ,20923          ,0              ,2221           ,-23144         ,23144          
+Q_learning                    ,0              ,0              ,0              ,0              ,0              ,0              

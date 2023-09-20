@@ -17,6 +17,9 @@ class DeliveryEnvironment(object):
         # Environment Config
         self.point_range = 10 # 節點通訊半徑範圍 (單位 10m)
         self.drift_range = 6 # 節點飄移範圍 (單位 10m)
+        self.system_time = 5000 # 執行時間 (單位s)
+        self.unit_time = 100 # 時間單位 (單位s)
+        self.current_time = 0 # 目前時間 (單位s)
         
         # UAV Config
         self.uav_range = 5 # 無人機通訊半徑範圍 (單位 10m)
@@ -33,7 +36,7 @@ class DeliveryEnvironment(object):
         self.drift_max_cost = 2 * (self.drift_range / 2) * math.pi  # 公式 2 x 3.14 x (r/2)
 
         self.data_generatation_range = 20 # 節點資料從 1 ~ 20 數字中隨機增加
-        self.mutihop_transmission = 5 # 透過muti-hop方式 減少的資料量
+        self.mutihop_transmission = 1 # 透過muti-hop方式 減少的資料量
 
 
         # Initialization
@@ -47,10 +50,12 @@ class DeliveryEnvironment(object):
         self.red_stops = []
         self.drift_cost_list = []
         self.method = method
+        self.result = []
 
         # 資料
         self.uav_data = 0
         self.sum_mutihop_data = 0
+        self.generate_data_total = 0
 
         # 感測器資料量相關
         self.data_amount_list = [] # 感測器儲存的資料量
