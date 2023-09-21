@@ -206,7 +206,6 @@ def runMain(index):
 
             # 隨機產生資料
             add_data = np.random.randint(env.data_generatation_range, size=env.max_box)
-            print(add_data)
             # total_data = total_data + sum(add_data)
 
             # env.generate_data(add_data)
@@ -334,10 +333,10 @@ def runMain(index):
 
 
             # 感測器儲存的資料，減去mutihop幫傳的資料
-            env_mutihop.subtract_mutihop_data()
-            env_greedy_and_mutihop.subtract_mutihop_data()
-            env_drift_greedy_and_mutihop.subtract_mutihop_data()
-            env_Q.subtract_mutihop_data()
+            # env_mutihop.subtract_mutihop_data()
+            # env_greedy_and_mutihop.subtract_mutihop_data()
+            # env_drift_greedy_and_mutihop.subtract_mutihop_data()
+            # env_Q.subtract_mutihop_data()
 
             g_mutihop_data = env_greedy.sum_mutihop_data
             gam_mutihop_data = env_greedy_and_mutihop.sum_mutihop_data

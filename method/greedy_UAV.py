@@ -109,9 +109,13 @@ def run_n_greedy_drift(
             if recordIndex <= int(env.current_time // env.unit_time):
                 for i in range(int(env.current_time // env.unit_time) - recordIndex + 1):
                     env.clear_data(init_position, False)
-                    env.subtract_mutihop_data()
+                    
+                    if (recordIndex % 5) == 0: 
+                        env.subtract_mutihop_data()
+                    
                     mutihop_data = env.sum_mutihop_data
                     sensor_data = sum(env.data_amount_list)
+                    print(recordIndex, env.data_amount_list)
                     total_data = env.generate_data_total
 
                     lost_data = env.generate_data_total - (mutihop_data + sensor_data + env.uav_data)
@@ -128,7 +132,9 @@ def run_n_greedy_drift(
         if recordIndex <= int(env.current_time // env.unit_time):
             for i in range(int(env.current_time // env.unit_time) - recordIndex + 1):
                 env.clear_data(init_position, False)
-                env.subtract_mutihop_data()
+                if (recordIndex % 5) == 0: 
+                    env.subtract_mutihop_data()
+                    
                 mutihop_data = env.sum_mutihop_data
                 sensor_data = sum(env.data_amount_list)
                 total_data = env.generate_data_total

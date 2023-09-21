@@ -37,8 +37,6 @@ def writeDataToCSV(path, data):
     for (x,y), value in np.ndenumerate(data):
         data[x][y] = str(data[x][y]).ljust(15)
     
-    print(data)
-    
     concatArr = np.concatenate((new_row, data), axis=0)
     
     
