@@ -72,7 +72,6 @@ num_points = 100 # 節點數
 max_box = 100  # 場景大小 單位 (10m)
 
 n_episodes = 2000 # 訓練次數
-num_uav_loops = 10 # UAV 拜訪幾輪
 
 # 比較參數
 total_data = 0
@@ -270,12 +269,14 @@ def runMain(index):
                 result_index=index,
                 loop_index=num+1,
                 train_params=params,
-                init_position=init_position
+                init_position=init_position,
+                total_data=total_data,
             )
 
             # 產生UAV路徑圖
             uav_run_img = env_greedy.render(return_img = True)
             imageio.mimsave(f"./result/greedy/{index}_loop_index{num+1}_UAV_result.gif",[uav_run_img],fps = 10)
+            csv_utils.writeDataToCSV('./result/csv/greedy.csv', env_greedy.result)
             end = time.time()
             
             print('env_greedy end', end - start)
@@ -285,17 +286,20 @@ def runMain(index):
             start = time.time()
 
 
-            env_greedy_and_mutihop = run_n_greedy(
+            env_greedy_and_mutihop = run_n_greedy_mutihop(
                 env_greedy_and_mutihop, 
                 n_episodes=n_episodes,
                 result_index=index,
                 loop_index=num+1,
                 train_params=params,
+                init_position=init_position,
+                total_data=total_data,
             )
 
             # 產生UAV路徑圖
             uav_run_img = env_greedy_and_mutihop.render(return_img = True)
             imageio.mimsave(f"./result/greedy_and_mutihop/{index}_loop_index{num+1}_UAV_result.gif",[uav_run_img],fps = 10)
+            csv_utils.writeDataToCSV('./result/csv/greedy_and_mutihop.csv', env_greedy_and_mutihop.result)
             
             end = time.time()
             print('greedy and mutihop end', end - start)
@@ -319,7 +323,9 @@ def runMain(index):
             # 產生UAV路徑圖
             uav_run_img = env_drift_greedy_and_mutihop.render(return_img = True)
             imageio.mimsave(f"./result/drift_greedy_and_mutihop/{index}_loop_index{num+1}_UAV_result.gif",[uav_run_img],fps = 10)
+            csv_utils.writeDataToCSV('./result/csv/drift_greedy_and_mutihop.csv', env_drift_greedy_and_mutihop.result)
             
+
             end = time.time()
             print('drift greedy and mutihop end', end - start)
 
@@ -356,7 +362,6 @@ def runMain(index):
             q_sensor_lost = total_data - (q_mutihop_data + q_sensor_data + env_Q.uav_data)
             m_sensor_lost = total_data - (m_mutihop_data + m_sensor_data + env_mutihop.uav_data)
 
-            csv_utils.writeDataToCSV('./result/drift_greedy_and_mutihop/drift_greedy_and_mutihop.csv', env_drift_greedy_and_mutihop.result)
             csv_utils.write('./result/train_table.csv', 
                 [
                     # 系統產生的總資料量、感測器內的資料量、UAV幫助的資料量

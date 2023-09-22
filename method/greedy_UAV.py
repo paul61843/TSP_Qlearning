@@ -28,6 +28,88 @@ def run_n_greedy(
     loop_index=0,
     train_params={},
     init_position=[],
+    total_data=0,
+):
+    # reset stops
+    env.stops = []
+    env.stops.append(env.first_point)
+
+    for i in env.x:
+        env.unvisited_stops = env.get_unvisited_stops()
+        a = getMostDataOfSensor(env.data_amount_list, env.unvisited_stops)
+
+        if a == None:
+            break
+        
+        env.stops.append(a)
+        
+        recordIndex = int(env.current_time // env.unit_time) + 1
+
+        distance = calcDistance(env.x[env.stops], env.y[env.stops])
+
+        x = env.x[[env.stops[0], env.stops[-1]]]
+        y = env.y[[env.stops[0], env.stops[-1]]]
+        to_start_cost = calcDistance(x, y)
+
+        distance = distance + to_start_cost
+
+        if distance > env.max_move_distance:
+            env.stops.pop()
+            
+            distance = calcDistance(env.x[env.stops], env.y[env.stops])
+            env.current_time = env.current_time + distance
+            
+            if recordIndex <= int(env.current_time // env.unit_time):
+                for i in range(int(env.current_time // env.unit_time) - recordIndex + 1):
+                    env.clear_data(init_position, False)
+                    
+                    mutihop_data = env.sum_mutihop_data
+                    sensor_data = sum(env.data_amount_list)
+                    total_data = env.generate_data_total
+
+                    lost_data = env.generate_data_total - (mutihop_data + sensor_data + env.uav_data)
+                    run_time = recordIndex * env.unit_time
+                    env.result.append([run_time, total_data, mutihop_data, sensor_data, env.uav_data, lost_data])
+                    
+                    recordIndex = recordIndex + 1
+                    added_data = generate_data_50[recordIndex % len(generate_data_50)]
+                    env.generate_data_total = env.generate_data_total + sum(added_data)
+                    env.generate_data(added_data)
+                    
+            
+            break
+        
+        if recordIndex <= int(env.current_time // env.unit_time):
+            for i in range(int(env.current_time // env.unit_time) - recordIndex + 1):
+                env.clear_data(init_position, False)
+                
+                mutihop_data = env.sum_mutihop_data
+                sensor_data = sum(env.data_amount_list)
+                total_data = env.generate_data_total
+
+                lost_data = env.generate_data_total - (mutihop_data + sensor_data + env.uav_data)
+                run_time = recordIndex * env.unit_time
+                env.result.append([run_time, total_data, mutihop_data, sensor_data, env.uav_data, lost_data])
+                
+                recordIndex = recordIndex + 1
+                added_data = generate_data_50[recordIndex % len(generate_data_50)]
+                env.generate_data_total = env.generate_data_total + sum(added_data)
+                env.generate_data(added_data)
+        
+
+    return env
+
+def run_n_greedy_mutihop(
+    env,
+    name="training.gif",
+    n_episodes=1000,
+    render_each=10,
+    fps=10,
+    result_index=0,
+    loop_index=0,
+    train_params={},
+    init_position=[],
+    total_data=0,
 ):
     # reset stops
     env.stops = []
@@ -42,6 +124,8 @@ def run_n_greedy(
         
         env.stops.append(a)
 
+        recordIndex = int(env.current_time // env.unit_time) + 1
+
         distance = calcDistance(env.x[env.stops], env.y[env.stops])
 
         x = env.x[[env.stops[0], env.stops[-1]]]
@@ -49,12 +133,60 @@ def run_n_greedy(
         to_start_cost = calcDistance(x, y)
 
         distance = distance + to_start_cost
+        # print(env.current_time, env.unit_time)
+
 
         if distance > env.max_move_distance:
             env.stops.pop()
-            break
+            
+            distance = calcDistance(env.x[env.stops], env.y[env.stops])
+            env.current_time = env.current_time + distance
+            
+            if recordIndex <= int(env.current_time // env.unit_time):
+                for i in range(int(env.current_time // env.unit_time) - recordIndex + 1):
+                    env.clear_data(init_position, False)
+                    
+                    if (recordIndex % 5) == 0: 
+                        env.subtract_mutihop_data()
+                    
+                    mutihop_data = env.sum_mutihop_data
+                    sensor_data = sum(env.data_amount_list)
+                    total_data = env.generate_data_total
 
+                    lost_data = env.generate_data_total - (mutihop_data + sensor_data + env.uav_data)
+                    run_time = recordIndex * env.unit_time
+                    env.result.append([run_time, total_data, mutihop_data, sensor_data, env.uav_data, lost_data])
+                    
+                    recordIndex = recordIndex + 1
+                    added_data = generate_data_50[recordIndex % len(generate_data_50)]
+                    env.generate_data_total = env.generate_data_total + sum(added_data)
+                    env.generate_data(added_data)
+                    
+            
+            break
+        
+        if recordIndex <= int(env.current_time // env.unit_time):
+            for i in range(int(env.current_time // env.unit_time) - recordIndex + 1):
+                env.clear_data(init_position, False)
+                
+                if (recordIndex % 5) == 0: 
+                    env.subtract_mutihop_data()
+                
+                mutihop_data = env.sum_mutihop_data
+                sensor_data = sum(env.data_amount_list)
+                total_data = env.generate_data_total
+
+                lost_data = env.generate_data_total - (mutihop_data + sensor_data + env.uav_data)
+                run_time = recordIndex * env.unit_time
+                env.result.append([run_time, total_data, mutihop_data, sensor_data, env.uav_data, lost_data])
+                
+                recordIndex = recordIndex + 1
+                added_data = generate_data_50[recordIndex % len(generate_data_50)]
+                env.generate_data_total = env.generate_data_total + sum(added_data)
+                env.generate_data(added_data)
+        
     return env
+
 
 def run_n_greedy_drift(
     env,
@@ -74,7 +206,8 @@ def run_n_greedy_drift(
     
     recordIndex = int(env.current_time // env.unit_time) + 1
 
-
+    print('len', len(env.x))
+    
     for i in env.x:
         
         env.unvisited_stops = env.get_unvisited_stops()
@@ -92,8 +225,6 @@ def run_n_greedy_drift(
         )
 
         distance = calcDistance(env.x[env.stops], env.y[env.stops])
-        
-        env.current_time = env.current_time + distance + drift_cost
         
         x = env.x[[env.stops[0], env.stops[-1]]]
         y = env.y[[env.stops[0], env.stops[-1]]]
@@ -115,7 +246,6 @@ def run_n_greedy_drift(
                     
                     mutihop_data = env.sum_mutihop_data
                     sensor_data = sum(env.data_amount_list)
-                    print(recordIndex, env.data_amount_list)
                     total_data = env.generate_data_total
 
                     lost_data = env.generate_data_total - (mutihop_data + sensor_data + env.uav_data)
@@ -123,6 +253,7 @@ def run_n_greedy_drift(
                     env.result.append([run_time, total_data, mutihop_data, sensor_data, env.uav_data, lost_data])
                     
                     recordIndex = recordIndex + 1
+                    
                     added_data = generate_data_50[recordIndex % len(generate_data_50)]
                     env.generate_data_total = env.generate_data_total + sum(added_data)
                     env.generate_data(added_data)
@@ -143,6 +274,7 @@ def run_n_greedy_drift(
                 env.result.append([run_time, total_data, mutihop_data, sensor_data, env.uav_data, lost_data])
                 
                 recordIndex = recordIndex + 1
+                
                 added_data = generate_data_50[recordIndex % len(generate_data_50)]
                 env.generate_data_total = env.generate_data_total + sum(added_data)
                 env.generate_data(added_data)
