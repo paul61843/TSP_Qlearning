@@ -203,10 +203,10 @@ def run_n_greedy_drift(
     # reset stops
     env.stops = []
     env.stops.append(env.first_point)
+    drift_cost = 0
+
     
     recordIndex = int(env.current_time // env.unit_time) + 1
-
-    print('len', len(env.x))
     
     for i in env.x:
         
@@ -218,11 +218,14 @@ def run_n_greedy_drift(
         env.stops.append(a)
 
         init_pos_x, init_pos_y = init_position
-        drift_cost = calc_drift_cost(
+        
+        add_drift_cost = calc_drift_cost(
             [init_pos_x[a],  env.x[a]], 
             [init_pos_y[a],  env.y[a]], 
             env
         )
+
+        drift_cost = drift_cost + add_drift_cost
 
         distance = calcDistance(env.x[env.stops], env.y[env.stops])
         
@@ -234,6 +237,7 @@ def run_n_greedy_drift(
 
         if total_cost > env.max_move_distance:
             env.stops.pop()
+            drift_cost = drift_cost - add_drift_cost
             distance = calcDistance(env.x[env.stops], env.y[env.stops])
             env.current_time = env.current_time + distance + drift_cost
             

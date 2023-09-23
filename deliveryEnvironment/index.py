@@ -17,7 +17,7 @@ class DeliveryEnvironment(object):
         # Environment Config
         self.point_range = 10 # 節點通訊半徑範圍 (單位 10m)
         self.drift_range = 6 # 節點飄移範圍 (單位 10m)
-        self.system_time = 5000 # 執行時間 (單位s)
+        self.system_time = 6000 # 執行時間 (單位s)
         self.unit_time = 100 # 時間單位 (單位s)
         self.current_time = 0 # 目前時間 (單位s)
         
