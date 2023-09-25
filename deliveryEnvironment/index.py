@@ -17,7 +17,7 @@ class DeliveryEnvironment(object):
         # Environment Config
         self.point_range = 10 # 節點通訊半徑範圍 (單位 10m)
         self.drift_range = 6 # 節點飄移範圍 (單位 10m)
-        self.system_time = 6000 # 執行時間 (單位s)
+        self.system_time = 6500 # 執行時間 (單位s)
         self.unit_time = 100 # 時間單位 (單位s)
         self.current_time = 0 # 目前時間 (單位s)
         
@@ -150,6 +150,17 @@ class DeliveryEnvironment(object):
                 self.uav_data = self.uav_data + self.data_amount_list[i]
                 self.data_amount_list[i] = 0
 
+        # 清除無人跡拜訪後的感測器資料
+    def clear_data_one(self, init_position, index, drift_consider):
+        [init_x, init_y] = init_position
+        drift_distance = np.sqrt(
+            (self.x[index] - init_x[index]) ** 2 + 
+            (self.y[index] - init_y[index]) ** 2
+        )
+        if (drift_distance <= self.uav_range) or drift_consider:
+            self.uav_data = self.uav_data + self.data_amount_list[index]
+            self.data_amount_list[index] = 0
+
     def _generate_q_values(self,box_size = 0.2):
         xy = np.column_stack([self.x,self.y])
         self.q_stops = cdist(xy,xy)
@@ -264,11 +275,10 @@ class DeliveryEnvironment(object):
         distance = self.q_stops[state,new_state]
         distance_reward = (1 - trade_of_factor * distance ** 2)
 
-        has_calc_threshold = self.data_amount_list[new_state] > self.calc_threshold
-        has_calc_danger_threshold = self.data_amount_list[new_state] > self.calc_danger_threshold
+        has_calc_danger_threshold = self.data_amount_list[new_state] > self.calc_threshold
 
-        yellow_reward = has_calc_threshold * 1
-        danger_reward = has_calc_danger_threshold * 6
+        yellow_reward = self.data_amount_list[new_state] * 2 
+        danger_reward = has_calc_danger_threshold * self.data_amount_list[new_state] * self.data_amount_list[new_state] / 800
         
 
         # 新增 孤立節點獎勵值

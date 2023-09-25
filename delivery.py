@@ -71,7 +71,7 @@ num_processes = 1 # 同時執行數量 (產生結果數量)
 num_points = 100 # 節點數
 max_box = 100  # 場景大小 單位 (10m)
 
-n_episodes = 100 # 訓練次數
+n_episodes = 5000 # 訓練次數
 
 # 比較參數
 total_data = 0
@@ -100,7 +100,7 @@ def run_uav(env, init_position):
 
     idx = 0
     
-    recordIndex = int(env.current_time // env.unit_time) + 1
+    recordIndex = int(env.current_time // env.unit_time)
 
     total_drift_cost = 0
 
@@ -157,10 +157,9 @@ def run_uav(env, init_position):
         current_time = env.current_time + distance + total_drift_cost
 
         if recordIndex <= int(current_time // env.unit_time):
-            for i in range(int(current_time // env.unit_time) - recordIndex + 1):
+            for i in range(int(current_time // env.unit_time) - recordIndex):
                 env.clear_data(init_position, False)
-                if (recordIndex % 5) == 0: 
-                    env.subtract_mutihop_data()
+                env.subtract_mutihop_data()
                     
                 mutihop_data = env.sum_mutihop_data
                 sensor_data = sum(env.data_amount_list)
@@ -169,11 +168,12 @@ def run_uav(env, init_position):
                 run_time = recordIndex * env.unit_time
                 env.result.append([run_time, total_data, mutihop_data, sensor_data, env.uav_data, lost_data])
                 
-                recordIndex = recordIndex + 1
-                
                 added_data = generate_data_50[recordIndex % len(generate_data_50)]
                 env.generate_data_total = env.generate_data_total + sum(added_data)
                 env.generate_data(added_data)
+
+                recordIndex = recordIndex + 1
+
     
     distance = calcDistance(env.x[env.stops], env.y[env.stops])
     drift_cost = sum(env.drift_cost_list)
@@ -237,15 +237,6 @@ def runMain(index):
 
             # 隨機產生資料
             add_data = np.random.randint(env.data_generatation_range, size=env.max_box)
-            # total_data = total_data + sum(add_data)
-
-            # env.generate_data(add_data)
-            # env_mutihop.generate_data(add_data)
-            # env_greedy.generate_data(add_data)
-            # env_greedy_and_mutihop.generate_data(add_data)
-            # env_drift_greedy_and_mutihop.generate_data(add_data)
-            # env_Q.generate_data(add_data)
-            
 
             # =============== Q learning ===============
             print('Q learning start')
