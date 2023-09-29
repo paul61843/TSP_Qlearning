@@ -15,7 +15,18 @@ def calc_drift_cost(position_x, position_y, env):
     if drift_distance <= env.uav_range:
         return 0
     else:
-        return env.drift_max_cost
+        # 計算兩點之間的向量
+        delta_x = position_x[0] - position_x[1]
+        delta_y = position_y[0] - position_y[1]
+
+        print(delta_x, delta_y)
+        
+        # 使用反正切函數計算夾角，然後將弧度轉換為度數
+        angle_rad = math.atan2(delta_y, delta_x)
+        angle_deg = math.degrees(angle_rad)
+        angle_deg = angle_deg if angle_deg >= 0 else angle_deg + 360
+
+        return env.drift_max_cost * (angle_deg / 360)
 
 def calcAvg(curr_pos, unvisited_stops, env):
     curr_x = env.x[curr_pos]
