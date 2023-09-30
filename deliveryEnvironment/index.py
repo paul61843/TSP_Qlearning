@@ -248,16 +248,32 @@ class DeliveryEnvironment(object):
 
         return new_state,reward,done
 
-    def drift_node(self):
+    # def drift_node(self, index):
+    #     arr = []
+    #     arr2 = []
+    #     for i in range(1, len(self.x)):
+    #         if i != self.first_point:
+    #             value = random.uniform(-self.drift_range, self.drift_range)
+    #             self.x[i] = self.x[i] + value
+    #             self.x[i] = 0 if self.x[i] <= 0 else self.max_box if self.x[i] >= self.max_box else self.x[i]
+    #             arr.append(value)
+
+    #             value = random.uniform(-self.drift_range, self.drift_range)
+    #             self.y[i] = self.y[i] + value
+    #             self.y[i] = 0 if self.y[i] <= 0 else self.max_box if self.y[i] >= self.max_box else self.y[i]
+    #             arr2.append(value)
+        
+    def drift_node(self, index):
         for i in range(1, len(self.x)):
             if i != self.first_point:
-                self.x[i] = self.x[i] + random.uniform(-self.drift_range, self.drift_range)
+                index = index % len(drift_distance_x)
+                self.x[i] = self.x[i] + drift_distance_x[index][i]
                 self.x[i] = 0 if self.x[i] <= 0 else self.max_box if self.x[i] >= self.max_box else self.x[i]
                 
-                self.y[i] = self.y[i] + random.uniform(-self.drift_range, self.drift_range)
+                self.y[i] = self.y[i] + drift_distance_y[index][i]
                 self.y[i] = 0 if self.y[i] <= 0 else self.max_box if self.y[i] >= self.max_box else self.y[i]
-                
         
+
 
     def _get_state(self):
         return self.stops[-1]

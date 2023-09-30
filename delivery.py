@@ -78,11 +78,11 @@ total_data = 0
 sensor_data = 0
 uav_data = 0
 
-def getMinDistancePoint(env, curr_point):
+def getMinDistanceIndex(env, curr_point):
     min_distance = float('inf')
     min_point = None
 
-    for point in env.unvisited_stops:
+    for (point, index) in enumerate(env.unvisited_stops):
 
         point_x = env.x[[point, curr_point]]
         point_y = env.y[[point, curr_point]]
@@ -90,9 +90,9 @@ def getMinDistancePoint(env, curr_point):
         distance = calcDistance(point_x, point_y)
         if distance < min_distance:
             min_distance = distance
-            min_point = point
+            min_index = index
 
-    return min_point
+    return min_index
 
 
 
@@ -131,14 +131,17 @@ def run_uav(env, init_position):
         env.remain_power = env.remain_power + drift_remain_cost
         env.unvisited_stops = env.get_unvisited_stops()
 
-        point = getMinDistancePoint(env, idx)
+        mostDataOfPoint = getMostDataOfSensor(env.data_amount_list, env.unvisited_stops)
+
+        add_index = getMinDistanceIndex(env, mostDataOfPoint)
+        print(add_index)
 
         # 還有剩餘電量加入新的節點
-        if point is not None:
+        if mostDataOfPoint is not None:
             oldStops = list(env.stops)
             oldDrift = list(env.drift_cost_list)
 
-            env.stops.insert(idx + 1, point)
+            env.stops.insert(add_index + 1, mostDataOfPoint)
             env.drift_cost_list.insert(idx + 1, env.drift_max_cost)
 
             new_cost = calcPowerCost(env)
@@ -403,7 +406,7 @@ def runMain(index):
             env.y = np.array(init_Y)
 
             # 執行節點飄移
-            env.drift_node()
+            env.drift_node(num)
 
             # 判斷是否為孤立節點
             env.set_isolated_node()
