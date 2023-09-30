@@ -263,6 +263,8 @@ class DeliveryEnvironment(object):
     #             self.y[i] = 0 if self.y[i] <= 0 else self.max_box if self.y[i] >= self.max_box else self.y[i]
     #             arr2.append(value)
         
+    #     print(arr, arr2)
+        
     def drift_node(self, index):
         for i in range(1, len(self.x)):
             if i != self.first_point:

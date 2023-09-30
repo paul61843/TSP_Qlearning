@@ -142,7 +142,7 @@ def run_uav(env, init_position):
             oldDrift = list(env.drift_cost_list)
 
             env.stops.insert(add_index + 1, mostDataOfPoint)
-            env.drift_cost_list.insert(idx + 1, env.drift_max_cost)
+            env.drift_cost_list.insert(add_index + 1, env.drift_max_cost)
 
             new_cost = calcPowerCost(env)
 
