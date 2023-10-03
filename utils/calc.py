@@ -19,8 +19,6 @@ def calc_drift_cost(position_x, position_y, env):
         delta_x = position_x[0] - position_x[1]
         delta_y = position_y[0] - position_y[1]
 
-        print(delta_x, delta_y)
-        
         # 使用反正切函數計算夾角，然後將弧度轉換為度數
         angle_rad = math.atan2(delta_y, delta_x)
         angle_deg = math.degrees(angle_rad)

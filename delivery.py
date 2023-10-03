@@ -71,7 +71,7 @@ num_processes = 1 # 同時執行數量 (產生結果數量)
 num_points = 100 # 節點數
 max_box = 100  # 場景大小 單位 (10m)
 
-n_episodes = 5000 # 訓練次數
+n_episodes = 2000 # 訓練次數
 
 # 比較參數
 total_data = 0
@@ -107,6 +107,7 @@ def run_uav(env, init_position):
     current_time = 0
 
     while idx < len(env.stops):
+
         
         route = env.stops[idx]
 
@@ -160,6 +161,7 @@ def run_uav(env, init_position):
         current_time = env.current_time + distance + total_drift_cost
 
         if recordIndex <= int(current_time // env.unit_time):
+
             for i in range(int(current_time // env.unit_time) - recordIndex):
                 env.clear_data(init_position, False)
                 env.subtract_mutihop_data()
@@ -174,6 +176,7 @@ def run_uav(env, init_position):
                 added_data = generate_data_50[recordIndex % len(generate_data_50)]
                 env.generate_data_total = env.generate_data_total + sum(added_data)
                 env.generate_data(added_data)
+                print('recordIndex', recordIndex, env.current_time)
 
                 recordIndex = recordIndex + 1
 
