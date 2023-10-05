@@ -59,10 +59,10 @@ class DeliveryEnvironment(object):
 
         # 感測器資料量相關
         self.data_amount_list = [] # 感測器儲存的資料量
-        self.buffer_size = 100 # 感測器儲存資料的最大量
+        self.buffer_size = 1024 * 1024 # 感測器儲存資料的最大量 (1Mb)
         self.calc_threshold = self.buffer_size * 50 // 100 # 感測器資料量超過 50% 門檻
         self.calc_danger_threshold = self.buffer_size * 75 //100 # 感測器資料量超過 75% 門檻
-
+        
         # 隔離節點
         self.isolated_node = []
 
