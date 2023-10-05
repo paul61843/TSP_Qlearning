@@ -1,6 +1,6 @@
                               ,total_data     ,mutihop        ,sensor_data    ,uav_data       ,lost_data      ,sum            
-greedy                        ,0              ,0              ,0              ,0              ,0              ,0              
+greedy                        ,0              ,0              ,8197           ,8701           ,-16898         ,16898          
 mutihop                       ,0              ,0              ,0              ,0              ,0              ,0              
-greedy_and_mutihop            ,0              ,0              ,0              ,0              ,0              ,0              
-drift_greedy_and_mutihop      ,0              ,20923          ,0              ,2221           ,-23144         ,23144          
-Q_learning                    ,0              ,0              ,0              ,0              ,0              ,0              
+greedy_and_mutihop            ,0              ,4322           ,6682           ,5910           ,-16914         ,16914          
+drift_greedy_and_mutihop      ,0              ,4394           ,6171           ,6971           ,-17536         ,17536          
+Q_learning                    ,0              ,3288           ,5141           ,5847           ,-14276         ,14276          
