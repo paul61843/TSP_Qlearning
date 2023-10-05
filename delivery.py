@@ -135,7 +135,6 @@ def run_uav(env, init_position):
         mostDataOfPoint = getMostDataOfSensor(env.data_amount_list, env.unvisited_stops)
 
         add_index = getMinDistanceIndex(env, mostDataOfPoint)
-        print(add_index)
 
         # 還有剩餘電量加入新的節點
         if mostDataOfPoint is not None:
@@ -176,7 +175,6 @@ def run_uav(env, init_position):
                 added_data = generate_data_50[recordIndex % len(generate_data_50)]
                 env.generate_data_total = env.generate_data_total + sum(added_data)
                 env.generate_data(added_data)
-                print('recordIndex', recordIndex, env.current_time)
 
                 recordIndex = recordIndex + 1
 
@@ -274,7 +272,7 @@ def runMain(index):
             # 產生UAV路徑圖
             uav_run_img = env_Q.render(return_img = True)
             imageio.mimsave(f"./result/Q_learning/{index}_epsilon_min{params['epsilon_min']}_gamma{params['gamma']}_lr{params['lr']}_loop_index{num+1}_UAV_result.gif",[uav_run_img],fps = 10)
-            csv_utils.writeDataToCSV('./result/csv/q_learning.csv', env_Q.result)
+            csv_utils.writeDataToCSV(f'./result/csv{index}/q_learning.csv', env_Q.result)
             
             end = time.time()
             print('Q learning end', end - start)
@@ -307,10 +305,13 @@ def runMain(index):
             # 產生UAV路徑圖
             uav_run_img = env_greedy.render(return_img = True)
             imageio.mimsave(f"./result/greedy/{index}_loop_index{num+1}_UAV_result.gif",[uav_run_img],fps = 10)
-            csv_utils.writeDataToCSV('./result/csv/greedy.csv', env_greedy.result)
+            csv_utils.writeDataToCSV(f'./result/csv{index}/greedy.csv', env_greedy.result)
             end = time.time()
             
             print('env_greedy end', end - start)
+
+            # =============== env_greedy end ===============
+
 
             # =============== greedy and mutihop ===========
             print('greedy and mutihop start')
@@ -330,7 +331,7 @@ def runMain(index):
             # 產生UAV路徑圖
             uav_run_img = env_greedy_and_mutihop.render(return_img = True)
             imageio.mimsave(f"./result/greedy_and_mutihop/{index}_loop_index{num+1}_UAV_result.gif",[uav_run_img],fps = 10)
-            csv_utils.writeDataToCSV('./result/csv/greedy_and_mutihop.csv', env_greedy_and_mutihop.result)
+            csv_utils.writeDataToCSV(f'./result/csv{index}/greedy_and_mutihop.csv', env_greedy_and_mutihop.result)
             
             end = time.time()
             print('greedy and mutihop end', end - start)
@@ -354,7 +355,7 @@ def runMain(index):
             # 產生UAV路徑圖
             uav_run_img = env_drift_greedy_and_mutihop.render(return_img = True)
             imageio.mimsave(f"./result/drift_greedy_and_mutihop/{index}_loop_index{num+1}_UAV_result.gif",[uav_run_img],fps = 10)
-            csv_utils.writeDataToCSV('./result/csv/drift_greedy_and_mutihop.csv', env_drift_greedy_and_mutihop.result)
+            csv_utils.writeDataToCSV(f'./result/csv{index}/drift_greedy_and_mutihop.csv', env_drift_greedy_and_mutihop.result)
             
 
             end = time.time()
