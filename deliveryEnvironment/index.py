@@ -15,28 +15,26 @@ class DeliveryEnvironment(object):
         print(f"Target metric for optimization is {method}")
 
         # Environment Config
-        self.point_range = 10 # 節點通訊半徑範圍 (單位 10m)
-        self.drift_range = 6 # 節點飄移範圍 (單位 10m)
+        self.point_range = 20 # 節點通訊半徑範圍 (單位 1m)
+        self.drift_range = 25 # 節點飄移範圍 (單位 1m)
         self.system_time = 10000 # 執行時間 (單位s)
         self.unit_time = 100 # 時間單位 (單位s)
         self.current_time = 0 # 目前時間 (單位s)
         
         # UAV Config
-        self.uav_range = 5 # 無人機通訊半徑範圍 (單位 10m)
-        self.uav_speed = 0.5 # 無人機移動速度 (單位 10m/s)
-        self.uav_energy = 100 * 1000 # 無人機電量 (單位w)
-        self.uav_energy_consumption = 200 # 無人機每秒消耗電量 (單位w)
-        self.uav_flyTime = self.uav_energy / self.uav_energy_consumption # 無人機可飛行時間 (單位s)
-        self.max_move_distance = 500 # 無人機最大移動距離 (單位 10m)
+        self.uav_range = 20 # 無人機通訊半徑範圍 (單位 1m)
+        self.uav_speed = 12 # 無人機移動速度 (單位 1m/s)
+        self.uav_flyTime = 28 * 60 # 無人機可飛行時間 28分鐘 (單位s)
+        self.max_move_distance = 1200 # 無人機每移動固定距離 需回sink同步感測器資訊 (單位 1m)
         
 
         # 無人機探索，飄移節點最大能量消耗
         # 假設無人機只需飛行一圈，即可完整探索感測器飄移可能區域
         # 故無人機只需以 r/2 為半徑飛行
-        self.drift_max_cost = 2 * (self.drift_range / 2) * math.pi  # 公式 2 x 3.14 x (r/2)
+        self.drift_max_cost = 2 * (self.drift_range - self.uav_range) * math.pi  # 公式 2 x 3.14 x r
 
         self.data_generatation_range = 20 # 節點資料從 1 ~ 20 數字中隨機增加
-        self.mutihop_transmission = 1 # 透過muti-hop方式 減少的資料量
+        self.mutihop_transmission = (self.unit_time // 10) * 16 # 透過muti-hop方式 減少的資料量 每 10 秒 16 Byte
 
 
         # Initialization
@@ -59,7 +57,8 @@ class DeliveryEnvironment(object):
 
         # 感測器資料量相關
         self.data_amount_list = [] # 感測器儲存的資料量
-        self.buffer_size = 1024 * 1024 # 感測器儲存資料的最大量 (1Mb)
+        self.uav_data_amount_list = [] # 無人機獲得的感測器資料量資訊
+        self.buffer_size = 16 * 1024 # 感測器儲存資料的最大量 (16KB)
         self.calc_threshold = self.buffer_size * 50 // 100 # 感測器資料量超過 50% 門檻
         self.calc_danger_threshold = self.buffer_size * 75 //100 # 感測器資料量超過 75% 門檻
         

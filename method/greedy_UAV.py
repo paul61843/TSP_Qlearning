@@ -39,10 +39,11 @@ def run_n_greedy(
     current_time = 0
 
     recordIndex = int(env.current_time // env.unit_time)
+    env.uav_data_amount_list = env.data_amount_list
 
     for i in env.x:
         env.unvisited_stops = env.get_unvisited_stops()
-        a = getMostDataOfSensor(env.data_amount_list, env.unvisited_stops)
+        a = getMostDataOfSensor(env.uav_data_amount_list, env.unvisited_stops)
 
         if a == None:
             break
@@ -111,11 +112,11 @@ def run_n_greedy_mutihop(
     recordIndex = int(env.current_time // env.unit_time)
 
     current_time = 0
-
+    env.uav_data_amount_list = env.data_amount_list
 
     for i in env.x:
         env.unvisited_stops = env.get_unvisited_stops()
-        a = getMostDataOfSensor(env.data_amount_list, env.unvisited_stops)
+        a = getMostDataOfSensor(env.uav_data_amount_list, env.unvisited_stops)
         temp_points.append(a)
 
         if a == None:
@@ -194,11 +195,12 @@ def run_n_greedy_drift(
     recordIndex = int(env.current_time // env.unit_time)
 
     current_time = 0
+    env.uav_data_amount_list = env.data_amount_list
 
     for i in env.x:
         
         env.unvisited_stops = env.get_unvisited_stops()
-        a = getMostDataOfSensor(env.data_amount_list, env.unvisited_stops)
+        a = getMostDataOfSensor(env.uav_data_amount_list, env.unvisited_stops)
         temp_points.append(a)
 
         if a == None:
