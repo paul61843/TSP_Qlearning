@@ -71,10 +71,10 @@ sys.path.append("../")
 
 # 設定環境參數
 num_processes = 1 # 同時執行數量 (產生結果數量)
-num_points = 100 # 節點數
-max_box = 100  # 場景大小 單位 (10m)
+num_points = 400 # 節點數
+max_box = 200  # 場景大小 單位 (10m)
 
-n_episodes = 2000 # 訓練次數
+n_episodes = 500 # 訓練次數
 
 # 比較參數
 total_data = 0
@@ -109,6 +109,8 @@ def run_uav(env, init_position):
 
     current_time = 0
 
+    env.uav_data_amount_list = env.data_amount_list
+
     while idx < len(env.stops):
 
         
@@ -134,8 +136,7 @@ def run_uav(env, init_position):
         # 用於搜尋飄移節點中的剩餘能量
         env.remain_power = env.remain_power + drift_remain_cost
         env.unvisited_stops = env.get_unvisited_stops()
-
-        mostDataOfPoint = getMostDataOfSensor(env.data_amount_list, env.unvisited_stops)
+        mostDataOfPoint = getMostDataOfSensor(env.uav_data_amount_list, env.unvisited_stops)
 
         add_index = getMinDistanceIndex(env, mostDataOfPoint)
 
@@ -175,9 +176,10 @@ def run_uav(env, init_position):
                 run_time = recordIndex * env.unit_time
                 env.result.append([run_time, total_data, mutihop_data, sensor_data, env.uav_data, lost_data])
                 
-                added_data = generate_data_50[recordIndex % len(generate_data_50)]
-                env.generate_data_total = env.generate_data_total + sum(added_data)
-                env.generate_data(added_data)
+                added_event_data = generate_data_50[recordIndex % len(generate_data_50)]
+                added_min_data = env.min_generate_data * len(added_event_data)
+                env.generate_data_total = env.generate_data_total + sum(added_event_data) + added_min_data
+                env.generate_data(added_event_data)
 
                 recordIndex = recordIndex + 1
 
@@ -229,7 +231,7 @@ def runMain(index):
         init_Y = np.array(env.y)
         init_position = [init_X, init_Y]
 
-        num_uav_loops = int(env.system_time // env.max_move_distance)
+        num_uav_loops = int(env.system_time // env.uav_flyTime)
         for num in range(num_uav_loops):
             env_mutihop.x = np.array(env.x)
             env_mutihop.y = np.array(env.y)
@@ -242,45 +244,41 @@ def runMain(index):
             env_Q.x = np.array(env.x)
             env_Q.y = np.array(env.y)
 
-            # 隨機產生資料
-            add_data = np.random.randint(env.data_generatation_range, size=env.max_box)
+            # # =============== Q learning ===============
+            # print('Q learning start')
+            # start = time.time()
 
-            # =============== Q learning ===============
-            print('Q learning start')
-            start = time.time()
+            # agent = DeliveryQAgent(
+            #     states_size=num_points,
+            #     actions_size=num_points,
+            #     epsilon = 1.0,
+            #     epsilon_min = params["epsilon_min"],
+            #     epsilon_decay = 0.9998,
+            #     gamma = params["gamma"],
+            #     lr = params["lr"]
+            # )
 
-            agent = DeliveryQAgent(
-                states_size=num_points,
-                actions_size=num_points,
-                epsilon = 1.0,
-                epsilon_min = params["epsilon_min"],
-                epsilon_decay = 0.9998,
-                gamma = params["gamma"],
-                lr = params["lr"]
-            )
+            # # 跑 Q learning
+            # env_Q,agent = run_n_episodes(
+            #     env_Q, 
+            #     agent,
+            #     n_episodes=n_episodes,
+            #     result_index=index,
+            #     loop_index=num+1,
+            #     train_params=params,
+            # )
 
-            # 跑 Q learning
-            env_Q,agent = run_n_episodes(
-                env_Q, 
-                agent,
-                n_episodes=n_episodes,
-                result_index=index,
-                loop_index=num+1,
-                train_params=params,
-            )
+            # # # uav 開始飛行
+            # env_Q = run_uav(env_Q, init_position)
 
-            # # uav 開始飛行
-            env_Q = run_uav(env_Q, init_position)
-
-            # 產生UAV路徑圖
-            uav_run_img = env_Q.render(return_img = True)
-            imageio.mimsave(f"./result/Q_learning/{index}_epsilon_min{params['epsilon_min']}_gamma{params['gamma']}_lr{params['lr']}_loop_index{num+1}_UAV_result.gif",[uav_run_img],fps = 10)
-            csv_utils.writeDataToCSV(f'./result/csv{index}/q_learning.csv', env_Q.result)
+            # # 產生UAV路徑圖
+            # uav_run_img = env_Q.render(return_img = True)
+            # imageio.mimsave(f"./result/Q_learning/{index}_epsilon_min{params['epsilon_min']}_gamma{params['gamma']}_lr{params['lr']}_loop_index{num+1}_UAV_result.gif",[uav_run_img],fps = 10)
+            # csv_utils.writeDataToCSV(f'./result/csv{index}/q_learning.csv', env_Q.result)
             
-            end = time.time()
-            print('Q learning end', end - start)
-            # =============== Q learning end ===========
-
+            # end = time.time()
+            # print('Q learning end', end - start)
+            # # =============== Q learning end ===========
             if env.stops == []:
                 print('no stops')
                 break

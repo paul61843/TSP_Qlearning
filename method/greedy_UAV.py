@@ -1,5 +1,6 @@
 import numpy as np
 from tqdm.notebook import tqdm
+import math
 
 from utils.calc import *
 import csv_utils
@@ -51,7 +52,6 @@ def run_n_greedy(
         env.stops.append(a)
         temp_points.append(a)
         
-
         distance = calcDistance(env.x[env.stops], env.y[env.stops])
 
         x = env.x[[env.stops[0], env.stops[-1]]]
@@ -64,7 +64,7 @@ def run_n_greedy(
             env.stops.pop()
             break
         
-        current_time = env.current_time + distance
+        current_time = env.current_time + (distance // env.uav_speed)
         if recordIndex <= int(current_time // env.unit_time):
 
             for i in temp_points:
@@ -79,11 +79,23 @@ def run_n_greedy(
 
                 lost_data = int(env.generate_data_total - (mutihop_data + sensor_data + env.uav_data))
                 run_time = recordIndex * env.unit_time
-                env.result.append([run_time, total_data, mutihop_data, sensor_data, env.uav_data, lost_data])
+                env.result.append([
+                    math.ceil(run_time), 
+                    math.ceil(total_data),
+                    math.ceil(mutihop_data), 
+                    math.ceil(sensor_data), 
+                    math.ceil(env.uav_data), 
+                    math.ceil(lost_data)
+                ])
                 
-                added_data = generate_data_50[recordIndex % len(generate_data_50)]
-                env.generate_data_total = env.generate_data_total + sum(added_data)
-                env.generate_data(added_data)
+                added_event_data = generate_data_50[recordIndex % len(generate_data_50)]
+                added_min_data = env.min_generate_data * len(added_event_data)
+                print(env.generate_data_total, sum(added_event_data), added_min_data)
+                env.generate_data_total = env.generate_data_total + sum(added_event_data) + added_min_data
+                env.generate_data(added_event_data)
+
+                print(env.generate_data_total, sum(env.data_amount_list))
+                print(sum(env.data_amount_list))
 
                 recordIndex = recordIndex + 1
 
@@ -139,7 +151,7 @@ def run_n_greedy_mutihop(
             break
         
         
-        current_time = env.current_time + distance
+        current_time = env.current_time + (distance // env.uav_speed)
         if recordIndex <= int(current_time // env.unit_time):
 
             for i in temp_points:
@@ -158,13 +170,19 @@ def run_n_greedy_mutihop(
                 run_time = recordIndex * env.unit_time
 
 
-                env.result.append([run_time, total_data, mutihop_data, sensor_data, env.uav_data, lost_data])
+                env.result.append([
+                    math.ceil(run_time), 
+                    math.ceil(total_data),
+                    math.ceil(mutihop_data), 
+                    math.ceil(sensor_data), 
+                    math.ceil(env.uav_data), 
+                    math.ceil(lost_data)
+                ])
                 
-                added_data = generate_data_50[recordIndex % len(generate_data_50)]
-
-                env.generate_data_total = env.generate_data_total + sum(added_data)
-
-                env.generate_data(added_data)
+                added_event_data = generate_data_50[recordIndex % len(generate_data_50)]
+                added_min_data = env.min_generate_data * len(added_event_data)
+                env.generate_data_total = env.generate_data_total + sum(added_event_data) + added_min_data
+                env.generate_data(added_event_data)
 
                 recordIndex = recordIndex + 1
 
@@ -230,7 +248,7 @@ def run_n_greedy_drift(
             env.stops.pop()
             break
 
-        current_time = env.current_time + distance
+        current_time = env.current_time + (distance // env.uav_speed)
         if recordIndex <= int(current_time // env.unit_time):
 
             for i in temp_points:
@@ -245,12 +263,19 @@ def run_n_greedy_drift(
                 total_data = env.generate_data_total
                 lost_data = total_data - (mutihop_data + sensor_data + env.uav_data)
                 run_time = recordIndex * env.unit_time
-                env.result.append([run_time, total_data, mutihop_data, sensor_data, env.uav_data, lost_data])
+                env.result.append([
+                    math.ceil(run_time), 
+                    math.ceil(total_data),
+                    math.ceil(mutihop_data), 
+                    math.ceil(sensor_data), 
+                    math.ceil(env.uav_data), 
+                    math.ceil(lost_data)
+                ])
                 
-                
-                added_data = generate_data_50[recordIndex % len(generate_data_50)]
-                env.generate_data_total = env.generate_data_total + sum(added_data)
-                env.generate_data(added_data)
+                added_event_data = generate_data_50[recordIndex % len(generate_data_50)]
+                added_min_data = env.min_generate_data * len(added_event_data)
+                env.generate_data_total = env.generate_data_total + sum(added_event_data) + added_min_data
+                env.generate_data(added_event_data)
 
                 recordIndex = recordIndex + 1
 
