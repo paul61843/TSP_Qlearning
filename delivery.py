@@ -72,7 +72,7 @@ sys.path.append("../")
 # 設定環境參數
 num_processes = 1 # 同時執行數量 (產生結果數量)
 num_points = 400 # 節點數
-max_box = 2000  # 場景大小 單位 (10m)
+max_box = 2000  # 場景大小 單位 (1m)
 
 n_episodes = 500 # 訓練次數
 
@@ -244,6 +244,14 @@ def runMain(index):
             env_Q.x = np.array(env.x)
             env_Q.y = np.array(env.y)
 
+            # 判斷是否為孤立節點
+            env.set_isolated_node()
+            env_mutihop.set_isolated_node()
+            env_greedy.set_isolated_node()
+            env_greedy_and_mutihop.set_isolated_node()
+            env_drift_greedy_and_mutihop.set_isolated_node()
+            env_Q.set_isolated_node()
+
             # # =============== Q learning ===============
             # print('Q learning start')
             # start = time.time()
@@ -413,8 +421,6 @@ def runMain(index):
             # 執行節點飄移
             env.drift_node(num)
 
-            # 判斷是否為孤立節點
-            env.set_isolated_node()
 
     print(f'run {index} end ========================================')
 

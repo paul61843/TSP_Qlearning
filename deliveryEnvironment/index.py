@@ -123,8 +123,6 @@ class DeliveryEnvironment(object):
             (self.x[first_point], self.y[first_point])
         )
         
-        print(self.x[self.isolated_node], self.y[self.isolated_node])
-        
     # 加上隨機產生感測器的資料量 max = 100
     def generate_data(self, add_data):
         arr1 = self.data_amount_list
@@ -257,34 +255,29 @@ class DeliveryEnvironment(object):
         done = len(self.stops) == self.n_stops
 
         return new_state,reward,done
-
-    # def drift_node(self, index):
-    #     arr = []
-    #     arr2 = []
-    #     for i in range(1, len(self.x)):
-    #         if i != self.first_point:
-    #             value = random.uniform(-self.drift_range, self.drift_range)
-    #             self.x[i] = self.x[i] + value
-    #             self.x[i] = 0 if self.x[i] <= 0 else self.max_box if self.x[i] >= self.max_box else self.x[i]
-    #             arr.append(value)
-
-    #             value = random.uniform(-self.drift_range, self.drift_range)
-    #             self.y[i] = self.y[i] + value
-    #             self.y[i] = 0 if self.y[i] <= 0 else self.max_box if self.y[i] >= self.max_box else self.y[i]
-    #             arr2.append(value)
-        
-    #     print(arr, arr2)
         
     def drift_node(self, index):
-        for i in range(1, len(self.x)):
-            if i != self.first_point:
-                index = index % len(drift_distance_x)
-                self.x[i] = self.x[i] + drift_distance_x[index][i]
-                self.x[i] = 0 if self.x[i] <= 0 else self.max_box if self.x[i] >= self.max_box else self.x[i]
-                
-                self.y[i] = self.y[i] + drift_distance_y[index][i]
-                self.y[i] = 0 if self.y[i] <= 0 else self.max_box if self.y[i] >= self.max_box else self.y[i]
-        
+        isFake = False
+
+        if isFake:
+            for i in range(1, len(self.x)):
+                if i != self.first_point:
+                    index = index % len(drift_distance_x)
+                    self.x[i] = self.x[i] + drift_distance_x[index][i]
+                    self.x[i] = 0 if self.x[i] <= 0 else self.max_box if self.x[i] >= self.max_box else self.x[i]
+                    
+                    self.y[i] = self.y[i] + drift_distance_y[index][i]
+                    self.y[i] = 0 if self.y[i] <= 0 else self.max_box if self.y[i] >= self.max_box else self.y[i]
+        else:
+            for i in range(1, len(self.x)):
+                if i != self.first_point:
+                    value = random.uniform(-self.drift_range, self.drift_range)
+                    self.x[i] = self.x[i] + value
+                    self.x[i] = 0 if self.x[i] <= 0 else self.max_box if self.x[i] >= self.max_box else self.x[i]
+
+                    value = random.uniform(-self.drift_range, self.drift_range)
+                    self.y[i] = self.y[i] + value
+                    self.y[i] = 0 if self.y[i] <= 0 else self.max_box if self.y[i] >= self.max_box else self.y[i]
 
 
     def _get_state(self):
