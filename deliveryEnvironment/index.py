@@ -15,8 +15,8 @@ class DeliveryEnvironment(object):
         print(f"Target metric for optimization is {method}")
 
         # Environment Config
-        self.point_range = 10 # 節點通訊半徑範圍 (單位 1m)
-        self.drift_range = 15 # 節點飄移範圍 (單位 1m)
+        self.point_range = 100 # 節點通訊半徑範圍 (單位 1m)
+        self.drift_range = 150 # 節點飄移範圍 (單位 1m)
         self.system_time = 10000 # 執行時間 (單位s)
         self.unit_time = 100 # 時間單位 (單位s)
         self.current_time = 0 # 目前時間 (單位s)
@@ -24,8 +24,8 @@ class DeliveryEnvironment(object):
         self.min_generate_data = 128 / 30 * self.unit_time # 事件為觸發前 資料產生量
         
         # UAV Config
-        self.uav_range = 10 # 無人機通訊半徑範圍 (單位 1m)
-        self.uav_speed = 1.2 # 無人機移動速度 (單位 1m/s)
+        self.uav_range = 100 # 無人機通訊半徑範圍 (單位 1m)
+        self.uav_speed = 12 # 無人機移動速度 (單位 1m/s)
         self.uav_flyTime = 28 * 60 # 無人機可飛行時間 28分鐘 (單位s)
         self.max_move_distance = self.uav_flyTime * self.uav_speed # 無人機每移動固定距離 需回sink同步感測器資訊 (單位 1m)
         
@@ -101,15 +101,12 @@ class DeliveryEnvironment(object):
                     
                     lessThree = 0 < count <= 5
                     
-                    print(isInner, lessThree, isInner and lessThree)
                     if isInner and lessThree:
                         points = np.append(points, [np.array([x,y])], axis=0)
                         break
             self.x = points[:,0]
             self.y = points[:,1]
             
-            print(self.x, self.y)
-
         # 預設感測器的目前資料量為0
         self.data_amount_list = [0] * self.n_stops
         
@@ -125,7 +122,8 @@ class DeliveryEnvironment(object):
             self.point_range, 
             (self.x[first_point], self.y[first_point])
         )
-
+        
+        print(self.x[self.isolated_node], self.y[self.isolated_node])
         
     # 加上隨機產生感測器的資料量 max = 100
     def generate_data(self, add_data):
@@ -133,7 +131,6 @@ class DeliveryEnvironment(object):
         arr2 = add_data
         
         added_data = [ x + y + self.min_generate_data for x, y in zip(arr1, arr2) ]
-        print(added_data)
         self.data_amount_list = [ x if x <= self.buffer_size else self.buffer_size for x in added_data ]
 
     # 減去 muti hop 傳輸的資料
@@ -191,18 +188,19 @@ class DeliveryEnvironment(object):
         
         self.red_stops = []
 
+        print('191', self.isolated_node)
         # 將孤立節點標記為灰色
         for i in self.isolated_node:
             plt.scatter(self.x[i], self.y[i], c = "#AAAAAA", s = 30)
 
         # 感測器的資料量大於50，將節點標記為黃色、紅色(代表優先節點)
-        for i in range(self.n_stops):
-            if self.data_amount_list[i] > self.calc_threshold:
-                plt.scatter(self.x[i], self.y[i], c = "yellow", s = 30)
+        # for i in range(self.n_stops):
+        #     if self.data_amount_list[i] > self.calc_threshold:
+        #         plt.scatter(self.x[i], self.y[i], c = "yellow", s = 30)
 
-            if self.data_amount_list[i] > self.calc_danger_threshold:
-                self.red_stops.append(i)
-                plt.scatter(self.x[i], self.y[i], c = "red", s = 30) 
+        #     if self.data_amount_list[i] > self.calc_danger_threshold:
+        #         self.red_stops.append(i)
+        #         plt.scatter(self.x[i], self.y[i], c = "red", s = 30) 
 
         # Show START
         if len(self.stops) > 0:
@@ -211,13 +209,13 @@ class DeliveryEnvironment(object):
             plt.annotate("SINK",xy=xy,xytext=xytext,weight = "bold")
             
         # Show itinerary
-        if len(self.stops) > 1:
-            x = np.concatenate((self.x[self.stops], [self.x[self.stops[0]]]))
-            y = np.concatenate((self.y[self.stops], [self.y[self.stops[0]]]))
-            plt.plot(x, y, c = "blue",linewidth=1,linestyle="--")
+        # if len(self.stops) > 1:
+        #     x = np.concatenate((self.x[self.stops], [self.x[self.stops[0]]]))
+        #     y = np.concatenate((self.y[self.stops], [self.y[self.stops[0]]]))
+        #     plt.plot(x, y, c = "blue",linewidth=1,linestyle="--")
             
-        plt.xticks(list(range(0, self.max_box + 20, 10)))
-        plt.yticks(list(range(0, self.max_box + 20, 10)))
+        plt.xticks(list(range(0, self.max_box + 20, self.max_box // 10)))
+        plt.yticks(list(range(0, self.max_box + 20, self.max_box // 10)))
         
         if return_img:
             # From https://ndres.me/post/matplotlib-animated-gifs-easily/

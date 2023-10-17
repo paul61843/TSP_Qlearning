@@ -72,7 +72,7 @@ sys.path.append("../")
 # 設定環境參數
 num_processes = 1 # 同時執行數量 (產生結果數量)
 num_points = 400 # 節點數
-max_box = 200  # 場景大小 單位 (10m)
+max_box = 2000  # 場景大小 單位 (10m)
 
 n_episodes = 500 # 訓練次數
 

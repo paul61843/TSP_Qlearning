@@ -48,7 +48,6 @@ def find_isolated_nodes(nodes, sensing_range, sink):
     for idx, node in enumerate(nodes):
         if bfs(graph, node, sink, sensing_range) is None:
             isolated_nodes.append(idx)
-
     return isolated_nodes
 
 # 查找孤立节点
