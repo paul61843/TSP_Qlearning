@@ -5,14 +5,14 @@ import matplotlib.pyplot as plt
 from scipy.spatial.distance import cdist
 from utils.calc import *
 from isolated_nodes.index import *
-from constants import *
+from constants.constants import *
+from constants.sensor_position import *
 
 
 class DeliveryEnvironment(object):
-    def __init__(self,n_stops = 20,max_box = 10,method = "distance",**kwargs):
+    def __init__(self,n_stops = 20,max_box = 10, env_index = 0, **kwargs):
 
         print(f"Initialized Delivery Environment with {n_stops} random stops")
-        print(f"Target metric for optimization is {method}")
 
         # Environment Config
         self.point_range = 100 # 節點通訊半徑範圍 (單位 1m)
@@ -45,11 +45,11 @@ class DeliveryEnvironment(object):
         self.observation_space = self.n_stops
         self.remain_power = self.max_move_distance
         self.max_box = max_box
+        self.env_index = env_index
         self.stops = []
         self.unvisited_stops = []
         self.red_stops = []
         self.drift_cost_list = []
-        self.method = method
         self.result = []
 
         # 資料
@@ -80,8 +80,9 @@ class DeliveryEnvironment(object):
 
         # 隨機生成感測器數量，並確保每個點的通訊範圍內至少有一個點
         if use_fake_data:
-            self.x = xPoints 
-            self.y = yPoints
+            self.x = globals()['sensor_positionX_' + str(self.env_index)]
+            self.y = globals()['sensor_positionY_' + str(self.env_index)]
+            
         else:
             points = init_point
             while (len(points) < self.n_stops):

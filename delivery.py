@@ -217,8 +217,8 @@ def runMain(index):
     ]
     
     for params in parmas_arr:
-
-        env = DeliveryEnvironment(num_points, max_box)
+        env_index = 0
+        env = DeliveryEnvironment(num_points, max_box, env_index)
 
         env_mutihop = copy.deepcopy(env)
         env_greedy = copy.deepcopy(env)

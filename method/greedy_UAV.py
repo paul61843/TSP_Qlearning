@@ -4,7 +4,7 @@ import math
 
 from utils.calc import *
 import csv_utils
-from constants import *
+from constants.constants import *
 
 # 取得資料量最高的感測器
 def getMostDataOfSensor(data_amount_list, unvisited_stops):
