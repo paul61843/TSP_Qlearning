@@ -111,6 +111,44 @@ class DeliveryEnvironment(object):
         # 預設感測器的目前資料量為0
         self.data_amount_list = [0] * self.n_stops
         
+    def generate_stops_and_remove_drift_point(self):
+
+        point_x = self.x
+        point_y = self.y
+
+        point_x = np.delete(point_x, self.isolated_node)
+
+        point_y = np.delete(point_y, self.isolated_node)
+
+        points = np.array([])
+        for i, point in enumerate(point_x):
+            points = list(points) + [np.array([point_x[i], point_y[i]])]
+            points = np.array(points)
+
+        while (len(points) < self.n_stops):
+            x,y = (np.random.rand(1,2) * self.max_box)[0]
+            for p in points:
+                isInner = any(
+                    (((x - p[0]) ** 2 + (y - p[1]) ** 2 ) ** 0.5 <= self.point_range) and 
+                    (((x - p[0]) ** 2 + (y - p[1]) ** 2 ) ** 0.5 >= self.point_range / 2) 
+                    for p in points
+                )
+                
+                count = 0
+                for node_x, node_y in points:
+                    distance = math.sqrt((node_x - p[0]) ** 2 + (node_y - p[1]) ** 2)
+                    if distance <= self.point_range:
+                        count += 1
+                
+                lessThree = 0 < count <= 5
+                
+                if isInner and lessThree:
+                    points = np.append(points, [np.array([x,y])], axis=0)
+                    break
+        print(self.isolated_node)
+        print(list(points[:,0]))
+        print(list(points[:,1]))
+
     def set_isolated_node(self):
         points = []
         
@@ -187,19 +225,18 @@ class DeliveryEnvironment(object):
         
         self.red_stops = []
 
-        print('191', self.isolated_node)
         # 將孤立節點標記為灰色
         for i in self.isolated_node:
             plt.scatter(self.x[i], self.y[i], c = "#AAAAAA", s = 30)
 
         # 感測器的資料量大於50，將節點標記為黃色、紅色(代表優先節點)
-        # for i in range(self.n_stops):
-        #     if self.data_amount_list[i] > self.calc_threshold:
-        #         plt.scatter(self.x[i], self.y[i], c = "yellow", s = 30)
+        for i in range(self.n_stops):
+            if self.data_amount_list[i] > self.calc_threshold:
+                plt.scatter(self.x[i], self.y[i], c = "yellow", s = 30)
 
-        #     if self.data_amount_list[i] > self.calc_danger_threshold:
-        #         self.red_stops.append(i)
-        #         plt.scatter(self.x[i], self.y[i], c = "red", s = 30) 
+            if self.data_amount_list[i] > self.calc_danger_threshold:
+                self.red_stops.append(i)
+                plt.scatter(self.x[i], self.y[i], c = "red", s = 30) 
 
         # Show START
         if len(self.stops) > 0:
@@ -208,10 +245,10 @@ class DeliveryEnvironment(object):
             plt.annotate("SINK",xy=xy,xytext=xytext,weight = "bold")
             
         # Show itinerary
-        # if len(self.stops) > 1:
-        #     x = np.concatenate((self.x[self.stops], [self.x[self.stops[0]]]))
-        #     y = np.concatenate((self.y[self.stops], [self.y[self.stops[0]]]))
-        #     plt.plot(x, y, c = "blue",linewidth=1,linestyle="--")
+        if len(self.stops) > 1:
+            x = np.concatenate((self.x[self.stops], [self.x[self.stops[0]]]))
+            y = np.concatenate((self.y[self.stops], [self.y[self.stops[0]]]))
+            plt.plot(x, y, c = "blue",linewidth=1,linestyle="--")
             
         plt.xticks(list(range(0, self.max_box + 20, self.max_box // 10)))
         plt.yticks(list(range(0, self.max_box + 20, self.max_box // 10)))
