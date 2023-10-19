@@ -303,10 +303,10 @@ class DeliveryEnvironment(object):
             for i in range(1, len(self.x)):
                 if i != self.first_point:
                     index = index % len(drift_distance_x)
-                    self.x[i] = self.x[i] + [x * 120 for x in drift_distance_x[index][i]]
+                    self.x[i] = self.x[i] + [x * 120 for x in drift_distance_x[index]][i]
                     self.x[i] = 0 if self.x[i] <= 0 else self.max_box if self.x[i] >= self.max_box else self.x[i]
                     
-                    self.y[i] = self.y[i] + [x * 120 for x in drift_distance_y[index][i]]
+                    self.y[i] = self.y[i] + [x * 120 for x in drift_distance_y[index]][i]
                     self.y[i] = 0 if self.y[i] <= 0 else self.max_box if self.y[i] >= self.max_box else self.y[i]
         else:
             for i in range(1, len(self.x)):
