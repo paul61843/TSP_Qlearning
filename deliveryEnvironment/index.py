@@ -17,11 +17,11 @@ class DeliveryEnvironment(object):
         # Environment Config
         self.point_range = 100 # 節點通訊半徑範圍 (單位 1m)
         self.drift_range = 120 # 節點飄移範圍 (單位 1m)
-        self.system_time = 10000 # 執行時間 (單位s)
+        self.system_time = 8000 # 執行時間 (單位s)
         self.unit_time = 100 # 時間單位 (單位s)
         self.current_time = 0 # 目前時間 (單位s)
         self.buffer_size = 16 * 1024 # 感測器儲存資料的最大量 (16KB)
-        self.min_generate_data = 128 / 30 * self.unit_time # 事件為觸發前 資料產生量
+        self.min_generate_data = 128 / 30 * 100 # 事件為觸發前 資料產生量
         
         # UAV Config
         self.uav_range = 100 # 無人機通訊半徑範圍 (單位 1m)
@@ -36,7 +36,7 @@ class DeliveryEnvironment(object):
         self.drift_max_cost = 2 * (self.drift_range - self.uav_range) / 2 * math.pi  # 公式 2 x 3.14 x r
 
         # 透過muti-hop方式 減少的資料量 (每秒)
-        self.mutihop_transmission = 128
+        self.mutihop_transmission = 128 * 100 / 30
 
 
         # Initialization
@@ -169,7 +169,7 @@ class DeliveryEnvironment(object):
         arr1 = self.data_amount_list
         arr2 = add_data
         
-        added_data = [ x + y + self.min_generate_data for x, y in zip(arr1, arr2) ]
+        added_data = [ (x + y + self.min_generate_data) for x, y in zip(arr1, arr2) ]
         self.data_amount_list = [ x if x <= self.buffer_size else self.buffer_size for x in added_data ]
 
     # 減去 muti hop 傳輸的資料

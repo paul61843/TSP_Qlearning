@@ -75,7 +75,7 @@ num_processes = 1 # 同時執行數量 (產生結果數量)
 num_points = 400 # 節點數
 max_box = 2000  # 場景大小 單位 (1m)
 
-n_episodes = 500 # 訓練次數
+n_episodes = 1000 # 訓練次數
 
 # 比較參數
 total_data = 0
@@ -161,8 +161,8 @@ def run_uav(env, init_position):
 
         idx = idx + 1
 
-        distance = calcDistance(env.x[env.stops[:idx]], env.y[env.stops[:idx]])
-        current_time = env.current_time + distance + total_drift_cost
+        distance = calcDistance(env.x[env.stops[:idx]], env.y[env.stops[:idx]]) + total_drift_cost
+        current_time = env.current_time + distance // env.uav_speed
 
         if recordIndex <= int(current_time // env.unit_time):
 
@@ -175,9 +175,16 @@ def run_uav(env, init_position):
                 total_data = env.generate_data_total
                 lost_data = total_data - (mutihop_data + sensor_data + env.uav_data)
                 run_time = recordIndex * env.unit_time
-                env.result.append([run_time, total_data, mutihop_data, sensor_data, env.uav_data, lost_data])
+                env.result.append([
+                    math.ceil(run_time), 
+                    math.ceil(total_data),
+                    math.ceil(mutihop_data), 
+                    math.ceil(sensor_data), 
+                    math.ceil(env.uav_data), 
+                    math.ceil(lost_data),
+                ])
                 
-                added_event_data = generate_data_50[recordIndex % len(generate_data_50)]
+                added_event_data = generate_data_50[recordIndex % len(generate_data_50)][:env.n_stops]
                 added_min_data = env.min_generate_data * len(added_event_data)
                 env.generate_data_total = env.generate_data_total + sum(added_event_data) + added_min_data
                 env.generate_data(added_event_data)
@@ -185,9 +192,8 @@ def run_uav(env, init_position):
                 recordIndex = recordIndex + 1
 
     
-    distance = calcDistance(env.x[env.stops], env.y[env.stops])
-    drift_cost = sum(env.drift_cost_list)
-    env.current_time = env.current_time + distance + drift_cost
+    distance = calcDistance(env.x[env.stops], env.y[env.stops]) + sum(env.drift_cost_list)
+    env.current_time = env.current_time + distance // env.uav_speed
 
     route,cost = optimal_route(env.stops, env, distance)
     startIndex = env.first_point
@@ -249,41 +255,41 @@ def runMain(index):
                 env_drift_greedy_and_mutihop.set_isolated_node()
                 env_Q.set_isolated_node()
 
-                # # =============== Q learning ===============
-                # print('Q learning start')
-                # start = time.time()
+                # =============== Q learning ===============
+                print('Q learning start')
+                start = time.time()
 
-                # agent = DeliveryQAgent(
-                #     states_size=num_points,
-                #     actions_size=num_points,
-                #     epsilon = 1.0,
-                #     epsilon_min = params["epsilon_min"],
-                #     epsilon_decay = 0.9998,
-                #     gamma = params["gamma"],
-                #     lr = params["lr"]
-                # )
+                agent = DeliveryQAgent(
+                    states_size=num_points,
+                    actions_size=num_points,
+                    epsilon = 1.0,
+                    epsilon_min = params["epsilon_min"],
+                    epsilon_decay = 0.9998,
+                    gamma = params["gamma"],
+                    lr = params["lr"]
+                )
 
-                # # 跑 Q learning
-                # env_Q,agent = run_n_episodes(
-                #     env_Q, 
-                #     agent,
-                #     n_episodes=n_episodes,
-                #     result_index=index,
-                #     loop_index=num+1,
-                #     train_params=params,
-                # )
+                # 跑 Q learning
+                env_Q,agent = run_n_episodes(
+                    env_Q, 
+                    agent,
+                    n_episodes=n_episodes,
+                    result_index=index,
+                    loop_index=num+1,
+                    train_params=params,
+                )
 
-                # # # uav 開始飛行
-                # env_Q = run_uav(env_Q, init_position)
+                # # uav 開始飛行
+                env_Q = run_uav(env_Q, init_position)
 
-                # # 產生UAV路徑圖
-                # uav_run_img = env_Q.render(return_img = True)
-                # imageio.mimsave(f"./result/Q_learning/{index}_epsilon_min{params['epsilon_min']}_gamma{params['gamma']}_lr{params['lr']}_loop_index{num+1}_UAV_result.gif",[uav_run_img],fps = 10)
-                # csv_utils.writeDataToCSV(f'./result/csv{index}/q_learning.csv', env_Q.result)
+                # 產生UAV路徑圖
+                uav_run_img = env_Q.render(return_img = True)
+                imageio.mimsave(f"./result/Q_learning/{index}_epsilon_min{params['epsilon_min']}_gamma{params['gamma']}_lr{params['lr']}_loop_index{num+1}_UAV_result.gif",[uav_run_img],fps = 10)
+                csv_utils.writeDataToCSV(f'./result/csv{index}/q_learning.csv', env_Q.result)
                 
-                # end = time.time()
-                # print('Q learning end', end - start)
-                # # =============== Q learning end ===========
+                end = time.time()
+                print('Q learning end', end - start)
+                # =============== Q learning end ===========
                 if env.stops == []:
                     print('no stops')
                     break
@@ -319,55 +325,55 @@ def runMain(index):
                 # =============== env_greedy end ===============
 
 
-                # # =============== greedy and mutihop ===========
-                # print('greedy and mutihop start')
-                # start = time.time()
+                # =============== greedy and mutihop ===========
+                print('greedy and mutihop start')
+                start = time.time()
 
 
-                # env_greedy_and_mutihop = run_n_greedy_mutihop(
-                #     env_greedy_and_mutihop, 
-                #     n_episodes=n_episodes,
-                #     result_index=index,
-                #     loop_index=num+1,
-                #     train_params=params,
-                #     init_position=init_position,
-                #     total_data=total_data,
-                # )
+                env_greedy_and_mutihop = run_n_greedy_mutihop(
+                    env_greedy_and_mutihop, 
+                    n_episodes=n_episodes,
+                    result_index=index,
+                    loop_index=num+1,
+                    train_params=params,
+                    init_position=init_position,
+                    total_data=total_data,
+                )
 
-                # # 產生UAV路徑圖
-                # uav_run_img = env_greedy_and_mutihop.render(return_img = True)
-                # imageio.mimsave(f"./result/greedy_and_mutihop/{index}_loop_index{num+1}_UAV_result.gif",[uav_run_img],fps = 10)
-                # csv_utils.writeDataToCSV(f'./result/csv{field_index}/greedy_and_mutihop.csv', env_greedy_and_mutihop.result)
+                # 產生UAV路徑圖
+                uav_run_img = env_greedy_and_mutihop.render(return_img = True)
+                imageio.mimsave(f"./result/greedy_and_mutihop/{index}_loop_index{num+1}_UAV_result.gif",[uav_run_img],fps = 10)
+                csv_utils.writeDataToCSV(f'./result/csv{field_index}/greedy_and_mutihop.csv', env_greedy_and_mutihop.result)
                 
-                # end = time.time()
-                # print('greedy and mutihop end', end - start)
-                # # =============== greedy and mutihop ===============
+                end = time.time()
+                print('greedy and mutihop end', end - start)
+                # =============== greedy and mutihop ===============
 
-                # # =============== drift greedy and mutihop ===============
-                # print('drift greedy and mutihop start')
-                # start = time.time()
+                # =============== drift greedy and mutihop ===============
+                print('drift greedy and mutihop start')
+                start = time.time()
 
-                # # 跑 uav greedy
-                # env_drift_greedy_and_mutihop = run_n_greedy_drift(
-                #     env_drift_greedy_and_mutihop, 
-                #     n_episodes=n_episodes,
-                #     result_index=index,
-                #     loop_index=num+1,
-                #     train_params=params,
-                #     init_position=init_position,
-                #     total_data=total_data,
-                # )
+                # 跑 uav greedy
+                env_drift_greedy_and_mutihop = run_n_greedy_drift(
+                    env_drift_greedy_and_mutihop, 
+                    n_episodes=n_episodes,
+                    result_index=index,
+                    loop_index=num+1,
+                    train_params=params,
+                    init_position=init_position,
+                    total_data=total_data,
+                )
 
-                # # 產生UAV路徑圖
-                # uav_run_img = env_drift_greedy_and_mutihop.render(return_img = True)
-                # imageio.mimsave(f"./result/drift_greedy_and_mutihop/{index}_loop_index{num+1}_UAV_result.gif",[uav_run_img],fps = 10)
-                # csv_utils.writeDataToCSV(f'./result/csv{field_index}/drift_greedy_and_mutihop.csv', env_drift_greedy_and_mutihop.result)
+                # 產生UAV路徑圖
+                uav_run_img = env_drift_greedy_and_mutihop.render(return_img = True)
+                imageio.mimsave(f"./result/drift_greedy_and_mutihop/{index}_loop_index{num+1}_UAV_result.gif",[uav_run_img],fps = 10)
+                csv_utils.writeDataToCSV(f'./result/csv{field_index}/drift_greedy_and_mutihop.csv', env_drift_greedy_and_mutihop.result)
                 
 
-                # end = time.time()
-                # print('drift greedy and mutihop end', end - start)
+                end = time.time()
+                print('drift greedy and mutihop end', end - start)
 
-                # # =============== drift greedy and mutihop ===============
+                # =============== drift greedy and mutihop ===============
 
                 # 清除無人跡拜訪後的感測器資料
                 # env_greedy.clear_data(init_position, False)

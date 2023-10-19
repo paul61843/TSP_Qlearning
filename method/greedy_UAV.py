@@ -88,7 +88,7 @@ def run_n_greedy(
                     math.ceil(lost_data)
                 ])
                 
-                added_event_data = generate_data_50[recordIndex % len(generate_data_50)]
+                added_event_data = generate_data_50[recordIndex % len(generate_data_50)][:env.n_stops]
                 added_min_data = env.min_generate_data * len(added_event_data)
                 env.generate_data_total = env.generate_data_total + sum(added_event_data) + added_min_data
                 env.generate_data(added_event_data)
@@ -173,7 +173,7 @@ def run_n_greedy_mutihop(
                     math.ceil(lost_data)
                 ])
                 
-                added_event_data = generate_data_50[recordIndex % len(generate_data_50)]
+                added_event_data = generate_data_50[recordIndex % len(generate_data_50)][:env.n_stops]
                 added_min_data = env.min_generate_data * len(added_event_data)
                 env.generate_data_total = env.generate_data_total + sum(added_event_data) + added_min_data
                 env.generate_data(added_event_data)
@@ -266,7 +266,7 @@ def run_n_greedy_drift(
                     math.ceil(lost_data)
                 ])
                 
-                added_event_data = generate_data_50[recordIndex % len(generate_data_50)]
+                added_event_data = generate_data_50[recordIndex % len(generate_data_50)][:env.n_stops]
                 added_min_data = env.min_generate_data * len(added_event_data)
                 env.generate_data_total = env.generate_data_total + sum(added_event_data) + added_min_data
                 env.generate_data(added_event_data)
