@@ -75,7 +75,7 @@ num_processes = 1 # 同時執行數量 (產生結果數量)
 num_points = 400 # 節點數
 max_box = 2000  # 場景大小 單位 (1m)
 
-n_episodes = 1000 # 訓練次數
+n_episodes = 5000 # 訓練次數
 
 # 比較參數
 total_data = 0
@@ -112,6 +112,8 @@ def run_uav(env, init_position):
 
     env.uav_data_amount_list = env.data_amount_list
 
+    temp_points = []
+
     while idx < len(env.stops):
 
         
@@ -121,6 +123,8 @@ def run_uav(env, init_position):
 
         position_x = env.x[env.stops]
         position_y = env.y[env.stops]
+
+        temp_points.append(route)
 
         # 搜尋飄移節點 所需要的電量消耗
         drift_cost = calc_drift_cost(
@@ -166,8 +170,12 @@ def run_uav(env, init_position):
 
         if recordIndex <= int(current_time // env.unit_time):
 
+            for i in temp_points:
+                env.clear_data_one(init_position, i , False)
+                temp_points = []
+
             for i in range(int(current_time // env.unit_time) - recordIndex):
-                env.clear_data(init_position, False)
+                # env.clear_data(init_position, False)
                 env.subtract_mutihop_data()
                     
                 mutihop_data = env.sum_mutihop_data

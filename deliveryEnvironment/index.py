@@ -17,7 +17,7 @@ class DeliveryEnvironment(object):
         # Environment Config
         self.point_range = 100 # 節點通訊半徑範圍 (單位 1m)
         self.drift_range = 120 # 節點飄移範圍 (單位 1m)
-        self.system_time = 8000 # 執行時間 (單位s)
+        self.system_time = 7000 # 執行時間 (單位s)
         self.unit_time = 100 # 時間單位 (單位s)
         self.current_time = 0 # 目前時間 (單位s)
         self.buffer_size = 16 * 1024 # 感測器儲存資料的最大量 (16KB)
