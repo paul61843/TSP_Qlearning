@@ -16,7 +16,7 @@ class DeliveryEnvironment(object):
 
         # Environment Config
         self.point_range = 100 # 節點通訊半徑範圍 (單位 1m)
-        self.drift_range = 150 # 節點飄移範圍 (單位 1m)
+        self.drift_range = 120 # 節點飄移範圍 (單位 1m)
         self.system_time = 10000 # 執行時間 (單位s)
         self.unit_time = 100 # 時間單位 (單位s)
         self.current_time = 0 # 目前時間 (單位s)
@@ -80,8 +80,8 @@ class DeliveryEnvironment(object):
 
         # 隨機生成感測器數量，並確保每個點的通訊範圍內至少有一個點
         if use_fake_data:
-            self.x = globals()['sensor_positionX_' + str(self.env_index)]
-            self.y = globals()['sensor_positionY_' + str(self.env_index)]
+            self.x = sensor_position[ self.env_index ]
+            self.y = sensor_position[ self.env_index + 1]
             
         else:
             points = init_point
@@ -145,9 +145,11 @@ class DeliveryEnvironment(object):
                 if isInner and lessThree:
                     points = np.append(points, [np.array([x,y])], axis=0)
                     break
-        print(self.isolated_node)
-        print(list(points[:,0]))
-        print(list(points[:,1]))
+
+        with open("node.txt", "r+") as f:
+            old = f.read() # read everything in the file
+            f.seek(0) # rewind
+            f.write(f'{old}\n{list(points[:,0])},\n{list(points[:,1])},') # write the new line before
 
     def set_isolated_node(self):
         points = []
