@@ -338,22 +338,21 @@ class DeliveryEnvironment(object):
 
         has_calc_danger_threshold = self.data_amount_list[new_state] > self.calc_threshold
 
-        yellow_reward = self.data_amount_list[new_state] * 2 
-        danger_reward = has_calc_danger_threshold * self.data_amount_list[new_state] * self.data_amount_list[new_state] / 800
+        buffer_percentage = self.data_amount_list[new_state] // self.buffer_size
+
+        yellow_reward = buffer_percentage * 2 
+        danger_reward = has_calc_danger_threshold * buffer_percentage * 8
         
 
         # 新增 孤立節點獎勵值
 
         is_isolated_node = new_state in self.isolated_node
-        isolated_reward = 2 if is_isolated_node else 0
+        isolated_reward = 1 if is_isolated_node else 0
 
         # unvisited_stops = self.get_unvisited_stops()
         # calcAvg(new_state, unvisited_stops, self)
 
-        return distance_reward + yellow_reward + danger_reward + isolated_reward
-        # return (1 - trade_of_factor * distance ** 2)
-        # return -(distance ** 2)
-        # return -distance
-        # return Theta_one * distance + 
-        #        (1 - Theta_one) * Theta_two / 
+        # return distance_reward + yellow_reward + danger_reward + isolated_reward
+        return -distance / self.max_box + yellow_reward + danger_reward + isolated_reward
+        
 

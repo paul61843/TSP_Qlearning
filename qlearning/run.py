@@ -94,7 +94,15 @@ def run_n_episodes(
             # img = env.render(return_img = True)
             # maxRewardImg = [img]
             max_reward_stop = env.stops
-        
+    
+    print(rewards)
+    # Show rewards
+    plt.figure(figsize = (15,3))
+    plt.title("Rewards over training")
+    plt.plot(rewards)
+    plt.savefig(f"./result/Q_learning/{result_index}_epsilon_min{train_params['epsilon_min']}_gamma{train_params['gamma']}_lr{train_params['lr']}_loop_index{loop_index}_rewards.png")
+    plt.close('all')
+
     # qlearning_distance ======================================
     env.stops = max_reward_stop
     
