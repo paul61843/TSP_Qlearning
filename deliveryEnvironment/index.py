@@ -209,6 +209,8 @@ class DeliveryEnvironment(object):
             self.uav_data = self.uav_data + self.data_amount_list[index]
             self.data_amount_list[index] = 0
 
+            return index
+
     def _generate_q_values(self,box_size = 0.2):
         xy = np.column_stack([self.x,self.y])
         self.q_stops = cdist(xy,xy)
@@ -303,10 +305,10 @@ class DeliveryEnvironment(object):
             for i in range(1, len(self.x)):
                 if i != self.first_point:
                     index = index % len(drift_distance_x)
-                    self.x[i] = self.x[i] + [x * 120 for x in drift_distance_x[index]][i]
+                    self.x[i] = self.x[i] + [x * self.drift_range for x in drift_distance_x[index]][i]
                     self.x[i] = 0 if self.x[i] <= 0 else self.max_box if self.x[i] >= self.max_box else self.x[i]
                     
-                    self.y[i] = self.y[i] + [x * 120 for x in drift_distance_y[index]][i]
+                    self.y[i] = self.y[i] + [x * self.drift_range for x in drift_distance_y[index]][i]
                     self.y[i] = 0 if self.y[i] <= 0 else self.max_box if self.y[i] >= self.max_box else self.y[i]
         else:
             for i in range(1, len(self.x)):
@@ -331,17 +333,17 @@ class DeliveryEnvironment(object):
         return x,y
 
     def _get_reward(self,state,new_state):
-        trade_of_factor = 0.001
 
-        distance = self.q_stops[state,new_state]
-        distance_reward = -trade_of_factor * distance ** 2
+        distance = self.q_stops[state,new_state] / self.max_box
+        distance_reward = -distance * 10
 
         has_calc_danger_threshold = self.data_amount_list[new_state] > self.calc_threshold
 
-        buffer_percentage = self.data_amount_list[new_state] // self.buffer_size
+        buffer_percentage = self.data_amount_list[new_state] / self.buffer_size
 
-        yellow_reward = buffer_percentage * 2 
-        danger_reward = has_calc_danger_threshold * buffer_percentage * 8
+        yellow_reward = buffer_percentage * 10
+        danger_reward = 0
+        # danger_reward = has_calc_danger_threshold * buffer_percentage * 8
         
 
         # 新增 孤立節點獎勵值
@@ -349,10 +351,6 @@ class DeliveryEnvironment(object):
         is_isolated_node = new_state in self.isolated_node
         isolated_reward = 1 if is_isolated_node else 0
 
-        # unvisited_stops = self.get_unvisited_stops()
-        # calcAvg(new_state, unvisited_stops, self)
-
-        # return distance_reward + yellow_reward + danger_reward + isolated_reward
-        return -distance / self.max_box + yellow_reward + danger_reward + isolated_reward
+        return distance_reward + yellow_reward + danger_reward
         
 

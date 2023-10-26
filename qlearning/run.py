@@ -95,7 +95,6 @@ def run_n_episodes(
             # maxRewardImg = [img]
             max_reward_stop = env.stops
     
-    print(rewards)
     # Show rewards
     plt.figure(figsize = (15,3))
     plt.title("Rewards over training")

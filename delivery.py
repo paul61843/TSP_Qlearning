@@ -31,11 +31,6 @@ plt.style.use("seaborn-v0_8-dark")
 
 sys.path.append("../")
 
-# 待完成事項
-
-# 無人機 不具備飄移探索能力
-
-
 # 比較對象
 # 1.	單純的multi-hop transmission
 # 2.	UAV拜訪所有匯聚點（不考慮飄浮）
@@ -63,10 +58,6 @@ sys.path.append("../")
 
 # 2 x 3 
 
-# 找現成的感測器 buffer 大小
-
-# 1k 240 秒
-# 16k
 
 
 
@@ -161,7 +152,7 @@ def run_uav(env, init_position):
                 env.drift_cost_list = list(oldDrift)
 
             if new_cost <= env.max_move_distance:
-                env.remain_power = new_cost
+                env.remain_power = env.max_move_distance - new_cost
 
         idx = idx + 1
 
@@ -169,9 +160,8 @@ def run_uav(env, init_position):
         current_time = env.current_time + distance // env.uav_speed
 
         if recordIndex <= int(current_time // env.unit_time):
-
             for i in temp_points:
-                env.clear_data_one(init_position, i , False)
+                index = env.clear_data_one(init_position, i , False)
                 temp_points = []
 
             for i in range(int(current_time // env.unit_time) - recordIndex):

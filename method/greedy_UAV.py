@@ -85,7 +85,7 @@ def run_n_greedy(
                     math.ceil(mutihop_data), 
                     math.ceil(sensor_data), 
                     math.ceil(env.uav_data), 
-                    math.ceil(lost_data)
+                    math.ceil(lost_data),
                 ])
                 
                 added_event_data = generate_data_50[recordIndex % len(generate_data_50)][:env.n_stops]
@@ -170,7 +170,7 @@ def run_n_greedy_mutihop(
                     math.ceil(mutihop_data), 
                     math.ceil(sensor_data), 
                     math.ceil(env.uav_data), 
-                    math.ceil(lost_data)
+                    math.ceil(lost_data),
                 ])
                 
                 added_event_data = generate_data_50[recordIndex % len(generate_data_50)][:env.n_stops]
@@ -263,7 +263,7 @@ def run_n_greedy_drift(
                     math.ceil(mutihop_data), 
                     math.ceil(sensor_data), 
                     math.ceil(env.uav_data), 
-                    math.ceil(lost_data)
+                    math.ceil(lost_data),
                 ])
                 
                 added_event_data = generate_data_50[recordIndex % len(generate_data_50)][:env.n_stops]
