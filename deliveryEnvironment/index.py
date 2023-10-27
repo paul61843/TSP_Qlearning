@@ -16,7 +16,7 @@ class DeliveryEnvironment(object):
 
         # Environment Config
         self.point_range = 100 # 節點通訊半徑範圍 (單位 1m)
-        self.drift_range = 120 # 節點飄移範圍 (單位 1m)
+        self.drift_range = 200 # 節點飄移範圍 (單位 1m)
         self.system_time = 7000 # 執行時間 (單位s)
         self.unit_time = 100 # 時間單位 (單位s)
         self.current_time = 0 # 目前時間 (單位s)
@@ -33,10 +33,14 @@ class DeliveryEnvironment(object):
         # 無人機探索，飄移節點最大能量消耗
         # 假設無人機只需飛行一圈，即可完整探索感測器飄移可能區域
         # 故無人機只需以 r/2 為半徑飛行
-        self.drift_max_cost = 2 * (self.drift_range - self.uav_range) / 2 * math.pi  # 公式 2 x 3.14 x r
+        self.drift_max_cost = 2 * (self.drift_range - self.point_range) / 2 * math.pi  # 公式 2 x 3.14 x r
 
         # 透過muti-hop方式 減少的資料量 (每秒)
         self.mutihop_transmission = 128 * 100 / 30
+        
+        # 計算速度
+        self.calc_speed = 128 * 100 / 30
+        self.calc_data_reduce_rate = 128
 
 
         # Initialization
@@ -53,7 +57,7 @@ class DeliveryEnvironment(object):
         self.result = []
 
         # 資料
-        self.uav_data = 0
+        self.uav_data = { 'origin': 0, 'calc': 0 }
         self.sum_mutihop_data = 0
         self.generate_data_total = 0
 
@@ -84,7 +88,7 @@ class DeliveryEnvironment(object):
             self.y = sensor_position[ self.env_index + 1]
             
         else:
-            points = init_point
+            points = []
             while (len(points) < self.n_stops):
                 x,y = (np.random.rand(1,2) * self.max_box)[0]
                 for p in points:
@@ -109,7 +113,7 @@ class DeliveryEnvironment(object):
             self.y = points[:,1]
             
         # 預設感測器的目前資料量為0
-        self.data_amount_list = [0] * self.n_stops
+        self.data_amount_list = [{ 'origin': 0, 'calc': 0 }] * self.n_stops
         
     def generate_stops_and_remove_drift_point(self):
 
@@ -166,21 +170,26 @@ class DeliveryEnvironment(object):
         
     # 加上隨機產生感測器的資料量 max = 100
     def generate_data(self, add_data):
-        arr1 = self.data_amount_list
-        arr2 = add_data
-        
-        added_data = [ (x + y + self.min_generate_data) for x, y in zip(arr1, arr2) ]
-        self.data_amount_list = [ x if x <= self.buffer_size else self.buffer_size for x in added_data ]
+        for idx, x in enumerate(self.data_amount_list):
+            x['origin'] = x['origin'] + add_data[idx]
+            
+            if x['origin'] > self.buffer_size:
+                x['origin'] = self.buffer_size
 
     # 減去 muti hop 傳輸的資料
     def subtract_mutihop_data(self):
         arr = np.array(self.data_amount_list)
 
         for i, data in enumerate(arr):
+            
+            arr[i]['origin'] = max(arr[i]['origin'] - self.calc_speed, 0)
+            arr[i]['calc'] = arr[i]['calc'] + max(arr[i]['origin'] - self.calc_speed, 0) // self.calc_data_reduce_rate
+            
             not_isolated_node = i not in self.isolated_node
+            
             if not_isolated_node:
-                self.sum_mutihop_data = self.sum_mutihop_data + (arr[i] - max(arr[i] - self.mutihop_transmission, 0))
-                arr[i] = max(arr[i] - self.mutihop_transmission, 0)
+                self.sum_mutihop_data = self.sum_mutihop_data + arr[i]['calc']
+                arr[i]['calc'] = 0
 
         self.data_amount_list = arr
 
@@ -195,8 +204,11 @@ class DeliveryEnvironment(object):
         for i in self.stops:
             drift_distance = np.sqrt((self.x[i] - init_x[i]) ** 2 + (self.y[i] - init_y[i]) ** 2)
             if (drift_distance <= self.uav_range) or drift_consider:
-                self.uav_data = self.uav_data + self.data_amount_list[i]
-                self.data_amount_list[i] = 0
+                self.uav_data = self.uav_data['origin'] + self.data_amount_list[i]['origin']
+                self.uav_data = self.uav_data['calc'] + self.data_amount_list[i]['calc']
+                
+                self.data_amount_list[i]['origin'] = 0
+                self.data_amount_list[i]['calc'] = 0
 
         # 清除無人跡拜訪後的感測器資料
     def clear_data_one(self, init_position, index, drift_consider):
@@ -206,8 +218,11 @@ class DeliveryEnvironment(object):
             (self.y[index] - init_y[index]) ** 2
         )
         if (drift_distance <= self.uav_range) or drift_consider:
-            self.uav_data = self.uav_data + self.data_amount_list[index]
-            self.data_amount_list[index] = 0
+            self.uav_data['origin'] = self.uav_data['origin'] + self.data_amount_list[index]['origin']
+            self.uav_data['calc'] = self.uav_data['calc'] + self.data_amount_list[index]['calc']
+            
+            self.data_amount_list[index]['origin'] = 0
+            self.data_amount_list[index]['calc'] = 0
 
             return index
 
@@ -232,13 +247,16 @@ class DeliveryEnvironment(object):
         # 將孤立節點標記為灰色
         for i in self.isolated_node:
             plt.scatter(self.x[i], self.y[i], c = "#AAAAAA", s = 30)
+            
 
         # 感測器的資料量大於50，將節點標記為黃色、紅色(代表優先節點)
         for i in range(self.n_stops):
-            if self.data_amount_list[i] > self.calc_threshold:
+            sensor_total_data = self.data_amount_list[i]['origin'] + self.data_amount_list[i]['calc']
+            
+            if sensor_total_data > self.calc_threshold:
                 plt.scatter(self.x[i], self.y[i], c = "yellow", s = 30)
 
-            if self.data_amount_list[i] > self.calc_danger_threshold:
+            if sensor_total_data > self.calc_danger_threshold:
                 self.red_stops.append(i)
                 plt.scatter(self.x[i], self.y[i], c = "red", s = 30) 
 
@@ -336,10 +354,13 @@ class DeliveryEnvironment(object):
 
         distance = self.q_stops[state,new_state] / self.max_box
         distance_reward = -distance * 10
+        
+        sensor_total_data = self.data_amount_list[new_state]['origin'] + self.data_amount_list[new_state]['calc']
+        
 
-        has_calc_danger_threshold = self.data_amount_list[new_state] > self.calc_threshold
+        has_calc_danger_threshold = sensor_total_data > self.calc_threshold
 
-        buffer_percentage = self.data_amount_list[new_state] / self.buffer_size
+        buffer_percentage = sensor_total_data / self.buffer_size
 
         yellow_reward = buffer_percentage * 10
         danger_reward = 0

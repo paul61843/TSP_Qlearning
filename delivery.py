@@ -5,6 +5,7 @@ import imageio
 import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
+
 from matplotlib import pyplot as plt
 from matplotlib.collections import PatchCollection
 from matplotlib.patches import Rectangle
@@ -58,7 +59,12 @@ sys.path.append("../")
 
 # 2 x 3 
 
+# 使用 GPSR 改掉  dijkstra，要增加感測器資料 分有計算過後 跟沒計算過後 
+# 透過 GPSR 將資料往下傳遞
 
+# 透過常態分布 產生假資料 0.1 2.1 13.6 34.1 34.1 13.6 2.1 0.1
+
+# 節點飄移 需要飄移特定方向 較遠的位置 飄移速度越快
 
 
 # 設定環境參數
@@ -132,7 +138,9 @@ def run_uav(env, init_position):
         # 用於搜尋飄移節點中的剩餘能量
         env.remain_power = env.remain_power + drift_remain_cost
         env.unvisited_stops = env.get_unvisited_stops()
-        mostDataOfPoint = getMostDataOfSensor(env.uav_data_amount_list, env.unvisited_stops)
+        
+        mostDataOfPoint = getMostDataOfSensor(env)
+        
 
         add_index = getMinDistanceIndex(env, mostDataOfPoint)
         
@@ -169,17 +177,23 @@ def run_uav(env, init_position):
                 env.subtract_mutihop_data()
                     
                 mutihop_data = env.sum_mutihop_data
-                sensor_data = sum(env.data_amount_list)
+                sensor_data_origin = sum(item['origin'] for item in env.data_amount_list)
+                sensor_data_calc = sum(item['calc'] for item in env.data_amount_list) * env.calc_data_reduce_rate
+                sensor_data = sensor_data_origin + sensor_data_calc
+                
+                uav_data = env.uav_data['origin'] + env.uav_data['calc'] * env.calc_data_reduce_rate
+                
                 total_data = env.generate_data_total
-                lost_data = total_data - (mutihop_data + sensor_data + env.uav_data)
-
+                lost_data = total_data - (mutihop_data + sensor_data + uav_data)
                 run_time = recordIndex * env.unit_time
                 env.result.append([
                     math.ceil(run_time), 
                     math.ceil(total_data),
                     math.ceil(mutihop_data), 
+                    math.ceil(sensor_data_origin), 
+                    math.ceil(sensor_data_calc), 
                     math.ceil(sensor_data), 
-                    math.ceil(env.uav_data), 
+                    math.ceil(uav_data), 
                     math.ceil(lost_data),
                 ])
                 
@@ -373,49 +387,6 @@ def runMain(index):
                 print('drift greedy and mutihop end', end - start)
 
                 # =============== drift greedy and mutihop ===============
-
-                # 清除無人跡拜訪後的感測器資料
-                # env_greedy.clear_data(init_position, False)
-                # env_greedy_and_mutihop.clear_data(init_position, False)
-                # env_drift_greedy_and_mutihop.clear_data(init_position, True)
-                # env_Q.clear_data(init_position, True)
-
-
-                # 感測器儲存的資料，減去mutihop幫傳的資料
-                # env_mutihop.subtract_mutihop_data()
-                # env_greedy_and_mutihop.subtract_mutihop_data()
-                # env_drift_greedy_and_mutihop.subtract_mutihop_data()
-                # env_Q.subtract_mutihop_data()
-
-                g_mutihop_data = env_greedy.sum_mutihop_data
-                gam_mutihop_data = env_greedy_and_mutihop.sum_mutihop_data
-                dgam_mutihop_data = env_drift_greedy_and_mutihop.sum_mutihop_data
-                q_mutihop_data = env_Q.sum_mutihop_data
-                m_mutihop_data = env_mutihop.sum_mutihop_data
-
-                g_sensor_data = sum(env_greedy.data_amount_list)
-                gam_sensor_data = sum(env_greedy_and_mutihop.data_amount_list)
-                dgam_sensor_data = sum(env_drift_greedy_and_mutihop.data_amount_list)
-                q_sensor_data = sum(env_Q.data_amount_list)
-                m_sensor_data = sum(env_mutihop.data_amount_list)
-
-                g_sensor_lost = total_data - (g_sensor_data + env_greedy.uav_data)
-                gam_sensor_lost = total_data - (gam_mutihop_data + gam_sensor_data + env_greedy_and_mutihop.uav_data)
-                dgam_sensor_lost = total_data - (dgam_mutihop_data + dgam_sensor_data + env_drift_greedy_and_mutihop.uav_data)
-                q_sensor_lost = total_data - (q_mutihop_data + q_sensor_data + env_Q.uav_data)
-                m_sensor_lost = total_data - (m_mutihop_data + m_sensor_data + env_mutihop.uav_data)
-
-                csv_utils.write('./result/train_table.csv', 
-                    [
-                        # 系統產生的總資料量、感測器內的資料量、UAV幫助的資料量
-                        [''.ljust(30),                        'total_data'.ljust(15)    ,  'mutihop'.ljust(15)               ,  'sensor_data'.ljust(15)                 ,   'uav_data'.ljust(15),                                 'lost_data'.ljust(15),             'sum'.ljust(15)                                                                               ],
-                        ['greedy'.ljust(30) ,                  str(total_data).ljust(15),  str(g_mutihop_data).ljust(15)     ,   str(g_sensor_data).ljust(15)           ,   str(env_greedy.uav_data).ljust(15),                   str(g_sensor_lost).ljust(15),      str(g_sensor_data + env_greedy.uav_data).ljust(15)                                           ],
-                        ['mutihop'.ljust(30),                  str(total_data).ljust(15),  str(m_mutihop_data).ljust(15)     ,   str(m_sensor_data).ljust(15)           ,   str(env_mutihop.uav_data).ljust(15),                  str(m_sensor_lost).ljust(15),      str(m_mutihop_data + m_sensor_data + env_mutihop.uav_data).ljust(15)                         ],
-                        ['greedy_and_mutihop'.ljust(30),       str(total_data).ljust(15),  str(gam_mutihop_data).ljust(15)   ,   str(gam_sensor_data).ljust(15)         ,   str(env_greedy_and_mutihop.uav_data).ljust(15),       str(gam_sensor_lost).ljust(15),    str(gam_mutihop_data + gam_sensor_data + env_greedy_and_mutihop.uav_data).ljust(15)          ],
-                        ['drift_greedy_and_mutihop'.ljust(30), str(total_data).ljust(15),  str(dgam_mutihop_data).ljust(15)  ,   str(dgam_sensor_data).ljust(15)        ,   str(env_drift_greedy_and_mutihop.uav_data).ljust(15), str(dgam_sensor_lost).ljust(15),   str(dgam_mutihop_data + dgam_sensor_data + env_drift_greedy_and_mutihop.uav_data).ljust(15)  ],
-                        ['Q_learning'.ljust(30),               str(total_data).ljust(15),  str(q_mutihop_data).ljust(15)     ,   str(q_sensor_data).ljust(15)           ,   str(env_Q.uav_data).ljust(15),                        str(q_sensor_lost).ljust(15),      str(q_mutihop_data + q_sensor_data + env_Q.uav_data).ljust(15)                               ],
-                    ]
-                )
 
                 # 產生場景的方式
                 # if len(env.isolated_node) <= 10:

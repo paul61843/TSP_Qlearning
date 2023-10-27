@@ -7,12 +7,13 @@ import csv_utils
 from constants.constants import *
 
 # 取得資料量最高的感測器
-def getMostDataOfSensor(data_amount_list, unvisited_stops):
+def getMostDataOfSensor(env):
     max_value = -1
     max_node = None
+    
 
-    for i in unvisited_stops:
-        data_amount = data_amount_list[i]
+    for i in env.unvisited_stops:
+        data_amount = env.uav_data_amount_list[i]['origin'] + env.uav_data_amount_list[i]['calc'] * env.calc_data_reduce_rate
         if data_amount >= max_value:
             max_value = data_amount
             max_node = i
@@ -44,7 +45,7 @@ def run_n_greedy(
 
     for i in env.x:
         env.unvisited_stops = env.get_unvisited_stops()
-        a = getMostDataOfSensor(env.uav_data_amount_list, env.unvisited_stops)
+        a = getMostDataOfSensor(env)
 
         if a == None:
             break
@@ -74,17 +75,23 @@ def run_n_greedy(
             for i in range(int(current_time // env.unit_time) - recordIndex):
                 
                 mutihop_data = env.sum_mutihop_data
-                sensor_data = sum(env.data_amount_list)
+                sensor_data_origin = sum(item['origin'] for item in env.data_amount_list)
+                sensor_data_calc = sum(item['calc'] for item in env.data_amount_list) * env.calc_data_reduce_rate
+                sensor_data = sensor_data_origin + sensor_data_calc
+                
+                uav_data = env.uav_data['origin'] + env.uav_data['calc'] * env.calc_data_reduce_rate
+                
                 total_data = env.generate_data_total
-
-                lost_data = int(env.generate_data_total - (mutihop_data + sensor_data + env.uav_data))
+                lost_data = total_data - (mutihop_data + sensor_data + uav_data)
                 run_time = recordIndex * env.unit_time
                 env.result.append([
                     math.ceil(run_time), 
                     math.ceil(total_data),
                     math.ceil(mutihop_data), 
+                    math.ceil(sensor_data_origin), 
+                    math.ceil(sensor_data_calc), 
                     math.ceil(sensor_data), 
-                    math.ceil(env.uav_data), 
+                    math.ceil(uav_data), 
                     math.ceil(lost_data),
                 ])
                 
@@ -124,7 +131,7 @@ def run_n_greedy_mutihop(
 
     for i in env.x:
         env.unvisited_stops = env.get_unvisited_stops()
-        a = getMostDataOfSensor(env.uav_data_amount_list, env.unvisited_stops)
+        a = getMostDataOfSensor(env)
         temp_points.append(a)
 
         if a == None:
@@ -156,20 +163,23 @@ def run_n_greedy_mutihop(
                 env.subtract_mutihop_data()
                 
                 mutihop_data = env.sum_mutihop_data
-                sensor_data = sum(env.data_amount_list)
-                total_data = env.generate_data_total
-
-                lost_data = int(env.generate_data_total - (mutihop_data + sensor_data + env.uav_data))
+                sensor_data_origin = sum(item['origin'] for item in env.data_amount_list)
+                sensor_data_calc = sum(item['calc'] for item in env.data_amount_list) * env.calc_data_reduce_rate
+                sensor_data = sensor_data_origin + sensor_data_calc
                 
+                uav_data = env.uav_data['origin'] + env.uav_data['calc'] * env.calc_data_reduce_rate
+                
+                total_data = env.generate_data_total
+                lost_data = total_data - (mutihop_data + sensor_data + uav_data)
                 run_time = recordIndex * env.unit_time
-
-
                 env.result.append([
                     math.ceil(run_time), 
                     math.ceil(total_data),
                     math.ceil(mutihop_data), 
+                    math.ceil(sensor_data_origin), 
+                    math.ceil(sensor_data_calc), 
                     math.ceil(sensor_data), 
-                    math.ceil(env.uav_data), 
+                    math.ceil(uav_data), 
                     math.ceil(lost_data),
                 ])
                 
@@ -212,7 +222,7 @@ def run_n_greedy_drift(
     for i in env.x:
         
         env.unvisited_stops = env.get_unvisited_stops()
-        a = getMostDataOfSensor(env.uav_data_amount_list, env.unvisited_stops)
+        a = getMostDataOfSensor(env)
         temp_points.append(a)
 
         if a == None:
@@ -238,7 +248,7 @@ def run_n_greedy_drift(
 
         total_cost = distance + to_start_cost + drift_cost
 
-        if distance > env.max_move_distance:
+        if total_cost > env.max_move_distance:
             env.stops.pop()
             break
 
@@ -253,16 +263,23 @@ def run_n_greedy_drift(
                 env.subtract_mutihop_data()
                     
                 mutihop_data = env.sum_mutihop_data
-                sensor_data = sum(env.data_amount_list)
+                sensor_data_origin = sum(item['origin'] for item in env.data_amount_list)
+                sensor_data_calc = sum(item['calc'] for item in env.data_amount_list) * env.calc_data_reduce_rate
+                sensor_data = sensor_data_origin + sensor_data_calc
+                
+                uav_data = env.uav_data['origin'] + env.uav_data['calc'] * env.calc_data_reduce_rate
+                
                 total_data = env.generate_data_total
-                lost_data = total_data - (mutihop_data + sensor_data + env.uav_data)
+                lost_data = total_data - (mutihop_data + sensor_data + uav_data)
                 run_time = recordIndex * env.unit_time
                 env.result.append([
                     math.ceil(run_time), 
                     math.ceil(total_data),
                     math.ceil(mutihop_data), 
+                    math.ceil(sensor_data_origin), 
+                    math.ceil(sensor_data_calc), 
                     math.ceil(sensor_data), 
-                    math.ceil(env.uav_data), 
+                    math.ceil(uav_data), 
                     math.ceil(lost_data),
                 ])
                 
