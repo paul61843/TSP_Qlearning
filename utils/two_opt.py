@@ -2,7 +2,7 @@ from utils.calc import *
 import numpy as np
 import random
 
-opt_max_times = 2000
+opt_max_times = 5000
 
 # 2-opt 程式碼
 def optimal_route(route, env, distance):
