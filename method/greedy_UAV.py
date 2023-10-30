@@ -13,7 +13,7 @@ def getMostDataOfSensor(env):
     
 
     for i in env.unvisited_stops:
-        data_amount = env.uav_data_amount_list[i]['origin'] + env.uav_data_amount_list[i]['calc'] * env.calc_data_reduce_rate
+        data_amount = env.uav_data_amount_list[i]['origin'] + env.uav_data_amount_list[i]['calc'] * env.calc_data_compression_ratio
         if data_amount >= max_value:
             max_value = data_amount
             max_node = i
@@ -76,10 +76,10 @@ def run_n_greedy(
                 
                 mutihop_data = env.sum_mutihop_data
                 sensor_data_origin = sum(item['origin'] for item in env.data_amount_list)
-                sensor_data_calc = sum(item['calc'] for item in env.data_amount_list) * env.calc_data_reduce_rate
+                sensor_data_calc = sum(item['calc'] for item in env.data_amount_list) * env.calc_data_compression_ratio
                 sensor_data = sensor_data_origin + sensor_data_calc
                 
-                uav_data = env.uav_data['origin'] + env.uav_data['calc'] * env.calc_data_reduce_rate
+                uav_data = env.uav_data['origin'] + env.uav_data['calc'] * env.calc_data_compression_ratio
                 
                 total_data = env.generate_data_total
                 lost_data = total_data - (mutihop_data + sensor_data + uav_data)
@@ -165,10 +165,10 @@ def run_n_greedy_mutihop(
                 env.subtract_mutihop_data()
                 mutihop_data = env.sum_mutihop_data
                 sensor_data_origin = sum(item['origin'] for item in env.data_amount_list)
-                sensor_data_calc = sum(item['calc'] for item in env.data_amount_list) * env.calc_data_reduce_rate
+                sensor_data_calc = sum(item['calc'] for item in env.data_amount_list) * env.calc_data_compression_ratio
                 sensor_data = sensor_data_origin + sensor_data_calc
                 
-                uav_data = env.uav_data['origin'] + env.uav_data['calc'] * env.calc_data_reduce_rate
+                uav_data = env.uav_data['origin'] + env.uav_data['calc'] * env.calc_data_compression_ratio
                 
                 total_data = env.generate_data_total
                 lost_data = total_data - (mutihop_data + sensor_data + uav_data)
@@ -267,10 +267,10 @@ def run_n_greedy_drift(
 
                 mutihop_data = env.sum_mutihop_data
                 sensor_data_origin = sum(item['origin'] for item in env.data_amount_list)
-                sensor_data_calc = sum(item['calc'] for item in env.data_amount_list) * env.calc_data_reduce_rate
+                sensor_data_calc = sum(item['calc'] for item in env.data_amount_list) * env.calc_data_compression_ratio
                 sensor_data = sensor_data_origin + sensor_data_calc
                 
-                uav_data = env.uav_data['origin'] + env.uav_data['calc'] * env.calc_data_reduce_rate
+                uav_data = env.uav_data['origin'] + env.uav_data['calc'] * env.calc_data_compression_ratio
                 
                 total_data = env.generate_data_total
                 lost_data = total_data - (mutihop_data + sensor_data + uav_data)

@@ -35,9 +35,9 @@ class DeliveryEnvironment(object):
         # 故無人機只需以 r/2 為半徑飛行
         self.drift_max_cost = 2 * (self.drift_range - self.point_range) / 2 * math.pi  # 公式 2 x 3.14 x r
         
-        # 計算速度
-        self.calc_speed = 128 * 100 / 30
-        self.calc_data_reduce_rate = 128 * 100 / 30
+        
+        self.calc_speed = 128 * 100 / 30 # 計算速度
+        self.calc_data_compression_ratio = 128 * 100 / 30
 
 
         # Initialization
