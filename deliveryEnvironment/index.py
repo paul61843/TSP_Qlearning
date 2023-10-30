@@ -7,6 +7,7 @@ from utils.calc import *
 from isolated_nodes.index import *
 from constants.constants import *
 from constants.sensor_position import *
+from GPSR.index import *
 
 
 class DeliveryEnvironment(object):
@@ -15,8 +16,8 @@ class DeliveryEnvironment(object):
         print(f"Initialized Delivery Environment with {n_stops} random stops")
 
         # Environment Config
-        self.point_range = 100 # 節點通訊半徑範圍 (單位 1m)
-        self.drift_range = 200 # 節點飄移範圍 (單位 1m)
+        self.communication_range = 100 # 節點通訊半徑 (單位 1m)
+        self.drift_range = 120 # 節點飄移範圍 (單位 1m)
         self.system_time = 4000 # 執行時間 (單位s)
         self.unit_time = 100 # 時間單位 (單位s)
         self.current_time = 0 # 目前時間 (單位s)
@@ -33,11 +34,11 @@ class DeliveryEnvironment(object):
         # 無人機探索，飄移節點最大能量消耗
         # 假設無人機只需飛行一圈，即可完整探索感測器飄移可能區域
         # 故無人機只需以 r/2 為半徑飛行
-        self.drift_max_cost = 2 * (self.drift_range - self.point_range) / 2 * math.pi  # 公式 2 x 3.14 x r
+        self.drift_max_cost = 2 * (self.drift_range - self.communication_range) / 2 * math.pi  # 公式 2 x 3.14 x r
         
         
         self.calc_speed = 128 * 100 / 30 # 計算速度
-        self.calc_data_compression_ratio = 128 * 100 / 30
+        self.calc_data_compression_ratio = self.min_generate_data / (128 * 100 / 30) # 計算壓縮比例
 
 
         # Initialization
@@ -90,15 +91,15 @@ class DeliveryEnvironment(object):
                 x,y = (np.random.rand(1,2) * self.max_box)[0]
                 for p in points:
                     isInner = any(
-                        (((x - p[0]) ** 2 + (y - p[1]) ** 2 ) ** 0.5 <= self.point_range) and 
-                        (((x - p[0]) ** 2 + (y - p[1]) ** 2 ) ** 0.5 >= self.point_range / 2) 
+                        (((x - p[0]) ** 2 + (y - p[1]) ** 2 ) ** 0.5 <= self.communication_range) and 
+                        (((x - p[0]) ** 2 + (y - p[1]) ** 2 ) ** 0.5 >= self.communication_range / 2) 
                         for p in points
                     )
                     
                     count = 0
                     for node_x, node_y in points:
                         distance = math.sqrt((node_x - p[0]) ** 2 + (node_y - p[1]) ** 2)
-                        if distance <= self.point_range:
+                        if distance <= self.communication_range:
                             count += 1
                     
                     lessThree = 0 < count <= 5
@@ -130,15 +131,15 @@ class DeliveryEnvironment(object):
             x,y = (np.random.rand(1,2) * self.max_box)[0]
             for p in points:
                 isInner = any(
-                    (((x - p[0]) ** 2 + (y - p[1]) ** 2 ) ** 0.5 <= self.point_range) and 
-                    (((x - p[0]) ** 2 + (y - p[1]) ** 2 ) ** 0.5 >= self.point_range / 2) 
+                    (((x - p[0]) ** 2 + (y - p[1]) ** 2 ) ** 0.5 <= self.communication_range) and 
+                    (((x - p[0]) ** 2 + (y - p[1]) ** 2 ) ** 0.5 >= self.communication_range / 2) 
                     for p in points
                 )
                 
                 count = 0
                 for node_x, node_y in points:
                     distance = math.sqrt((node_x - p[0]) ** 2 + (node_y - p[1]) ** 2)
-                    if distance <= self.point_range:
+                    if distance <= self.communication_range:
                         count += 1
                 
                 lessThree = 0 < count <= 5
@@ -161,7 +162,7 @@ class DeliveryEnvironment(object):
 
         self.isolated_node = find_isolated_nodes(
             points, 
-            self.point_range, 
+            self.communication_range, 
             (self.x[first_point], self.y[first_point])
         )
         
@@ -179,18 +180,19 @@ class DeliveryEnvironment(object):
 
         for i, data in enumerate(arr):
             
-            arr[i]['calc'] = arr[i]['calc'] + 1 if arr[i]['origin'] >= self.calc_speed else 0
+            
+            arr[i]['calc'] = arr[i]['calc'] + self.calc_data_compression_ratio if arr[i]['origin'] >= self.calc_speed else 0
             arr[i]['origin'] = arr[i]['origin'] - self.calc_speed if arr[i]['origin'] >= self.calc_speed else arr[i]['origin']
             
             not_isolated_node = i not in self.isolated_node
             
+            run_gpsr_node(self)
             # 飄移節點需要實作
             # if not_isolated_node:
             #     self.sum_mutihop_data = self.sum_mutihop_data + arr[i]['calc']
             #     arr[i]['calc'] = 0
 
         self.data_amount_list = arr
-        print('197', self.data_amount_list[0]['origin'])
         
 
 
