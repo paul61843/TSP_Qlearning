@@ -17,7 +17,7 @@ class DeliveryEnvironment(object):
         # Environment Config
         self.point_range = 100 # 節點通訊半徑範圍 (單位 1m)
         self.drift_range = 200 # 節點飄移範圍 (單位 1m)
-        self.system_time = 7000 # 執行時間 (單位s)
+        self.system_time = 4000 # 執行時間 (單位s)
         self.unit_time = 100 # 時間單位 (單位s)
         self.current_time = 0 # 目前時間 (單位s)
         self.buffer_size = 16 * 1024 # 感測器儲存資料的最大量 (16KB)
@@ -113,7 +113,7 @@ class DeliveryEnvironment(object):
             self.y = points[:,1]
             
         # 預設感測器的目前資料量為0
-        self.data_amount_list = [{ 'origin': 0, 'calc': 0 }] * self.n_stops
+        self.data_amount_list = [{ 'origin': 0, 'calc': 0 } for _ in range(self.n_stops)]
         
     def generate_stops_and_remove_drift_point(self):
 
@@ -175,23 +175,27 @@ class DeliveryEnvironment(object):
             
             if x['origin'] > self.buffer_size:
                 x['origin'] = self.buffer_size
-
+        
     # 減去 muti hop 傳輸的資料
     def subtract_mutihop_data(self):
-        arr = np.array(self.data_amount_list)
+        arr = self.data_amount_list
 
         for i, data in enumerate(arr):
             
-            arr[i]['origin'] = max(arr[i]['origin'] - self.calc_speed, 0)
-            arr[i]['calc'] = arr[i]['calc'] + max(arr[i]['origin'] - self.calc_speed, 0) // self.calc_data_reduce_rate
+            arr[i]['calc'] = arr[i]['calc'] + 1 if arr[i]['origin'] > self.calc_speed else 0
+            arr[i]['origin'] = arr[i]['origin'] - self.calc_speed if arr[i]['origin'] > self.calc_speed else arr[i]['origin']
             
             not_isolated_node = i not in self.isolated_node
             
-            if not_isolated_node:
-                self.sum_mutihop_data = self.sum_mutihop_data + arr[i]['calc']
-                arr[i]['calc'] = 0
+            # 飄移節點需要實作
+            # if not_isolated_node:
+            #     self.sum_mutihop_data = self.sum_mutihop_data + arr[i]['calc']
+            #     arr[i]['calc'] = 0
 
         self.data_amount_list = arr
+        print('197', self.data_amount_list[0]['origin'])
+        
+
 
     def get_unvisited_stops(self):
         # 使用 set 運算來找出未被包含在 route 中的節點

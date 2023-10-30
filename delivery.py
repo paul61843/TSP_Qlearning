@@ -175,7 +175,6 @@ def run_uav(env, init_position):
             for i in range(int(current_time // env.unit_time) - recordIndex):
                 # env.clear_data(init_position, False)
                 env.subtract_mutihop_data()
-                    
                 mutihop_data = env.sum_mutihop_data
                 sensor_data_origin = sum(item['origin'] for item in env.data_amount_list)
                 sensor_data_calc = sum(item['calc'] for item in env.data_amount_list) * env.calc_data_reduce_rate
@@ -198,9 +197,12 @@ def run_uav(env, init_position):
                 ])
                 
                 added_event_data = generate_data_50[recordIndex % len(generate_data_50)][:env.n_stops]
-                added_min_data = env.min_generate_data * len(added_event_data)
-                env.generate_data_total = env.generate_data_total + sum(added_event_data) + added_min_data
-                env.generate_data(added_event_data)
+                added_min_data = [env.min_generate_data] * len(added_event_data)
+                added_data = [ x + y for x, y in zip(added_event_data, added_min_data)]
+                
+                env.generate_data_total = env.generate_data_total + sum(added_data)
+                env.generate_data(added_data)
+
 
                 recordIndex = recordIndex + 1
 
@@ -268,41 +270,41 @@ def runMain(index):
                 env_drift_greedy_and_mutihop.set_isolated_node()
                 env_Q.set_isolated_node()
 
-                # =============== Q learning ===============
-                print('Q learning start')
-                start = time.time()
+                # # =============== Q learning ===============
+                # print('Q learning start')
+                # start = time.time()
 
-                agent = DeliveryQAgent(
-                    states_size=num_points,
-                    actions_size=num_points,
-                    epsilon = 1.0,
-                    epsilon_min = params["epsilon_min"],
-                    epsilon_decay = 0.9998,
-                    gamma = params["gamma"],
-                    lr = params["lr"]
-                )
+                # agent = DeliveryQAgent(
+                #     states_size=num_points,
+                #     actions_size=num_points,
+                #     epsilon = 1.0,
+                #     epsilon_min = params["epsilon_min"],
+                #     epsilon_decay = 0.9998,
+                #     gamma = params["gamma"],
+                #     lr = params["lr"]
+                # )
 
-                # 跑 Q learning
-                env_Q,agent = run_n_episodes(
-                    env_Q, 
-                    agent,
-                    n_episodes=n_episodes,
-                    result_index=index,
-                    loop_index=num+1,
-                    train_params=params,
-                )
+                # # 跑 Q learning
+                # env_Q,agent = run_n_episodes(
+                #     env_Q, 
+                #     agent,
+                #     n_episodes=n_episodes,
+                #     result_index=index,
+                #     loop_index=num+1,
+                #     train_params=params,
+                # )
 
-                # uav 開始飛行
-                env_Q = run_uav(env_Q, init_position)
+                # # uav 開始飛行
+                # env_Q = run_uav(env_Q, init_position)
 
-                # 產生UAV路徑圖
-                uav_run_img = env_Q.render(return_img = True)
-                imageio.mimsave(f"./result/Q_learning/{index}_epsilon_min{params['epsilon_min']}_gamma{params['gamma']}_lr{params['lr']}_loop_index{num+1}_UAV_result.gif",[uav_run_img],fps = 10)
-                csv_utils.writeDataToCSV(f'./result/csv{index}/q_learning.csv', env_Q.result)
+                # # 產生UAV路徑圖
+                # uav_run_img = env_Q.render(return_img = True)
+                # imageio.mimsave(f"./result/Q_learning/{index}_epsilon_min{params['epsilon_min']}_gamma{params['gamma']}_lr{params['lr']}_loop_index{num+1}_UAV_result.gif",[uav_run_img],fps = 10)
+                # csv_utils.writeDataToCSV(f'./result/csv{index}/q_learning.csv', env_Q.result)
                 
-                end = time.time()
-                print('Q learning end', end - start)
-                # =============== Q learning end ===========
+                # end = time.time()
+                # print('Q learning end', end - start)
+                # # =============== Q learning end ===========
                 if env.stops == []:
                     print('no stops')
                     break
@@ -312,30 +314,30 @@ def runMain(index):
                 imageio.mimsave(f"./result/mutihop/{index}_loop_index{num+1}_UAV_result.gif",[uav_run_img],fps = 10)
                 # =============== mutihop end ===============
 
-                # =============== env_greedy ===============
-                print('env_greedy start')
-                start = time.time()
+                # # =============== env_greedy ===============
+                # print('env_greedy start')
+                # start = time.time()
 
-                # 跑 uav greedy
-                env_greedy = run_n_greedy(
-                    env_greedy, 
-                    n_episodes=n_episodes,
-                    result_index=index,
-                    loop_index=num+1,
-                    train_params=params,
-                    init_position=init_position,
-                    total_data=total_data,
-                )
+                # # 跑 uav greedy
+                # env_greedy = run_n_greedy(
+                #     env_greedy, 
+                #     n_episodes=n_episodes,
+                #     result_index=index,
+                #     loop_index=num+1,
+                #     train_params=params,
+                #     init_position=init_position,
+                #     total_data=total_data,
+                # )
 
-                # 產生UAV路徑圖
-                uav_run_img = env_greedy.render(return_img = True)
-                imageio.mimsave(f"./result/greedy/{index}_loop_index{num+1}_UAV_result.gif",[uav_run_img],fps = 10)
-                csv_utils.writeDataToCSV(f'./result/csv{field_index}/greedy.csv', env_greedy.result)
-                end = time.time()
+                # # 產生UAV路徑圖
+                # uav_run_img = env_greedy.render(return_img = True)
+                # imageio.mimsave(f"./result/greedy/{index}_loop_index{num+1}_UAV_result.gif",[uav_run_img],fps = 10)
+                # csv_utils.writeDataToCSV(f'./result/csv{field_index}/greedy.csv', env_greedy.result)
+                # end = time.time()
                 
-                print('env_greedy end', end - start)
+                # print('env_greedy end', end - start)
 
-                # =============== env_greedy end ===============
+                # # =============== env_greedy end ===============
 
 
                 # =============== greedy and mutihop ===========

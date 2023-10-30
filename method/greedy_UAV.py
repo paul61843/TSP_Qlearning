@@ -96,9 +96,11 @@ def run_n_greedy(
                 ])
                 
                 added_event_data = generate_data_50[recordIndex % len(generate_data_50)][:env.n_stops]
-                added_min_data = env.min_generate_data * len(added_event_data)
-                env.generate_data_total = env.generate_data_total + sum(added_event_data) + added_min_data
-                env.generate_data(added_event_data)
+                added_min_data = [env.min_generate_data] * len(added_event_data)
+                added_data = [ x + y for x, y in zip(added_event_data, added_min_data)]
+                
+                env.generate_data_total = env.generate_data_total + sum(added_data)
+                env.generate_data(added_data)
 
                 recordIndex = recordIndex + 1
 
@@ -161,7 +163,6 @@ def run_n_greedy_mutihop(
 
             for i in range(int(current_time // env.unit_time) - recordIndex):
                 env.subtract_mutihop_data()
-                
                 mutihop_data = env.sum_mutihop_data
                 sensor_data_origin = sum(item['origin'] for item in env.data_amount_list)
                 sensor_data_calc = sum(item['calc'] for item in env.data_amount_list) * env.calc_data_reduce_rate
@@ -184,9 +185,11 @@ def run_n_greedy_mutihop(
                 ])
                 
                 added_event_data = generate_data_50[recordIndex % len(generate_data_50)][:env.n_stops]
-                added_min_data = env.min_generate_data * len(added_event_data)
-                env.generate_data_total = env.generate_data_total + sum(added_event_data) + added_min_data
-                env.generate_data(added_event_data)
+                added_min_data = [env.min_generate_data] * len(added_event_data)
+                added_data = [ x + y for x, y in zip(added_event_data, added_min_data)]
+                
+                env.generate_data_total = env.generate_data_total + sum(added_data)
+                env.generate_data(added_data)
 
                 recordIndex = recordIndex + 1
 
@@ -261,7 +264,7 @@ def run_n_greedy_drift(
 
             for i in range(int(current_time // env.unit_time) - recordIndex):
                 env.subtract_mutihop_data()
-                    
+
                 mutihop_data = env.sum_mutihop_data
                 sensor_data_origin = sum(item['origin'] for item in env.data_amount_list)
                 sensor_data_calc = sum(item['calc'] for item in env.data_amount_list) * env.calc_data_reduce_rate
@@ -284,9 +287,11 @@ def run_n_greedy_drift(
                 ])
                 
                 added_event_data = generate_data_50[recordIndex % len(generate_data_50)][:env.n_stops]
-                added_min_data = env.min_generate_data * len(added_event_data)
-                env.generate_data_total = env.generate_data_total + sum(added_event_data) + added_min_data
-                env.generate_data(added_event_data)
+                added_min_data = [env.min_generate_data] * len(added_event_data)
+                added_data = [ x + y for x, y in zip(added_event_data, added_min_data)]
+                
+                env.generate_data_total = env.generate_data_total + sum(added_data)
+                env.generate_data(added_data)
 
                 recordIndex = recordIndex + 1
 
