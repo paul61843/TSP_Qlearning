@@ -34,13 +34,10 @@ class DeliveryEnvironment(object):
         # 假設無人機只需飛行一圈，即可完整探索感測器飄移可能區域
         # 故無人機只需以 r/2 為半徑飛行
         self.drift_max_cost = 2 * (self.drift_range - self.point_range) / 2 * math.pi  # 公式 2 x 3.14 x r
-
-        # 透過muti-hop方式 減少的資料量 (每秒)
-        self.mutihop_transmission = 128 * 100 / 30
         
         # 計算速度
         self.calc_speed = 128 * 100 / 30
-        self.calc_data_reduce_rate = 128
+        self.calc_data_reduce_rate = 128 * 100 / 30
 
 
         # Initialization
@@ -182,8 +179,8 @@ class DeliveryEnvironment(object):
 
         for i, data in enumerate(arr):
             
-            arr[i]['calc'] = arr[i]['calc'] + 1 if arr[i]['origin'] > self.calc_speed else 0
-            arr[i]['origin'] = arr[i]['origin'] - self.calc_speed if arr[i]['origin'] > self.calc_speed else arr[i]['origin']
+            arr[i]['calc'] = arr[i]['calc'] + 1 if arr[i]['origin'] >= self.calc_speed else 0
+            arr[i]['origin'] = arr[i]['origin'] - self.calc_speed if arr[i]['origin'] >= self.calc_speed else arr[i]['origin']
             
             not_isolated_node = i not in self.isolated_node
             
