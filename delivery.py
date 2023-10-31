@@ -59,9 +59,6 @@ sys.path.append("../")
 
 # 2 x 3 
 
-# 使用 GPSR 改掉  dijkstra，要增加感測器資料 分有計算過後 跟沒計算過後 
-# 透過 GPSR 將資料往下傳遞
-
 # 透過常態分布 產生假資料 0.1 2.1 13.6 34.1 34.1 13.6 2.1 0.1
 
 # 節點飄移 需要飄移特定方向 較遠的位置 飄移速度越快
@@ -169,13 +166,13 @@ def run_uav(env, init_position):
 
         if recordIndex <= int(current_time // env.unit_time):
             for i in temp_points:
-                index = env.clear_data_one(init_position, i , False)
+                index = env.clear_data_one(init_position, i , True)
                 temp_points = []
 
             for i in range(int(current_time // env.unit_time) - recordIndex):
                 # env.clear_data(init_position, False)
                 env.subtract_mutihop_data()
-                mutihop_data = env.sum_mutihop_data
+                mutihop_data = env.sum_mutihop_data * env.calc_data_compression_ratio
                 sensor_data_origin = sum(item['origin'] for item in env.data_amount_list)
                 sensor_data_calc = sum(item['calc'] for item in env.data_amount_list) * env.calc_data_compression_ratio
                 sensor_data = sensor_data_origin + sensor_data_calc
@@ -237,16 +234,20 @@ def runMain(index):
 
             env = DeliveryEnvironment(num_points, max_box, field_index)
 
+            # 感測器初始座標 (水下定錨座標)
+            init_X = np.array(env.x)
+            init_Y = np.array(env.y)
+
+            init_position = [init_X, init_Y]
+
+            # 執行節點飄移
+            env.drift_node(0)
+
             env_mutihop = copy.deepcopy(env)
             env_greedy = copy.deepcopy(env)
             env_greedy_and_mutihop = copy.deepcopy(env)
             env_drift_greedy_and_mutihop = copy.deepcopy(env)
             env_Q = copy.deepcopy(env)
-
-            # 感測器初始座標 (水下定錨座標)
-            init_X = np.array(env.x)
-            init_Y = np.array(env.y)
-            init_position = [init_X, init_Y]
 
             num_uav_loops = int(env.system_time // env.uav_flyTime)
                 
@@ -305,14 +306,14 @@ def runMain(index):
                 # end = time.time()
                 # print('Q learning end', end - start)
                 # # =============== Q learning end ===========
-                if env.stops == []:
-                    print('no stops')
-                    break
+                # if env.stops == []:
+                #     print('no stops')
+                #     break
 
-                # =============== mutihop ===============
-                uav_run_img = env_mutihop.render(return_img = True)
-                imageio.mimsave(f"./result/mutihop/{index}_loop_index{num+1}_UAV_result.gif",[uav_run_img],fps = 10)
-                # =============== mutihop end ===============
+                # # =============== mutihop ===============
+                # uav_run_img = env_mutihop.render(return_img = True)
+                # imageio.mimsave(f"./result/mutihop/{index}_loop_index{num+1}_UAV_result.gif",[uav_run_img],fps = 10)
+                # # =============== mutihop end ===============
 
                 # # =============== env_greedy ===============
                 # print('env_greedy start')
