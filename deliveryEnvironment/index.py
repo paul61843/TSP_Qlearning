@@ -1,3 +1,4 @@
+import time
 import math
 import random
 import numpy as np
@@ -37,8 +38,8 @@ class DeliveryEnvironment(object):
         self.drift_max_cost = 2 * (self.drift_range - self.communication_range) / 2 * math.pi  # 公式 2 x 3.14 x r
         
         
-        self.calc_speed = 128 * 100 / 30 # 計算速度
-        self.calc_data_compression_ratio = self.min_generate_data / (128 * 100 / 30) # 計算壓縮比例
+        self.calc_speed = 128 / 30 * 100 # 計算速度
+        self.calc_data_compression_ratio = 128 / 30 * 100 # 計算壓縮率
 
 
         # Initialization
@@ -179,22 +180,12 @@ class DeliveryEnvironment(object):
         arr = self.data_amount_list
 
         for i, data in enumerate(arr):
-            
-            
-            arr[i]['calc'] = arr[i]['calc'] + self.calc_data_compression_ratio if arr[i]['origin'] >= self.calc_speed else 0
+            calc_data = self.min_generate_data / self.calc_data_compression_ratio
+            arr[i]['calc'] = arr[i]['calc'] + calc_data if arr[i]['origin'] >= self.calc_speed else 0
             arr[i]['origin'] = arr[i]['origin'] - self.calc_speed if arr[i]['origin'] >= self.calc_speed else arr[i]['origin']
             
-            not_isolated_node = i not in self.isolated_node
-            
-            run_gpsr_node(self)
-            # 飄移節點需要實作
-            # if not_isolated_node:
-            #     self.sum_mutihop_data = self.sum_mutihop_data + arr[i]['calc']
-            #     arr[i]['calc'] = 0
-
+        run_gpsr_node(self)
         self.data_amount_list = arr
-        
-
 
     def get_unvisited_stops(self):
         # 使用 set 運算來找出未被包含在 route 中的節點
@@ -220,14 +211,12 @@ class DeliveryEnvironment(object):
             (self.x[index] - init_x[index]) ** 2 + 
             (self.y[index] - init_y[index]) ** 2
         )
+
         if (drift_distance <= self.uav_range) or drift_consider:
             self.uav_data['origin'] = self.uav_data['origin'] + self.data_amount_list[index]['origin']
             self.uav_data['calc'] = self.uav_data['calc'] + self.data_amount_list[index]['calc']
-            
             self.data_amount_list[index]['origin'] = 0
             self.data_amount_list[index]['calc'] = 0
-
-            return index
 
     def _generate_q_values(self,box_size = 0.2):
         xy = np.column_stack([self.x,self.y])
@@ -365,9 +354,9 @@ class DeliveryEnvironment(object):
 
         buffer_percentage = sensor_total_data / self.buffer_size
 
-        yellow_reward = buffer_percentage * 10
-        danger_reward = 0
-        # danger_reward = has_calc_danger_threshold * buffer_percentage * 8
+        yellow_reward = buffer_percentage * 50
+        # danger_reward = 0
+        danger_reward = has_calc_danger_threshold * buffer_percentage * 100
         
 
         # 新增 孤立節點獎勵值

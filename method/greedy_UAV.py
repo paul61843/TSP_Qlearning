@@ -73,8 +73,7 @@ def run_n_greedy(
             temp_points = []
 
             for i in range(int(current_time // env.unit_time) - recordIndex):
-                env.subtract_mutihop_data()
-                mutihop_data = env.sum_mutihop_data
+                mutihop_data = env.sum_mutihop_data * env.calc_data_compression_ratio
                 sensor_data_origin = sum(item['origin'] for item in env.data_amount_list)
                 sensor_data_calc = sum(item['calc'] for item in env.data_amount_list) * env.calc_data_compression_ratio
                 sensor_data = sensor_data_origin + sensor_data_calc
@@ -163,7 +162,7 @@ def run_n_greedy_mutihop(
 
             for i in range(int(current_time // env.unit_time) - recordIndex):
                 env.subtract_mutihop_data()
-                mutihop_data = env.sum_mutihop_data
+                mutihop_data = env.sum_mutihop_data * env.calc_data_compression_ratio
                 sensor_data_origin = sum(item['origin'] for item in env.data_amount_list)
                 sensor_data_calc = sum(item['calc'] for item in env.data_amount_list) * env.calc_data_compression_ratio
                 sensor_data = sensor_data_origin + sensor_data_calc
@@ -265,7 +264,7 @@ def run_n_greedy_drift(
             for i in range(int(current_time // env.unit_time) - recordIndex):
                 env.subtract_mutihop_data()
 
-                mutihop_data = env.sum_mutihop_data
+                mutihop_data = env.sum_mutihop_data * env.calc_data_compression_ratio
                 sensor_data_origin = sum(item['origin'] for item in env.data_amount_list)
                 sensor_data_calc = sum(item['calc'] for item in env.data_amount_list) * env.calc_data_compression_ratio
                 sensor_data = sensor_data_origin + sensor_data_calc

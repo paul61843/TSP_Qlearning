@@ -5,8 +5,9 @@ import random
 opt_max_times = 5000
 
 # 2-opt 程式碼
-def optimal_route(route, env, distance):
-    cost = distance
+def optimal_route(route, env):
+    cost = calcDistance(env.x[env.stops], env.y[env.stops])
+    
     if len(route) == 0:
         return route,cost
 
@@ -64,7 +65,7 @@ def swap(route, index1, index2):
 #         new_route.append(route[j])
 #     return new_route
 
-# def optimal_route(route, env, distance):
+# def optimal_route(route, env):
 #     cost = distance
 #     for i in range(opt_max_times):
 #         for j in range(len(route)-2):

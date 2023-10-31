@@ -94,6 +94,10 @@ def run_n_episodes(
             # img = env.render(return_img = True)
             # maxRewardImg = [img]
             max_reward_stop = env.stops
+            
+            cost = calcPowerCost(env)
+            distance = calcDistance(env.x[env.stops], env.y[env.stops])
+            print('99', cost, distance, sum(env.drift_cost_list))
     
     # Show rewards
     plt.figure(figsize = (15,3))

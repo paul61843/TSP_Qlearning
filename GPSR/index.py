@@ -38,8 +38,6 @@ class GPSR_Node:
         
         current_distance = self.euclidean_distance({ 'x': self.x, 'y': self.y })
         
-        print(current_distance)
-        
         for idx, x in enumerate(self.env.x):
             x = self.env.x[idx]
             y = self.env.y[idx]
@@ -78,27 +76,22 @@ def run_gpsr_node(env):
     arr = generate_gpsr_node(env)
     
     for idx, current_node in enumerate(arr):
-        nearest_sink_node = current_node.nearest_sink_node
-        print(idx, nearest_sink_node)
         
         while (True):
+            nearest_sink_node = current_node.nearest_sink_node
             if nearest_sink_node != None:
                 current_index = current_node.index
-                print('current_index', current_index)
-                print('nearest_sink_node calc', env.data_amount_list[nearest_sink_node]['calc'])
                 
                 if env.first_point == nearest_sink_node:
-                    env.sum_mutihop_data = env.sum_mutihop_data + arr[current_index]['calc']
-                    print('sum_mutihop_data', env.sum_mutihop_data)
+                    env.sum_mutihop_data = env.sum_mutihop_data + env.data_amount_list[current_index]['calc']
+                    env.data_amount_list[current_index]['calc'] = 0
+                    break
                 else:
                     env.data_amount_list[nearest_sink_node]['calc'] = env.data_amount_list[nearest_sink_node]['calc'] + env.data_amount_list[current_index]['calc']
                 env.data_amount_list[current_index]['calc'] = 0
 
-                print('current_index', current_index)
-                print('nearest_sink_node calc', env.data_amount_list[nearest_sink_node]['calc'])
-                
                 current_node = arr[nearest_sink_node]
             else:
                 break
-
+    
     return arr
