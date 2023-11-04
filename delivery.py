@@ -248,6 +248,18 @@ def runMain(index):
         { "epsilon_min": 0.05, "gamma": 0.62, "lr": 0.65 },
     ]
     
+    # for 迴圈 10000次 1~10000
+        # 無人機收資料
+            # 作法1 跑到該點後 產生下一個節點
+            # 如果 目前的節點到 sink 的距離 小於剩餘電量的話 則回 sink
+            # Q learning 從 sink 出發前，需跑 Q learning 找出最佳路徑
+            #
+            
+        # 產生資料
+        # 將資料計算
+        # 計算後的資料透過 GPSR 傳出去
+        # 節點飄移
+    
     for params in parmas_arr:
         for field_index in range(0, num_processes, 1):
         # for field_index in range(0, len(sensor_position), 2):
@@ -260,9 +272,6 @@ def runMain(index):
             init_Y = np.array(env.y)
 
             init_position = [init_X, init_Y]
-
-            # 執行節點飄移
-            env.drift_node(0)
 
             env_mutihop = copy.deepcopy(env)
             env_greedy = copy.deepcopy(env)

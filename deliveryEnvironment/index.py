@@ -19,7 +19,7 @@ class DeliveryEnvironment(object):
         # Environment Config
         self.communication_range = 100 # 節點通訊半徑 (單位 1m)
         self.drift_range = 120 # 節點飄移範圍 (單位 1m)
-        self.system_time = 4000 # 執行時間 (單位s)
+        self.system_time = 7000 # 執行時間 (單位s)
         self.unit_time = 100 # 時間單位 (單位s)
         self.current_time = 0 # 目前時間 (單位s)
         self.buffer_size = 16 * 1024 # 感測器儲存資料的最大量 (16KB)
@@ -37,9 +37,13 @@ class DeliveryEnvironment(object):
         # 故無人機只需以 r/2 為半徑飛行
         self.drift_max_cost = 2 * (self.drift_range - self.communication_range) / 2 * math.pi  # 公式 2 x 3.14 x r
         
-        
+        # 計算速度與資料壓縮輛
         self.calc_speed = 128 / 30 * 100 # 計算速度
         self.calc_data_compression_ratio = 128 / 30 * 100 # 計算壓縮率
+        
+        #海洋漂流速度
+        self.min_flow_speed = 0.5 # (m/s)
+        self.max_flow_speed = 1.5 # (m/s)
 
 
         # Initialization
@@ -309,29 +313,37 @@ class DeliveryEnvironment(object):
         return new_state,reward,done
         
     def drift_node(self, index):
-        isFake = True
+        [ drift_position_x, drift_position_y ] = drift_position[index % len(drift_position)]
+               
+        print(self.x[1])
+         
+        for i in range(1, len(self.x)):
+            if i != self.first_point:
+                distance = np.sqrt((self.x[i] - drift_position_x) ** 2 + (self.y[i] - drift_position_y) ** 2)
+                
+                # 最大長度 場景大小平方開根號
+                rate = (self.max_flow_speed - self.min_flow_speed) / math.sqrt((self.max_box ** 2))
+                flow_speed = (self.max_box - distance) * rate
+                dx = abs(self.x[i] - drift_position_x) / distance * flow_speed * 30
+                dy = abs(self.y[i] - drift_position_y) / distance * flow_speed * 30
+                
+                flow_distance = np.sqrt(dx ** 2 + dy ** 2)
+                
+                print('332', dx, dy)
+                dx = dx if dx <= self.drift_range else dx * (self.drift_range / flow_distance)
+                dy = dy if dy <= self.drift_range else dy * (self.drift_range / flow_distance)
+                print('335', dx, dy)
+                
+                
+                self.x[i] = self.x[i] + dx
+                self.x[i] = 0 if self.x[i] <= 0 else self.max_box if self.x[i] >= self.max_box else self.x[i]
 
-        if isFake:
-            for i in range(1, len(self.x)):
-                if i != self.first_point:
-                    index = index % len(drift_distance_x)
-                    self.x[i] = self.x[i] + [x * self.drift_range for x in drift_distance_x[index]][i]
-                    self.x[i] = 0 if self.x[i] <= 0 else self.max_box if self.x[i] >= self.max_box else self.x[i]
-                    
-                    self.y[i] = self.y[i] + [x * self.drift_range for x in drift_distance_y[index]][i]
-                    self.y[i] = 0 if self.y[i] <= 0 else self.max_box if self.y[i] >= self.max_box else self.y[i]
-        else:
-            for i in range(1, len(self.x)):
-                if i != self.first_point:
-                    value = random.uniform(-self.drift_range, self.drift_range)
-                    self.x[i] = self.x[i] + value
-                    self.x[i] = 0 if self.x[i] <= 0 else self.max_box if self.x[i] >= self.max_box else self.x[i]
-
-                    value = random.uniform(-self.drift_range, self.drift_range)
-                    self.y[i] = self.y[i] + value
-                    self.y[i] = 0 if self.y[i] <= 0 else self.max_box if self.y[i] >= self.max_box else self.y[i]
-
-
+                self.y[i] = self.y[i] + dy
+                self.y[i] = 0 if self.y[i] <= 0 else self.max_box if self.y[i] >= self.max_box else self.y[i]
+        
+        print(self.x[1])
+        
+                
     def _get_state(self):
         return self.stops[-1]
 
