@@ -19,17 +19,22 @@ class DeliveryEnvironment(object):
         # Environment Config
         self.communication_range = 100 # 節點通訊半徑 (單位 1m)
         self.drift_range = 120 # 節點飄移範圍 (單位 1m)
-        self.system_time = 7000 # 執行時間 (單位s)
+        self.run_time = 7000 # 執行時間 (單位s)
         self.unit_time = 100 # 時間單位 (單位s)
         self.current_time = 0 # 目前時間 (單位s)
         self.buffer_size = 16 * 1024 # 感測器儲存資料的最大量 (16KB)
         self.min_generate_data = 128 / 30 * 100 # 事件為觸發前 資料產生量
+        self.event_change_time = 1000 # 事件發生變化時間
+        self.drift_change_time = 1000 # 節點飄移變化時間
+        self.drift_speed_interval = 30 # 節點飄移移動速度切分格子數
         
         # UAV Config
         self.uav_range = 100 # 無人機通訊半徑範圍 (單位 1m)
         self.uav_speed = 12 # 無人機移動速度 (單位 1m/s)
         self.uav_flyTime = 28 * 60 # 無人機可飛行時間 28分鐘 (單位s)
         self.max_move_distance = self.uav_flyTime * self.uav_speed # 無人機每移動固定距離 需回sink同步感測器資訊 (單位 1m)
+        self.uav_run_distance = 0 # 無人機執行飛行距離 (單位s)
+        self.uav_remain_run_distance = 0 # 無人機剩餘的飛行距離 (單位s)
         
 
         # 無人機探索，飄移節點最大能量消耗
@@ -42,8 +47,8 @@ class DeliveryEnvironment(object):
         self.calc_data_compression_ratio = 128 / 30 * 100 # 計算壓縮率
         
         #海洋漂流速度
-        self.min_flow_speed = 0.5 # (m/s)
-        self.max_flow_speed = 1.5 # (m/s)
+        self.min_flow_speed = 0.1 # (m/s)
+        self.max_flow_speed = 3 # (m/s)
 
 
         # Initialization
@@ -172,9 +177,17 @@ class DeliveryEnvironment(object):
         )
         
     # 加上隨機產生感測器的資料量 max = 100
-    def generate_data(self, add_data):
+    def generate_data(self, current_time):
+        index = current_time // self.event_change_time % len(generate_data_50)
+
+        added_event_data = generate_data_50[index][:self.n_stops]
+        added_min_data = [self.min_generate_data] * len(added_event_data)
+        added_data = [ x + y for x, y in zip(added_event_data, added_min_data)]
+        
+        self.generate_data_total = self.generate_data_total + sum(added_data)
+
         for idx, x in enumerate(self.data_amount_list):
-            x['origin'] = x['origin'] + add_data[idx]
+            x['origin'] = x['origin'] + added_data[idx]
             
             if x['origin'] > self.buffer_size:
                 x['origin'] = self.buffer_size
@@ -312,36 +325,41 @@ class DeliveryEnvironment(object):
 
         return new_state,reward,done
         
-    def drift_node(self, index):
-        [ drift_position_x, drift_position_y ] = drift_position[index % len(drift_position)]
+    def drift_node(self, init_position, current_time):
+
+        [ init_x, init_y ] = init_position
+
+        index = self.drift_change_time // current_time % len(drift_position)
+        [ drift_position_x, drift_position_y ] = drift_position[index]
                
-        print(self.x[1])
-         
         for i in range(1, len(self.x)):
+
             if i != self.first_point:
                 distance = np.sqrt((self.x[i] - drift_position_x) ** 2 + (self.y[i] - drift_position_y) ** 2)
                 
                 # 最大長度 場景大小平方開根號
-                rate = (self.max_flow_speed - self.min_flow_speed) / math.sqrt((self.max_box ** 2))
-                flow_speed = (self.max_box - distance) * rate
-                dx = abs(self.x[i] - drift_position_x) / distance * flow_speed * 30
-                dy = abs(self.y[i] - drift_position_y) / distance * flow_speed * 30
-                
-                flow_distance = np.sqrt(dx ** 2 + dy ** 2)
-                
-                print('332', dx, dy)
-                dx = dx if dx <= self.drift_range else dx * (self.drift_range / flow_distance)
-                dy = dy if dy <= self.drift_range else dy * (self.drift_range / flow_distance)
-                print('335', dx, dy)
-                
-                
-                self.x[i] = self.x[i] + dx
-                self.x[i] = 0 if self.x[i] <= 0 else self.max_box if self.x[i] >= self.max_box else self.x[i]
+                max_distance = math.sqrt((self.max_box ** 2) * 2)
+                rate = (self.max_flow_speed - self.min_flow_speed) / self.drift_speed_interval
+                speed_interval_distance = max_distance // self.drift_speed_interval
+                flow_speed = (max_distance - distance) // speed_interval_distance * rate + self.min_flow_speed
 
+                dx = (drift_position_x - self.x[i]) / distance * flow_speed
+                dy = (drift_position_y - self.y[i]) / distance * flow_speed
+
+                self.x[i] = self.x[i] + dx
                 self.y[i] = self.y[i] + dy
-                self.y[i] = 0 if self.y[i] <= 0 else self.max_box if self.y[i] >= self.max_box else self.y[i]
-        
-        print(self.x[1])
+
+                drift_distance = ((self.x[i] - init_x[i]) ** 2 + (self.y[i] - init_y[i]) ** 2) ** 0.5
+
+                dx = self.x[i] - init_x[i]
+                dy = self.y[i] - init_y[i]
+                # 判斷節點是否超出飄移範圍
+                self.x[i] = self.x[i] if drift_distance <= self.drift_range else init_x[i] + dx * (self.drift_range / drift_distance)
+                self.y[i] = self.y[i] if drift_distance <= self.drift_range else init_y[i] + dy * (self.drift_range / drift_distance)
+                
+                # 判斷節點是否超出邊界
+                self.x[i] = 0 if self.x[i] < 0 else self.max_box if self.x[i] > self.max_box else self.x[i]
+                self.y[i] = 0 if self.y[i] < 0 else self.max_box if self.y[i] > self.max_box else self.y[i]
         
                 
     def _get_state(self):
