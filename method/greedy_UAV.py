@@ -3,6 +3,7 @@ from tqdm.notebook import tqdm
 import math
 import time
 import imageio
+import copy
 
 from utils.calc import *
 import csv_utils
@@ -50,7 +51,7 @@ def run_n_greedy(
         if env.stops[-1] == env.first_point:
             env.stops = []
             env.stops.append(env.first_point)
-            env.uav_data_amount_list = env.data_amount_list
+            env.uav_data_amount_list = copy.deepcopy(env.data_amount_list)
 
         # 新增下一個節點
         env.unvisited_stops = env.get_unvisited_stops()
@@ -125,9 +126,10 @@ def run_n_greedy_mutihop(
 
         # 如果抵達 sink，則 reset 環境
         if env.stops[-1] == env.first_point:
+            print(env)
             env.stops = []
             env.stops.append(env.first_point)
-            env.uav_data_amount_list = env.data_amount_list
+            env.uav_data_amount_list = copy.deepcopy(env.data_amount_list)
 
         # 新增下一個節點
         env.unvisited_stops = env.get_unvisited_stops()
@@ -205,7 +207,7 @@ def run_n_greedy_drift(
         if env.stops[-1] == env.first_point:
             env.stops = []
             env.stops.append(env.first_point)
-            env.uav_data_amount_list = env.data_amount_list
+            env.uav_data_amount_list = copy.deepcopy(env.data_amount_list)
 
         # 新增下一個節點
         env.unvisited_stops = env.get_unvisited_stops()

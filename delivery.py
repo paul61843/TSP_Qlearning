@@ -243,10 +243,10 @@ def runMain(index):
             env_drift_greedy_and_mutihop = copy.deepcopy(env)
             env_Q = copy.deepcopy(env)
             
-            env_greedy.uav_data_amount_list = env_greedy.data_amount_list
-            env_greedy_and_mutihop.uav_data_amount_list = env_greedy_and_mutihop.data_amount_list
-            env_drift_greedy_and_mutihop.uav_data_amount_list = env_drift_greedy_and_mutihop.data_amount_list
-            env_Q.uav_data_amount_list = env_Q.data_amount_list
+            env_greedy.uav_data_amount_list = copy.deepcopy(env_greedy.data_amount_list)
+            env_greedy_and_mutihop.uav_data_amount_list = copy.deepcopy(env_greedy_and_mutihop.data_amount_list)
+            env_drift_greedy_and_mutihop.uav_data_amount_list = copy.deepcopy(env_drift_greedy_and_mutihop.data_amount_list)
+            env_Q.uav_data_amount_list = copy.deepcopy(env_Q.data_amount_list)
 
             for current_time in range(1, env.run_time + 1, 1):
                 
