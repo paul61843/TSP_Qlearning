@@ -69,7 +69,7 @@ num_processes = 1 # 同時執行數量 (產生結果數量)
 num_points = 400 # 節點數
 max_box = 2000  # 場景大小 單位 (1m)
 
-n_episodes = 1000 # 訓練次數
+n_episodes = 10000 # 訓練次數
 
 # 比較參數
 total_data = 0
@@ -321,7 +321,7 @@ def runMain(index):
                 # =============== Q learning end ===========
 
                 # 減去 mutihop 的資料量 (GPSR)
-                if current_time % 100 == 0:    
+                if current_time % env.unit_time == 0:    
                     # env_mutihop.subtract_mutihop_data()
                     env_greedy_and_mutihop.subtract_mutihop_data()
                     env_drift_greedy_and_mutihop.subtract_mutihop_data()
@@ -343,7 +343,7 @@ def runMain(index):
                 env_Q.y = np.array(env.y)
 
                 # 產生資料
-                if current_time % 100 == 0:
+                if current_time % env.unit_time == 0:
                     # env_mutihop.generate_data(current_time)
                     env_greedy.generate_data(current_time)
                     env_greedy_and_mutihop.generate_data(current_time)

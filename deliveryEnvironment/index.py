@@ -23,7 +23,7 @@ class DeliveryEnvironment(object):
         self.unit_time = 100 # 時間單位 (單位s)
         self.current_time = 0 # 目前時間 (單位s)
         self.buffer_size = 16 * 1024 * 8 # 感測器儲存資料的最大量 (16KB)
-        self.min_generate_data = 34 * 100 # 事件為觸發前 資料產生量
+        self.min_generate_data = 34 * self.unit_time # 事件為觸發前 資料產生量
         self.event_change_time = 1000 # 事件發生變化時間
         self.drift_change_time = 1000 # 節點飄移變化時間
         self.drift_speed_interval = 30 # 節點飄移移動速度切分格子數
@@ -43,8 +43,8 @@ class DeliveryEnvironment(object):
         self.drift_max_cost = 2 * (self.drift_range - self.communication_range) / 2 * math.pi  # 公式 2 x 3.14 x r
         
         # 計算速度與資料壓縮輛
-        self.calc_speed = 34 * 100 # 計算速度
-        self.calc_data_compression_ratio = 34 * 100 # 計算壓縮率
+        self.calc_speed = 34 * self.unit_time # 計算速度
+        self.calc_data_compression_ratio = 34 * self.unit_time # 計算壓縮率
         
         #海洋漂流速度
         self.min_flow_speed = 0.1 # (m/s)
