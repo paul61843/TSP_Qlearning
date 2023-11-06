@@ -65,12 +65,9 @@ def run_episode(env,agent,verbose = 1):
 def run_n_episodes(
     env,
     agent,
-    name="training.gif",
     n_episodes=1000,
-    render_each=10,
-    fps=10,
-    result_index=0,
-    loop_index=0,
+    current_time=0,
+    process_index=0,
     train_params={},
 ):
 
@@ -95,21 +92,18 @@ def run_n_episodes(
             # maxRewardImg = [img]
             max_reward_stop = env.stops
             
-            cost = calcPowerCost(env)
-            distance = calcDistance(env.x[env.stops], env.y[env.stops])
-    
     # Show rewards
     plt.figure(figsize = (15,3))
     plt.title("Rewards over training")
     plt.plot(rewards)
-    plt.savefig(f"./result/Q_learning/{result_index}_epsilon_min{train_params['epsilon_min']}_gamma{train_params['gamma']}_lr{train_params['lr']}_loop_index{loop_index}_rewards.png")
+    plt.savefig(f"./result/Q_learning/{process_index}_epsilon_min{train_params['epsilon_min']}_gamma{train_params['gamma']}_lr{train_params['lr']}_current_time{current_time}_rewards.png")
     plt.close('all')
 
     # qlearning_distance ======================================
     env.stops = max_reward_stop
     
     env.unvisited_stops = env.get_unvisited_stops()
-    env.remain_power = calcPowerCost(env)
+    env.remain_power = env.uav_flyTime * env.uav_speed - calcPowerCost(env)
     env.drift_cost_list = len(env.stops) * [env.drift_max_cost]
     
     return env,agent
