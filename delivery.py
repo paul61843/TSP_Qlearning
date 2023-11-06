@@ -69,7 +69,7 @@ num_processes = 1 # 同時執行數量 (產生結果數量)
 num_points = 400 # 節點數
 max_box = 2000  # 場景大小 單位 (1m)
 
-n_episodes = 10000 # 訓練次數
+n_episodes = 1000 # 訓練次數
 
 # 比較參數
 total_data = 0
@@ -128,7 +128,7 @@ def run_uav(env, init_position, current_time, process_index):
         
         if env.uav_remain_run_distance >= next_point_cost:
             env.uav_remain_run_distance = env.uav_remain_run_distance - next_point_cost
-            env.clear_data_one(init_position, env.stops[-1], True)
+            env.clear_data_one(init_position, env.stops[env.next_point], True)
         
             # 如果抵達 sink，則 reset 環境
             if env.stops[-1] == env.first_point:
@@ -249,7 +249,7 @@ def runMain(index):
             env_Q.uav_data_amount_list = env_Q.data_amount_list
 
             for current_time in range(1, env.run_time + 1, 1):
-
+                
                 # 1. mutihop
                 # # =============== mutihop ===============
                 # uav_run_img = env_mutihop.render(return_img = True)
@@ -349,7 +349,7 @@ def runMain(index):
                     env_greedy_and_mutihop.generate_data(current_time)
                     env_drift_greedy_and_mutihop.generate_data(current_time)
                     env_Q.generate_data(current_time)
-
+                    
     print(f'run {index} end ========================================')
 
 # mutiprocessing start ================================
