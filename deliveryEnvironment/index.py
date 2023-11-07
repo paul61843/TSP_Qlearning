@@ -25,7 +25,7 @@ class DeliveryEnvironment(object):
         self.buffer_size = 16 * 1024 * 8 # 感測器儲存資料的最大量 (16KB)
         self.min_generate_data = 34 * self.unit_time # 事件為觸發前 資料產生量
         self.event_change_time = 1000 # 事件發生變化時間
-        self.drift_change_time = 1000 # 節點飄移變化時間
+        self.drift_change_time = 500 # 節點飄移變化時間
         self.drift_speed_interval = 30 # 節點飄移移動速度切分格子數
         
         # UAV Config
@@ -44,7 +44,7 @@ class DeliveryEnvironment(object):
         
         # 計算速度與資料壓縮輛
         self.calc_speed = 34 * self.unit_time # 計算速度
-        self.calc_data_compression_ratio = 34 * self.unit_time # 計算壓縮率
+        self.calc_data_compression_ratio = 10 # 計算壓縮率
         
         #海洋漂流速度
         self.min_flow_speed = 0.1 # (m/s)
@@ -191,9 +191,8 @@ class DeliveryEnvironment(object):
         for idx, x in enumerate(self.data_amount_list):
             x['origin'] = x['origin'] + added_data[idx]
             
-            if x['origin'] > self.buffer_size:
-                x['origin'] = self.buffer_size
-        
+            if x['origin'] + x['calc'] > self.buffer_size:
+                x['origin'] = self.buffer_size - x['calc']
     # 減去 muti hop 傳輸的資料
     def subtract_mutihop_data(self):
         arr = self.data_amount_list

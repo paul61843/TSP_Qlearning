@@ -59,8 +59,6 @@ sys.path.append("../")
 
 # 2 x 3 
 
-# 透過常態分布 產生假資料 0.1 2.1 13.6 34.1 34.1 13.6 2.1 0.1
-
 # 節點飄移 需要飄移特定方向 較遠的位置 飄移速度越快
 
 
@@ -186,7 +184,9 @@ def run_uav(env, init_position, current_time, process_index):
         sensor_data_calc = sum(item['calc'] for item in env.data_amount_list) * env.calc_data_compression_ratio
         sensor_data = sensor_data_origin + sensor_data_calc
         
-        uav_data = env.uav_data['origin'] + env.uav_data['calc'] * env.calc_data_compression_ratio
+        uav_data_origin = env.uav_data['origin']
+        uav_data_calc = env.uav_data['calc'] * env.calc_data_compression_ratio
+        uav_data = uav_data_calc +uav_data_origin
         
         total_data = env.generate_data_total
         lost_data = total_data - (mutihop_data + sensor_data + uav_data)
@@ -198,6 +198,8 @@ def run_uav(env, init_position, current_time, process_index):
             math.ceil(sensor_data_origin // 8), 
             math.ceil(sensor_data_calc // 8), 
             math.ceil(sensor_data // 8), 
+            math.ceil(uav_data_calc //8), 
+            math.ceil(uav_data_origin // 8), 
             math.ceil(uav_data // 8), 
             math.ceil(lost_data // 8),
         ])

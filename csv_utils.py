@@ -31,6 +31,8 @@ def writeDataToCSV(path, data):
         'sensor_data_origin'.ljust(15),   
         'sensor_data_calc'.ljust(15),   
         'sensor_data'.ljust(15),   
+        'uav_data_calc'.ljust(15),
+        'uav_data_origin'.ljust(15),
         'uav_data'.ljust(15),
         'lost_data'.ljust(15),
     ]])
