@@ -19,14 +19,13 @@ class DeliveryEnvironment(object):
         # Environment Config
         self.communication_range = 100 # 節點通訊半徑 (單位 1m)
         self.drift_range = 120 # 節點飄移範圍 (單位 1m)
-        self.run_time = 7000 # 執行時間 (單位s)
+        self.run_time = 5000 # 執行時間 (單位s)
         self.unit_time = 100 # 時間單位 (單位s)
         self.current_time = 0 # 目前時間 (單位s)
         self.buffer_size = 16 * 1024 * 8 # 感測器儲存資料的最大量 (16KB)
-        self.min_generate_data = 34 * self.unit_time # 事件為觸發前 資料產生量
+        self.generate_data_rate = 34 * self.unit_time # 事件為觸發前 資料產生量
         self.event_change_time = 1000 # 事件發生變化時間
         self.drift_change_time = 500 # 節點飄移變化時間
-        self.drift_speed_interval = 30 # 節點飄移移動速度切分格子數
         
         # UAV Config
         self.uav_range = 100 # 無人機通訊半徑範圍 (單位 1m)
@@ -73,6 +72,7 @@ class DeliveryEnvironment(object):
 
         # 感測器資料量相關
         self.data_amount_list = [] # 感測器儲存的資料量
+        self.sink_amount_list = [] # sink 收到的資料量
         self.uav_data_amount_list = [] # 無人機獲得的感測器資料量資訊
         self.calc_threshold = self.buffer_size * 50 // 100 # 感測器資料量超過 50% 門檻
         self.calc_danger_threshold = self.buffer_size * 75 //100 # 感測器資料量超過 75% 門檻
@@ -180,25 +180,24 @@ class DeliveryEnvironment(object):
         
     # 加上隨機產生感測器的資料量 max = 100
     def generate_data(self, current_time):
-        index = current_time // self.event_change_time % len(generate_data_50)
+        index = current_time // self.event_change_time % len(generate_event_data)
 
-        added_event_data = generate_data_50[index][:self.n_stops]
-        added_min_data = [self.min_generate_data] * len(added_event_data)
-        added_data = [ x + y for x, y in zip(added_event_data, added_min_data)]
+        event_data = generate_event_data[index][:self.n_stops]
         
-        self.generate_data_total = self.generate_data_total + sum(added_data)
+        self.generate_data_total = self.generate_data_total + sum(event_data)
 
         for idx, x in enumerate(self.data_amount_list):
-            x['origin'] = x['origin'] + added_data[idx]
+            x['origin'] = x['origin'] + event_data[idx]
             
             if x['origin'] + x['calc'] > self.buffer_size:
                 x['origin'] = self.buffer_size - x['calc']
+                
     # 減去 muti hop 傳輸的資料
     def subtract_mutihop_data(self):
         arr = self.data_amount_list
-
+        
         for i, data in enumerate(arr):
-            calc_data = self.min_generate_data / self.calc_data_compression_ratio
+            calc_data = self.generate_data_rate / self.calc_data_compression_ratio
             arr[i]['calc'] = arr[i]['calc'] + calc_data if arr[i]['origin'] >= self.calc_speed else 0
             arr[i]['origin'] = arr[i]['origin'] - self.calc_speed if arr[i]['origin'] >= self.calc_speed else arr[i]['origin']
             
@@ -225,6 +224,17 @@ class DeliveryEnvironment(object):
         # 清除無人跡拜訪後的感測器資料
     def clear_data_one(self, init_position, index, drift_consider):
         [init_x, init_y] = init_position
+        
+        # 清除感測範圍內的感測器資料
+        for idx, i in enumerate(self.x):
+            distance = np.sqrt((self.x[idx] - init_x[idx]) ** 2 + (self.y[idx] - init_y[idx]) ** 2)
+            
+            if distance <= self.uav_range:
+                self.uav_data['origin'] = self.uav_data['origin'] + self.data_amount_list[idx]['origin']
+                self.uav_data['calc'] = self.uav_data['calc'] + self.data_amount_list[idx]['calc']
+                self.data_amount_list[idx]['origin'] = 0
+                self.data_amount_list[idx]['calc'] = 0
+        
         drift_distance = np.sqrt(
             (self.x[index] - init_x[index]) ** 2 + 
             (self.y[index] - init_y[index]) ** 2
@@ -340,9 +350,8 @@ class DeliveryEnvironment(object):
                 
                 # 最大長度 場景大小平方開根號
                 max_distance = math.sqrt((self.max_box ** 2) * 2)
-                rate = (self.max_flow_speed - self.min_flow_speed) / self.drift_speed_interval
-                speed_interval_distance = max_distance // self.drift_speed_interval
-                flow_speed = (max_distance - distance) // speed_interval_distance * rate + self.min_flow_speed
+                rate = (self.max_flow_speed - self.min_flow_speed) / max_distance
+                flow_speed = (max_distance - distance) * rate + self.min_flow_speed
 
                 dx = (drift_position_x - self.x[i]) / distance * flow_speed
                 dy = (drift_position_y - self.y[i]) / distance * flow_speed

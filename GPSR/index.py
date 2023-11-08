@@ -22,6 +22,7 @@ class GPSR_Node:
         self.around_nodes = []
         self.first_point = env.first_point
         self.nearest_sink_node = None
+        self.parent_num = 0
         
         # method
         self.get_around_nodes()
@@ -42,9 +43,10 @@ class GPSR_Node:
             x = self.env.x[idx]
             y = self.env.y[idx]
             
-            distance = self.euclidean_distance({ 'x': x, 'y': y})
+            sink_distance = self.euclidean_distance({ 'x': x, 'y': y})
+            nearby_distance = math.sqrt((self.x - x) ** 2 + (self.y - y) ** 2)
             
-            if idx != self.index and distance <= self.env.communication_range and distance < current_distance:
+            if idx != self.index and nearby_distance <= self.env.communication_range and sink_distance < current_distance:
                 self.around_nodes.append(idx)
         
         return self.around_nodes 
@@ -70,6 +72,27 @@ def generate_gpsr_node(env):
         y = env.y[idx]
         arr.append(GPSR_Node(x, y, idx, env))
         
+    return arr
+
+def set_tree_parent_num(env):
+    arr = generate_gpsr_node(env)
+    
+    for idx, current_node in enumerate(arr):
+        
+        current_index = current_node
+        
+        while (True):
+            nearest_sink_node = current_index.nearest_sink_node
+            if nearest_sink_node != None:
+                arr[nearest_sink_node].parent_num = arr[nearest_sink_node].parent_num + 1
+                
+                if env.first_point == nearest_sink_node:
+                    break
+                else:
+                    current_index = arr[nearest_sink_node]
+            else:
+                break
+    
     return arr
 
 def run_gpsr_node(env):

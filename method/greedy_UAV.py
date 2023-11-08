@@ -110,7 +110,6 @@ def run_n_greedy_mutihop(
     current_time=0,
     process_index=0,
 ):
-    start = time.time()
 
     env.uav_remain_run_distance = env.uav_remain_run_distance + env.uav_speed * 1 # 每秒新增的距離
 
@@ -130,7 +129,6 @@ def run_n_greedy_mutihop(
 
         # 如果抵達 sink，則 reset 環境
         if env.stops[-1] == env.first_point:
-            print(env)
             env.stops = []
             env.stops.append(env.first_point)
             env.uav_data_amount_list = copy.deepcopy(env.data_amount_list)

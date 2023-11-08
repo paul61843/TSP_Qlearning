@@ -24,7 +24,7 @@ from utils.calc import *
 from constants.constants import *
 
 from method.greedy_UAV import *
-from method.method1 import *
+from method.NJNP import *
 from method.method2 import *
 
 
@@ -249,6 +249,8 @@ def runMain(index):
             env_greedy_and_mutihop.uav_data_amount_list = copy.deepcopy(env_greedy_and_mutihop.data_amount_list)
             env_drift_greedy_and_mutihop.uav_data_amount_list = copy.deepcopy(env_drift_greedy_and_mutihop.data_amount_list)
             env_Q.uav_data_amount_list = copy.deepcopy(env_Q.data_amount_list)
+            
+            set_tree_parent_num(env)
 
             for current_time in range(1, env.run_time + 1, 1):
                 
@@ -260,21 +262,21 @@ def runMain(index):
 
                 # 2. greedy
                 # =============== env_greedy ===============
-                env_greedy = run_n_greedy(
-                    env_greedy, 
-                    init_position=init_position,
-                    current_time=current_time,
-                    process_index=process_index,
-                )
+                # env_greedy = run_n_greedy(
+                #     env_greedy, 
+                #     init_position=init_position,
+                #     current_time=current_time,
+                #     process_index=process_index,
+                # )
                 # =============== env_greedy end ===============
 
                 # =============== env_greedy ===============
-                env_greedy_and_mutihop = run_n_greedy_mutihop(
-                    env_greedy_and_mutihop, 
-                    init_position=init_position,
-                    current_time=current_time,
-                    process_index=process_index,
-                )
+                # env_greedy_and_mutihop = run_n_greedy_mutihop(
+                #     env_greedy_and_mutihop, 
+                #     init_position=init_position,
+                #     current_time=current_time,
+                #     process_index=process_index,
+                # )
                 # =============== env_greedy end ===============
 
                 
@@ -325,7 +327,7 @@ def runMain(index):
                 # 減去 mutihop 的資料量 (GPSR)
                 if current_time % env.unit_time == 0:    
                     # env_mutihop.subtract_mutihop_data()
-                    env_greedy_and_mutihop.subtract_mutihop_data()
+                    # env_greedy_and_mutihop.subtract_mutihop_data()
                     env_drift_greedy_and_mutihop.subtract_mutihop_data()
                     env_Q.subtract_mutihop_data()
 
