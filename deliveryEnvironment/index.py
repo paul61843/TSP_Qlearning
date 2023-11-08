@@ -42,7 +42,7 @@ class DeliveryEnvironment(object):
         self.drift_max_cost = 2 * (self.drift_range - self.communication_range) / 2 * math.pi  # 公式 2 x 3.14 x r
         
         # 計算速度與資料壓縮輛
-        self.calc_speed = 34 * self.unit_time # 計算速度
+        self.calc_speed = 2 * 34 * self.unit_time # 計算速度
         self.calc_data_compression_ratio = 10 # 計算壓縮率
         
         #海洋漂流速度
