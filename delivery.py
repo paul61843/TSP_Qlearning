@@ -67,7 +67,7 @@ num_processes = 1 # 同時執行數量 (產生結果數量)
 num_points = 400 # 節點數
 max_box = 2000  # 場景大小 單位 (1m)
 
-n_episodes = 10000 # 訓練次數
+n_episodes = 1000 # 訓練次數
 
 # 比較參數
 total_data = 0

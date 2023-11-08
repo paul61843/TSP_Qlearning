@@ -87,6 +87,7 @@ def set_tree_parent_num(env):
                 arr[nearest_sink_node].parent_num = arr[nearest_sink_node].parent_num + 1
                 
                 if env.first_point == nearest_sink_node:
+                    print('84', current_index.index, current_index.around_nodes)
                     break
                 else:
                     current_index = arr[nearest_sink_node]
@@ -98,6 +99,7 @@ def set_tree_parent_num(env):
 def run_gpsr_node(env):
     arr = generate_gpsr_node(env)
     
+    connect_num = 0
     for idx, current_node in enumerate(arr):
         
         while (True):
@@ -108,6 +110,7 @@ def run_gpsr_node(env):
                 if env.first_point == nearest_sink_node:
                     env.sum_mutihop_data = env.sum_mutihop_data + env.data_amount_list[current_index]['calc']
                     env.data_amount_list[current_index]['calc'] = 0
+                    connect_num = connect_num + 1
                     break
                 else:
                     env.data_amount_list[nearest_sink_node]['calc'] = env.data_amount_list[nearest_sink_node]['calc'] + env.data_amount_list[current_index]['calc']
@@ -117,4 +120,5 @@ def run_gpsr_node(env):
             else:
                 break
     
+    print('connect_num', connect_num)
     return arr
