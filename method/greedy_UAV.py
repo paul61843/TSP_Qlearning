@@ -23,21 +23,22 @@ def getMostDataOfSensor(env):
 
     return max_node
 
-def run_n_greedy(
+def run_n_NJNP(
     env,
     init_position=[],
     current_time=0,
     process_index=0,
+    NJNP_nodes=[],
 ):
-    start = time.time()
-
     env.uav_remain_run_distance = env.uav_remain_run_distance + env.uav_speed * 1 # 每秒新增的距離
 
     # 如果沒有下一個節點，則取得資料量最高的感測器新增
     if len(env.stops) == 1:
         env.unvisited_stops = env.get_unvisited_stops()
-        a = getMostDataOfSensor(env)
+        a = NJNP_nodes[0]
+        NJNP_nodes.remove(NJNP_nodes[0])
         env.stops.append(a)
+        print('41', env.stops)
 
     # 判斷無人機飛是否抵達下一個節點
     x = env.x[[env.stops[-1], env.stops[-2]]]
@@ -49,13 +50,15 @@ def run_n_greedy(
 
         # 如果抵達 sink，則 reset 環境
         if env.stops[-1] == env.first_point:
+            print(env.stops)
             env.stops = []
             env.stops.append(env.first_point)
             env.uav_data_amount_list = copy.deepcopy(env.data_amount_list)
 
         # 新增下一個節點
         env.unvisited_stops = env.get_unvisited_stops()
-        a = getMostDataOfSensor(env)
+        a = NJNP_nodes[0]
+        NJNP_nodes.remove(NJNP_nodes[0])
         env.stops.append(a)
 
         # 判斷無人機飛行距離是否能返回 sink
@@ -93,14 +96,12 @@ def run_n_greedy(
             math.ceil(uav_data // 8), 
             math.ceil(lost_data // 8),
         ])
-        csv_utils.writeDataToCSV(f'./result/csv{process_index}/greedy.csv', env.result)
+        csv_utils.writeDataToCSV(f'./result/csv{process_index}/NJNP_and_mutihop.csv', env.result)
 
     # 產生UAV路徑圖
     if current_time % 1000 == 0:
         uav_run_img = env.render(return_img = True)
-        imageio.mimsave(f"./result/greedy/{current_time}_time_index{process_index}_UAV_result.gif",[uav_run_img],fps = 10)
-    
-    end = time.time()
+        imageio.mimsave(f"./result/NJNP/{current_time}_time_index{process_index}_UAV_result.gif",[uav_run_img],fps = 10)
     
     return env
 

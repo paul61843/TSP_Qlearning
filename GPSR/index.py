@@ -94,7 +94,7 @@ def set_tree_parent_num(env):
             else:
                 break
     
-    return arr
+    return [node.parent_num  for idx, node in enumerate(arr)]
 
 def run_gpsr_node(env):
     arr = generate_gpsr_node(env)

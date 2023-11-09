@@ -240,17 +240,20 @@ def runMain(index):
             init_position = [init_X, init_Y]
 
             env_mutihop = copy.deepcopy(env)
-            env_greedy = copy.deepcopy(env)
+            env_NJNP = copy.deepcopy(env)
             env_greedy_and_mutihop = copy.deepcopy(env)
             env_drift_greedy_and_mutihop = copy.deepcopy(env)
             env_Q = copy.deepcopy(env)
             
-            env_greedy.uav_data_amount_list = copy.deepcopy(env_greedy.data_amount_list)
+            env_NJNP.uav_data_amount_list = copy.deepcopy(env_NJNP.data_amount_list)
             env_greedy_and_mutihop.uav_data_amount_list = copy.deepcopy(env_greedy_and_mutihop.data_amount_list)
             env_drift_greedy_and_mutihop.uav_data_amount_list = copy.deepcopy(env_drift_greedy_and_mutihop.data_amount_list)
             env_Q.uav_data_amount_list = copy.deepcopy(env_Q.data_amount_list)
             
-            set_tree_parent_num(env)
+            # NJNP
+            parent_num = set_tree_parent_num(env)
+            NJNP_nodes = run_NJNP(env, parent_num)
+            njnp_nodes = []
 
             for current_time in range(1, env.run_time + 1, 1):
                 
@@ -261,23 +264,28 @@ def runMain(index):
                 # # =============== mutihop end ===============
 
                 # 2. greedy
-                # =============== env_greedy ===============
-                # env_greedy = run_n_greedy(
-                #     env_greedy, 
-                #     init_position=init_position,
-                #     current_time=current_time,
-                #     process_index=process_index,
-                # )
-                # =============== env_greedy end ===============
+                # =============== env_NJNP ===============
+                
+                if len(njnp_nodes) == 0:
+                    njnp_nodes = copy.deepcopy(NJNP_nodes)
+                
+                env_NJNP = run_n_NJNP(
+                    env_NJNP, 
+                    init_position=init_position,
+                    current_time=current_time,
+                    process_index=process_index,
+                    NJNP_nodes=njnp_nodes,
+                )
+                # =============== env_NJNP end ===============
 
-                # =============== env_greedy ===============
-                # env_greedy_and_mutihop = run_n_greedy_mutihop(
-                #     env_greedy_and_mutihop, 
-                #     init_position=init_position,
-                #     current_time=current_time,
-                #     process_index=process_index,
-                # )
-                # =============== env_greedy end ===============
+                # =============== env_greedy_and_mutihop ===============
+                env_greedy_and_mutihop = run_n_greedy_mutihop(
+                    env_greedy_and_mutihop, 
+                    init_position=init_position,
+                    current_time=current_time,
+                    process_index=process_index,
+                )
+                # =============== env_greedy_and_mutihop end ===============
 
                 
                 # =============== drift greedy and mutihop ===============
@@ -326,8 +334,8 @@ def runMain(index):
 
                 # 減去 mutihop 的資料量 (GPSR)
                 if current_time % env.unit_time == 0:    
-                    # env_mutihop.subtract_mutihop_data()
-                    # env_greedy_and_mutihop.subtract_mutihop_data()
+                    env_NJNP.subtract_mutihop_data()
+                    env_greedy_and_mutihop.subtract_mutihop_data()
                     env_drift_greedy_and_mutihop.subtract_mutihop_data()
                     env_Q.subtract_mutihop_data()
 
@@ -337,8 +345,8 @@ def runMain(index):
                 # 將飄移後的節點座標存放到各個環境中
                 # env_mutihop.x = np.array(env.x)
                 # env_mutihop.y = np.array(env.y)
-                env_greedy.x = np.array(env.x)
-                env_greedy.y = np.array(env.y)
+                env_NJNP.x = np.array(env.x)
+                env_NJNP.y = np.array(env.y)
                 env_greedy_and_mutihop.x = np.array(env.x)
                 env_greedy_and_mutihop.y = np.array(env.y)
                 env_drift_greedy_and_mutihop.x = np.array(env.x)
@@ -349,7 +357,7 @@ def runMain(index):
                 # 產生資料
                 if current_time % env.unit_time == 0:
                     # env_mutihop.generate_data(current_time)
-                    env_greedy.generate_data(current_time)
+                    env_NJNP.generate_data(current_time)
                     env_greedy_and_mutihop.generate_data(current_time)
                     env_drift_greedy_and_mutihop.generate_data(current_time)
                     env_Q.generate_data(current_time)
