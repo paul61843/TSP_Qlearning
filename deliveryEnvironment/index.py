@@ -21,11 +21,13 @@ class DeliveryEnvironment(object):
         self.drift_range = 120 # 節點飄移範圍 (單位 1m)
         self.run_time = 5000 # 執行時間 (單位s)
         self.unit_time = 100 # 時間單位 (單位s)
+        self.record_time = 100 # 時間單位 (單位s)
         self.current_time = 0 # 目前時間 (單位s)
         self.buffer_size = 16 * 1024 * 8 # 感測器儲存資料的最大量 (16KB)
-        self.generate_data_rate = 34 * self.unit_time # 事件為觸發前 資料產生量
+        self.generate_data_rate = 2 * 34 * self.unit_time # 事件為觸發前 資料產生量
         self.event_change_time = 1000 # 事件發生變化時間
         self.drift_change_time = 1000 # 節點飄移變化時間
+        self.connect_num = 0 # 隔離節點數量
         
         # UAV Config
         self.uav_range = 100 # 無人機通訊半徑範圍 (單位 1m)
@@ -341,7 +343,6 @@ class DeliveryEnvironment(object):
         [ init_x, init_y ] = init_position
 
         index = (current_time // self.drift_change_time) % len(drift_position)
-        print('index', index, current_time, self.drift_change_time, len(drift_position))
         
         [ drift_position_x, drift_position_y ] = drift_position[index]
                

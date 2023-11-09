@@ -67,7 +67,7 @@ num_processes = 1 # 同時執行數量 (產生結果數量)
 num_points = 400 # 節點數
 max_box = 2000  # 場景大小 單位 (1m)
 
-n_episodes = 1000 # 訓練次數
+n_episodes = 10000 # 訓練次數
 
 # 比較參數
 total_data = 0
@@ -178,7 +178,7 @@ def run_uav(env, init_position, current_time, process_index):
         
         
     # 紀錄資料
-    if current_time % env.unit_time == 0:
+    if current_time % env.record_time == 0:
         mutihop_data = env.sum_mutihop_data * env.calc_data_compression_ratio
         sensor_data_origin = sum(item['origin'] for item in env.data_amount_list)
         sensor_data_calc = sum(item['calc'] for item in env.data_amount_list) * env.calc_data_compression_ratio
@@ -191,6 +191,8 @@ def run_uav(env, init_position, current_time, process_index):
         total_data = env.generate_data_total
         lost_data = total_data - (mutihop_data + sensor_data + uav_data)
         run_time = current_time
+        connect_num = env.connect_num
+        
         env.result.append([
             math.ceil(run_time), 
             math.ceil(total_data // 8),
@@ -202,11 +204,12 @@ def run_uav(env, init_position, current_time, process_index):
             math.ceil(uav_data_origin // 8), 
             math.ceil(uav_data // 8), 
             math.ceil(lost_data // 8),
+            math.ceil(env.connect_num),
         ])
         csv_utils.writeDataToCSV(f'./result/csv{process_index}/q_learning.csv', env.result)
 
     # 產生UAV路徑圖
-    if current_time % 1000 == 0:
+    if current_time % 500 == 0:
         uav_run_img = env.render(return_img = True)
         imageio.mimsave(f"./result/Q_learning/{current_time}_time_index{process_index}_UAV_result.gif",[uav_run_img],fps = 10)
     

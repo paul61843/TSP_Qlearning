@@ -46,7 +46,7 @@ def run_n_NJNP(
     next_point_distance = math.ceil(calcDistance(x, y))
     if env.uav_remain_run_distance >= next_point_distance:
         env.uav_remain_run_distance = env.uav_remain_run_distance - next_point_distance
-        env.clear_data_one(init_position, env.stops[-1], False)
+        env.clear_data_one(init_position, env.stops[-1], True)
 
         # 如果抵達 sink，則 reset 環境
         if env.stops[-1] == env.first_point:
@@ -71,7 +71,7 @@ def run_n_NJNP(
             env.stops.append(env.first_point)
 
     # 紀錄資料
-    if current_time % env.unit_time == 0:
+    if current_time % env.record_time == 0:
         mutihop_data = env.sum_mutihop_data * env.calc_data_compression_ratio
         sensor_data_origin = sum(item['origin'] for item in env.data_amount_list)
         sensor_data_calc = sum(item['calc'] for item in env.data_amount_list) * env.calc_data_compression_ratio
@@ -84,6 +84,8 @@ def run_n_NJNP(
         total_data = env.generate_data_total
         lost_data = total_data - (mutihop_data + sensor_data + uav_data)
         run_time = current_time
+        connect_num = env.connect_num
+        
         env.result.append([
             math.ceil(run_time), 
             math.ceil(total_data // 8),
@@ -95,6 +97,7 @@ def run_n_NJNP(
             math.ceil(uav_data_origin // 8), 
             math.ceil(uav_data // 8), 
             math.ceil(lost_data // 8),
+            math.ceil(env.connect_num),
         ])
         csv_utils.writeDataToCSV(f'./result/csv{process_index}/NJNP_and_mutihop.csv', env.result)
 
@@ -149,7 +152,7 @@ def run_n_greedy_mutihop(
             env.stops.append(env.first_point)
 
     # 紀錄資料
-    if current_time % env.unit_time == 0:
+    if current_time % env.record_time == 0:
         mutihop_data = env.sum_mutihop_data * env.calc_data_compression_ratio
         sensor_data_origin = sum(item['origin'] for item in env.data_amount_list)
         sensor_data_calc = sum(item['calc'] for item in env.data_amount_list) * env.calc_data_compression_ratio
@@ -162,6 +165,8 @@ def run_n_greedy_mutihop(
         total_data = env.generate_data_total
         lost_data = total_data - (mutihop_data + sensor_data + uav_data)
         run_time = current_time
+        connect_num = env.connect_num
+        
         env.result.append([
             math.ceil(run_time), 
             math.ceil(total_data // 8),
@@ -169,10 +174,11 @@ def run_n_greedy_mutihop(
             math.ceil(sensor_data_origin // 8), 
             math.ceil(sensor_data_calc // 8), 
             math.ceil(sensor_data // 8), 
-            math.ceil(uav_data_calc // 8), 
+            math.ceil(uav_data_calc //8), 
             math.ceil(uav_data_origin // 8), 
             math.ceil(uav_data // 8), 
             math.ceil(lost_data // 8),
+            math.ceil(env.connect_num),
         ])
         csv_utils.writeDataToCSV(f'./result/csv{process_index}/greedy_and_mutihop.csv', env.result)
 
@@ -231,7 +237,7 @@ def run_n_greedy_drift(
             env.stops.append(env.first_point)
 
     # 紀錄資料
-    if current_time % env.unit_time == 0:
+    if current_time % env.record_time == 0:
         mutihop_data = env.sum_mutihop_data * env.calc_data_compression_ratio
         sensor_data_origin = sum(item['origin'] for item in env.data_amount_list)
         sensor_data_calc = sum(item['calc'] for item in env.data_amount_list) * env.calc_data_compression_ratio
@@ -244,6 +250,8 @@ def run_n_greedy_drift(
         total_data = env.generate_data_total
         lost_data = total_data - (mutihop_data + sensor_data + uav_data)
         run_time = current_time
+        connect_num = env.connect_num
+        
         env.result.append([
             math.ceil(run_time), 
             math.ceil(total_data // 8),
@@ -251,10 +259,11 @@ def run_n_greedy_drift(
             math.ceil(sensor_data_origin // 8), 
             math.ceil(sensor_data_calc // 8), 
             math.ceil(sensor_data // 8), 
-            math.ceil(uav_data_calc // 8), 
+            math.ceil(uav_data_calc //8), 
             math.ceil(uav_data_origin // 8), 
             math.ceil(uav_data // 8), 
             math.ceil(lost_data // 8),
+            math.ceil(env.connect_num),
         ])
         csv_utils.writeDataToCSV(f'./result/csv{process_index}/drift_greedy_and_mutihop.csv', env.result)
 

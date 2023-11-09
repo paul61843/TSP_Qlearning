@@ -87,7 +87,6 @@ def set_tree_parent_num(env):
                 arr[nearest_sink_node].parent_num = arr[nearest_sink_node].parent_num + 1
                 
                 if env.first_point == nearest_sink_node:
-                    print('84', current_index.index, current_index.around_nodes)
                     break
                 else:
                     current_index = arr[nearest_sink_node]
@@ -119,6 +118,5 @@ def run_gpsr_node(env):
                 current_node = arr[nearest_sink_node]
             else:
                 break
-    
-    print('connect_num', connect_num)
+    env.connect_num = connect_num
     return arr
