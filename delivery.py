@@ -67,7 +67,7 @@ num_processes = 1 # 同時執行數量 (產生結果數量)
 num_points = 400 # 節點數
 max_box = 2000  # 場景大小 單位 (1m)
 
-n_episodes = 10000 # 訓練次數
+n_episodes = 1000 # 訓練次數
 
 # 比較參數
 total_data = 0
@@ -254,9 +254,8 @@ def runMain(index):
             env_Q.uav_data_amount_list = copy.deepcopy(env_Q.data_amount_list)
             
             # NJNP
-            parent_num = set_tree_parent_num(env)
-            NJNP_nodes = run_NJNP(env, parent_num)
-            njnp_nodes = []
+            child_nodes = set_tree_parent_num(env)
+            # NJNP_nodes = run_NJNP(env, parent_num)
 
             for current_time in range(1, env.run_time + 1, 1):
                 
@@ -268,20 +267,18 @@ def runMain(index):
 
                 # 2. greedy
                 # =============== env_NJNP ===============
-                
-                if len(njnp_nodes) == 0:
-                    njnp_nodes = copy.deepcopy(NJNP_nodes)
-                
+                env_NJNP.current_time = current_time
                 env_NJNP = run_n_NJNP(
                     env_NJNP, 
                     init_position=init_position,
                     current_time=current_time,
                     process_index=process_index,
-                    NJNP_nodes=njnp_nodes,
+                    child_nodes=child_nodes,
                 )
                 # =============== env_NJNP end ===============
 
                 # =============== env_greedy_and_mutihop ===============
+                env_greedy_and_mutihop.current_time = current_time
                 env_greedy_and_mutihop = run_n_greedy_mutihop(
                     env_greedy_and_mutihop, 
                     init_position=init_position,
@@ -292,6 +289,7 @@ def runMain(index):
 
                 
                 # =============== drift greedy and mutihop ===============
+                env_drift_greedy_and_mutihop.current_time = current_time
                 env_drift_greedy_and_mutihop = run_n_greedy_drift(
                     env_drift_greedy_and_mutihop, 
                     init_position=init_position,
@@ -332,6 +330,7 @@ def runMain(index):
                 
 
                 # uav 開始飛行
+                env_Q.current_time = current_time
                 env_Q = run_uav(env_Q, init_position, current_time, process_index)
                 # =============== Q learning end ===========
 

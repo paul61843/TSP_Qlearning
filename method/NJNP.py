@@ -1,6 +1,27 @@
 import numpy as np
 
-def run_NJNP(env, parent_num):
+def getNJNPNextPoint(env, child_nodes):
+    max_value = -1
+    max_node = None
+    
+    current_node = env.stops[-1]
+
+    for i in env.unvisited_stops:
+        child_num = child_nodes[i]
+
+        distance = ((env.x[i] - env.x[current_node]) ** 2 + (env.y[i] - env.y[current_node])**2) ** 0.5
+
+        data_amount = child_num / distance
+
+        print(child_num, distance)
+        if data_amount >= max_value:
+            max_value = data_amount
+            max_node = i
+
+    return max_node
+    
+
+def run_NJNP(env, child_num):
     
     priority_nodes = []
     
@@ -13,11 +34,11 @@ def run_NJNP(env, parent_num):
         
         x = env.x[idx]
         y = env.y[idx]
-        parent = parent_num[idx]
+        child = child_num[idx]
         
         distance = ((x - sink_x) ** 2 + (y - sink_y)**2) ** 0.5
         
-        priority_nodes.append(parent / distance)
+        priority_nodes.append(child / distance)
     
     priority_nodes = np.array(priority_nodes)
     

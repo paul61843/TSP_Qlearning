@@ -90,6 +90,9 @@ class DeliveryEnvironment(object):
         # Initialize first point
         self.set_first_point()
         self.reset()
+        
+        # render image
+        run_gpsr_node(self)
 
     def _generate_stops(self):
         use_fake_data = True

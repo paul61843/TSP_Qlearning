@@ -1,5 +1,10 @@
 import math
 
+import matplotlib.pyplot as plt
+import numpy as np
+import imageio
+
+
 # 取得感測器的周圍檢點資訊
 # 將所有感測器跑回圈
 # 判斷哪些感測器有計算後的資料
@@ -56,8 +61,8 @@ class GPSR_Node:
         nearest_distance = None
         
         for node in self.around_nodes:
-            x = self.env.x[self.first_point]
-            y = self.env.y[self.first_point]
+            x = self.env.x[node]
+            y = self.env.y[node]
             
             distance = self.euclidean_distance({ 'x': x, 'y': y})
             if nearest_distance == None or distance < nearest_distance:
@@ -76,6 +81,7 @@ def generate_gpsr_node(env):
 
 def set_tree_parent_num(env):
     arr = generate_gpsr_node(env)
+    draw_around_node(env, arr)
     
     for idx, current_node in enumerate(arr):
         
@@ -95,7 +101,38 @@ def set_tree_parent_num(env):
     
     return [node.parent_num  for idx, node in enumerate(arr)]
 
+def draw_around_node(env, arr):
+    fig = plt.figure(figsize=(7,7))
+    plt.axes()
+    plt.title("Delivery Stops")
+    plt.xlabel("x axis")
+    plt.ylabel("y axis")
+    # plt.scatter(env.x,env.y,c = "black",s = 30)
+
+    for idx, current_node in enumerate(arr):
+        x = [current_node.x]
+        y = [current_node.y]
+        for node in current_node.around_nodes:
+            x.append(env.x[node])
+            y.append(env.y[node])
+        plt.text(current_node.x, current_node.y, str(idx), color="red", fontsize=6)
+        plt.plot(x, y, c = "blue",linewidth=1,linestyle="--")
+
+    fig.canvas.draw()
+    image = np.frombuffer(fig.canvas.tostring_rgb(), dtype='uint8')
+    image  = image.reshape(fig.canvas.get_width_height()[::-1] + (3,))
+    imageio.mimsave(f"./result/GPSR/time{env.current_time}_around_node.gif", [image], fps = 10)
+    plt.close('all')
+
+
 def run_gpsr_node(env):
+    
+    fig = plt.figure(figsize=(7,7))
+    plt.axes()
+    plt.title("Delivery Stops")
+    plt.xlabel("x axis")
+    plt.ylabel("y axis")
+
     arr = generate_gpsr_node(env)
     
     connect_num = 0
@@ -104,7 +141,11 @@ def run_gpsr_node(env):
         while (True):
             nearest_sink_node = current_node.nearest_sink_node
             if nearest_sink_node != None:
+                x = [current_node.x, env.x[nearest_sink_node]]
+                y = [current_node.y, env.y[nearest_sink_node]]
+                plt.plot(x, y, c = "blue",linewidth=1,linestyle="--")
                 current_index = current_node.index
+
                 
                 if env.first_point == nearest_sink_node:
                     env.sum_mutihop_data = env.sum_mutihop_data + env.data_amount_list[current_index]['calc']
@@ -118,5 +159,19 @@ def run_gpsr_node(env):
                 current_node = arr[nearest_sink_node]
             else:
                 break
+    
+    fig.canvas.draw()
+    image = np.frombuffer(fig.canvas.tostring_rgb(), dtype='uint8')
+    image  = image.reshape(fig.canvas.get_width_height()[::-1] + (3,))
+    imageio.mimsave(f"./result/GPSR/time{env.current_time}_gpsr.gif", [image], fps = 10)
+
+    plt.scatter(env.x,env.y,c = "black",s = 30)
+    fig.canvas.draw()
+    image = np.frombuffer(fig.canvas.tostring_rgb(), dtype='uint8')
+    image  = image.reshape(fig.canvas.get_width_height()[::-1] + (3,))
+    imageio.mimsave(f"./result/GPSR/time{env.current_time}_gpsr_point.gif", [image], fps = 10)
+
+    plt.close('all')
+
     env.connect_num = connect_num
     return arr

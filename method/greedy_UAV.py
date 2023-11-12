@@ -9,6 +9,9 @@ from utils.calc import *
 import csv_utils
 from constants.constants import *
 
+from method.NJNP import *
+
+
 # 取得資料量最高的感測器
 def getMostDataOfSensor(env):
     max_value = -1
@@ -28,17 +31,15 @@ def run_n_NJNP(
     init_position=[],
     current_time=0,
     process_index=0,
-    NJNP_nodes=[],
+    child_nodes=[],
 ):
     env.uav_remain_run_distance = env.uav_remain_run_distance + env.uav_speed * 1 # 每秒新增的距離
 
     # 如果沒有下一個節點，則取得資料量最高的感測器新增
     if len(env.stops) == 1:
         env.unvisited_stops = env.get_unvisited_stops()
-        a = NJNP_nodes[0]
-        NJNP_nodes.remove(NJNP_nodes[0])
+        a = getNJNPNextPoint(env, child_nodes)
         env.stops.append(a)
-        print('41', env.stops)
 
     # 判斷無人機飛是否抵達下一個節點
     x = env.x[[env.stops[-1], env.stops[-2]]]
@@ -57,8 +58,7 @@ def run_n_NJNP(
 
         # 新增下一個節點
         env.unvisited_stops = env.get_unvisited_stops()
-        a = NJNP_nodes[0]
-        NJNP_nodes.remove(NJNP_nodes[0])
+        a = getNJNPNextPoint(env, child_nodes)
         env.stops.append(a)
 
         # 判斷無人機飛行距離是否能返回 sink
