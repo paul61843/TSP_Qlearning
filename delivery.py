@@ -64,10 +64,11 @@ sys.path.append("../")
 
 # 設定環境參數
 num_processes = 1 # 同時執行數量 (產生結果數量)
+run_executions_time = 5 # 執行次數
 num_points = 400 # 節點數
 max_box = 2000  # 場景大小 單位 (1m)
 
-n_episodes = 1000 # 訓練次數
+n_episodes = 10000 # 訓練次數
 
 # 比較參數
 total_data = 0
@@ -230,15 +231,19 @@ def runMain(index):
     ]
     
     for params in parmas_arr:
-        for process_index in range(0, num_processes, 1):
+        for process_index in range(0, run_executions_time, 1):
+            print(f'============= run_executions_time {process_index} =============')
+            
             total_data = 0
             agent = None
 
             env = DeliveryEnvironment(num_points, max_box, process_index)
 
+
             # 感測器初始座標 (水下定錨座標)
             init_X = np.array(env.x)
             init_Y = np.array(env.y)
+
 
             init_position = [init_X, init_Y]
 
@@ -255,9 +260,11 @@ def runMain(index):
             
             # NJNP
             child_nodes = set_tree_parent_num(env)
+            env_Q.subTree_num = child_nodes
             # NJNP_nodes = run_NJNP(env, parent_num)
 
             for current_time in range(1, env.run_time + 1, 1):
+
                 
                 # 1. mutihop
                 # # =============== mutihop ===============

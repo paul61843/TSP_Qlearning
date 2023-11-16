@@ -6,17 +6,20 @@ def getNJNPNextPoint(env, child_nodes):
     
     current_node = env.stops[-1]
 
-    for i in env.unconnect_nodes:
-        
-        child_num = child_nodes[i]
+    remain_unconnect_nodes = [elem for elem in env.unconnect_nodes if elem not in list(env.stops)]
 
-        distance = ((env.x[i] - env.x[current_node]) ** 2 + (env.y[i] - env.y[current_node])**2) ** 0.5
+    for i in remain_unconnect_nodes:
 
-        data_amount = child_num / distance
+        if current_node != i:    
+            child_num = child_nodes[i]
 
-        if data_amount >= max_value:
-            max_value = data_amount
-            max_node = i
+            distance = ((env.x[i] - env.x[current_node]) ** 2 + (env.y[i] - env.y[current_node])**2) ** 0.5
+
+            data_amount = child_num / distance
+
+            if data_amount >= max_value:
+                max_value = data_amount
+                max_node = i
 
     return max_node
     

@@ -239,7 +239,7 @@ class DeliveryEnvironment(object):
                 self.uav_data['calc'] = self.uav_data['calc'] + self.data_amount_list[idx]['calc']
                 self.data_amount_list[idx]['origin'] = 0
                 self.data_amount_list[idx]['calc'] = 0
-        
+
         drift_distance = np.sqrt(
             (self.x[index] - init_x[index]) ** 2 + 
             (self.y[index] - init_y[index]) ** 2
@@ -376,8 +376,8 @@ class DeliveryEnvironment(object):
                 # 判斷節點是否超出邊界
                 self.x[i] = 0 if self.x[i] < 0 else self.max_box if self.x[i] > self.max_box else self.x[i]
                 self.y[i] = 0 if self.y[i] < 0 else self.max_box if self.y[i] > self.max_box else self.y[i]
-        
-                
+
+
     def _get_state(self):
         return self.stops[-1]
 
@@ -403,13 +403,18 @@ class DeliveryEnvironment(object):
         yellow_reward = buffer_percentage * 50
         # danger_reward = 0
         danger_reward = has_calc_danger_threshold * buffer_percentage * 100
-        
 
-        # 新增 孤立節點獎勵值
+        # subTree_num = self.subTree_num[new_state]
+
+        # edge_reward = -distance / subTree_num * 10
+
+        # edge_reward = 0 if edge_reward == float("-inf") else edge_reward
+
+        # # 新增 孤立節點獎勵值
 
         is_isolated_node = new_state in self.isolated_node
         isolated_reward = 1 if is_isolated_node else 0
 
-        return distance_reward + yellow_reward + danger_reward
+        return distance_reward + isolated_reward + yellow_reward + danger_reward
         
 

@@ -57,7 +57,7 @@ def run_n_NJNP(
     next_point_cost = next_point_distance + drift_cost
     if env.uav_remain_run_distance >= next_point_cost:
         env.uav_remain_run_distance = env.uav_remain_run_distance - next_point_cost
-        env.clear_data_one(init_position, env.stops[-1], True)
+        env.clear_data_one(init_position, env.stops[-1], False)
 
         # 如果抵達 sink，則 reset 環境
         if env.stops[-1] == env.first_point:
