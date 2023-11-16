@@ -92,7 +92,7 @@ class DeliveryEnvironment(object):
         self.reset()
         
         # render image
-        run_gpsr_node(self)
+        self.unconnect_nodes = run_gpsr_node(self)
 
     def _generate_stops(self):
         use_fake_data = True

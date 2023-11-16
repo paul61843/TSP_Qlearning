@@ -9,7 +9,7 @@ generate_event_data = [
 ]
 
 drift_position = np.array([
-    [2000, 2000],
     [0, 0],
+    [2000, 2000],
 ])
 

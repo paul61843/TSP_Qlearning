@@ -45,13 +45,22 @@ def run_n_NJNP(
     x = env.x[[env.stops[-1], env.stops[-2]]]
     y = env.y[[env.stops[-1], env.stops[-2]]]
     next_point_distance = math.ceil(calcDistance(x, y))
-    if env.uav_remain_run_distance >= next_point_distance:
-        env.uav_remain_run_distance = env.uav_remain_run_distance - next_point_distance
+    [init_pos_x, init_pos_y] = init_position
+    
+    # 搜尋飄移節點 所需要的電量消耗
+    drift_cost = calc_drift_cost(
+        [init_pos_x[env.stops[env.next_point]],  env.x[env.stops[env.next_point]]], 
+        [init_pos_y[env.stops[env.next_point]],  env.y[env.stops[env.next_point]]], 
+        env
+    )
+    
+    next_point_cost = next_point_distance + drift_cost
+    if env.uav_remain_run_distance >= next_point_cost:
+        env.uav_remain_run_distance = env.uav_remain_run_distance - next_point_cost
         env.clear_data_one(init_position, env.stops[-1], True)
 
         # 如果抵達 sink，則 reset 環境
         if env.stops[-1] == env.first_point:
-            print(env.stops)
             env.stops = []
             env.stops.append(env.first_point)
             env.uav_data_amount_list = copy.deepcopy(env.data_amount_list)
@@ -127,8 +136,19 @@ def run_n_greedy_mutihop(
     x = env.x[[env.stops[-1], env.stops[-2]]]
     y = env.y[[env.stops[-1], env.stops[-2]]]
     next_point_distance = math.ceil(calcDistance(x, y))
-    if env.uav_remain_run_distance >= next_point_distance:
-        env.uav_remain_run_distance = env.uav_remain_run_distance - next_point_distance
+    [init_pos_x, init_pos_y] = init_position
+    
+    # 搜尋飄移節點 所需要的電量消耗
+    drift_cost = calc_drift_cost(
+        [init_pos_x[env.stops[env.next_point]],  env.x[env.stops[env.next_point]]], 
+        [init_pos_y[env.stops[env.next_point]],  env.y[env.stops[env.next_point]]], 
+        env
+    )
+    
+    next_point_cost = next_point_distance + drift_cost
+    
+    if env.uav_remain_run_distance >= next_point_cost:
+        env.uav_remain_run_distance = env.uav_remain_run_distance - next_point_cost
         env.clear_data_one(init_position, env.stops[-1], False)
 
         # 如果抵達 sink，則 reset 環境
@@ -212,8 +232,20 @@ def run_n_greedy_drift(
     x = env.x[[env.stops[-1], env.stops[-2]]]
     y = env.y[[env.stops[-1], env.stops[-2]]]
     next_point_distance = math.ceil(calcDistance(x, y))
-    if env.uav_remain_run_distance >= next_point_distance:
-        env.uav_remain_run_distance = env.uav_remain_run_distance - next_point_distance
+    [init_pos_x, init_pos_y] = init_position
+    
+    # 搜尋飄移節點 所需要的電量消耗
+    drift_cost = calc_drift_cost(
+        [init_pos_x[env.stops[env.next_point]],  env.x[env.stops[env.next_point]]], 
+        [init_pos_y[env.stops[env.next_point]],  env.y[env.stops[env.next_point]]], 
+        env
+    )
+    
+    next_point_cost = next_point_distance + drift_cost
+    
+    
+    if env.uav_remain_run_distance >= next_point_cost:
+        env.uav_remain_run_distance = env.uav_remain_run_distance - next_point_cost
         env.clear_data_one(init_position, env.stops[-1], True)
 
         # 如果抵達 sink，則 reset 環境

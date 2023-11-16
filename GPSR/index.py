@@ -102,12 +102,18 @@ def set_tree_parent_num(env):
     return [node.parent_num  for idx, node in enumerate(arr)]
 
 def draw_around_node(env, arr):
-    fig = plt.figure(figsize=(7,7))
-    plt.axes()
-    plt.title("Delivery Stops")
-    plt.xlabel("x axis")
-    plt.ylabel("y axis")
+    # fig = plt.figure(figsize=(7,7))
+    # plt.axes()
+    # plt.title("Delivery Stops")
+    # plt.xlabel("x axis")
+    # plt.ylabel("y axis")
     # plt.scatter(env.x,env.y,c = "black",s = 30)
+    
+    # Show START
+    if len(env.stops) > 0:
+        xy = env._get_xy(initial = True)
+        xytext = xy[0] + 0.1, xy[1]-0.05
+        plt.annotate("SINK",xy=xy,xytext=xytext,weight = "bold")
 
     for idx, current_node in enumerate(arr):
         x = [current_node.x]
@@ -115,41 +121,53 @@ def draw_around_node(env, arr):
         for node in current_node.around_nodes:
             x.append(env.x[node])
             y.append(env.y[node])
-        plt.text(current_node.x, current_node.y, str(idx), color="red", fontsize=6)
         plt.plot(x, y, c = "blue",linewidth=1,linestyle="--")
 
-    fig.canvas.draw()
-    image = np.frombuffer(fig.canvas.tostring_rgb(), dtype='uint8')
-    image  = image.reshape(fig.canvas.get_width_height()[::-1] + (3,))
-    imageio.mimsave(f"./result/GPSR/time{env.current_time}_around_node.gif", [image], fps = 10)
-    plt.close('all')
+    # fig.canvas.draw()
+    # image = np.frombuffer(fig.canvas.tostring_rgb(), dtype='uint8')
+    # image  = image.reshape(fig.canvas.get_width_height()[::-1] + (3,))
+    # imageio.mimsave(f"./result/GPSR/time{env.current_time}_around_node.gif", [image], fps = 10)
+    # plt.close('all')
 
 
 def run_gpsr_node(env):
     
-    fig = plt.figure(figsize=(7,7))
-    plt.axes()
-    plt.title("Delivery Stops")
-    plt.xlabel("x axis")
-    plt.ylabel("y axis")
+    # fig = plt.figure(figsize=(7,7))
+    # plt.axes()
+    # plt.title("Delivery Stops")
+    # plt.xlabel("x axis")
+    # plt.ylabel("y axis")
+    
+    # Show START
+    if len(env.stops) > 0:
+        xy = env._get_xy(initial = True)
+        xytext = xy[0] + 0.1, xy[1]-0.05
+        # plt.annotate("SINK",xy=xy,xytext=xytext,weight = "bold")
 
     arr = generate_gpsr_node(env)
     
     connect_num = 0
+    connect_nodes = []
+    total_nodes = []
+
     for idx, current_node in enumerate(arr):
+
+        if idx != current_node.nearest_sink_node:
+            total_nodes.append(idx)
         
         while (True):
             nearest_sink_node = current_node.nearest_sink_node
             if nearest_sink_node != None:
                 x = [current_node.x, env.x[nearest_sink_node]]
                 y = [current_node.y, env.y[nearest_sink_node]]
-                plt.plot(x, y, c = "blue",linewidth=1,linestyle="--")
+                # plt.plot(x, y, c = "blue",linewidth=1,linestyle="--")
                 current_index = current_node.index
 
                 
                 if env.first_point == nearest_sink_node:
                     env.sum_mutihop_data = env.sum_mutihop_data + env.data_amount_list[current_index]['calc']
                     env.data_amount_list[current_index]['calc'] = 0
+                    connect_nodes.append(idx)
                     connect_num = connect_num + 1
                     break
                 else:
@@ -160,18 +178,19 @@ def run_gpsr_node(env):
             else:
                 break
     
-    fig.canvas.draw()
-    image = np.frombuffer(fig.canvas.tostring_rgb(), dtype='uint8')
-    image  = image.reshape(fig.canvas.get_width_height()[::-1] + (3,))
-    imageio.mimsave(f"./result/GPSR/time{env.current_time}_gpsr.gif", [image], fps = 10)
+    # fig.canvas.draw()
+    # image = np.frombuffer(fig.canvas.tostring_rgb(), dtype='uint8')
+    # image  = image.reshape(fig.canvas.get_width_height()[::-1] + (3,))
+    # imageio.mimsave(f"./result/GPSR/time{env.current_time}_gpsr.gif", [image], fps = 10)
 
-    plt.scatter(env.x,env.y,c = "black",s = 30)
-    fig.canvas.draw()
-    image = np.frombuffer(fig.canvas.tostring_rgb(), dtype='uint8')
-    image  = image.reshape(fig.canvas.get_width_height()[::-1] + (3,))
-    imageio.mimsave(f"./result/GPSR/time{env.current_time}_gpsr_point.gif", [image], fps = 10)
+    # plt.scatter(env.x,env.y,c = "black",s = 30)
+    # fig.canvas.draw()
+    # image = np.frombuffer(fig.canvas.tostring_rgb(), dtype='uint8')
+    # image  = image.reshape(fig.canvas.get_width_height()[::-1] + (3,))
+    # imageio.mimsave(f"./result/GPSR/time{env.current_time}_gpsr_point.gif", [image], fps = 10)
 
-    plt.close('all')
+    # plt.close('all')
+    unconnect_nodes = [elem for elem in total_nodes if elem not in connect_nodes]
 
-    env.connect_num = connect_num
-    return arr
+
+    return unconnect_nodes
