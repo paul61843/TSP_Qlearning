@@ -26,7 +26,7 @@ class DeliveryEnvironment(object):
         self.buffer_size = 16 * 1024 * 8 # 感測器儲存資料的最大量 (16KB)
         self.generate_data_rate = 2 * 34 * self.unit_time # 事件為觸發前 資料產生量
         self.event_change_time = 1000 # 事件發生變化時間
-        self.drift_change_time = 1000 # 節點飄移變化時間
+        self.drift_change_time = 3000 # 節點飄移變化時間
         self.connect_num = 0 # 隔離節點數量
         
         # UAV Config

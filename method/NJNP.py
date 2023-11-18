@@ -22,6 +22,27 @@ def getNJNPNextPoint(env, child_nodes):
                 max_node = i
 
     return max_node
+
+def getHeightSubTreeNextPoint(env, child_nodes):
+    max_value = -1
+    max_node = None
+    
+    current_node = env.stops[-1]
+
+    remain_unconnect_nodes = [elem for elem in env.unconnect_nodes if elem not in list(env.stops)]
+
+    for i in remain_unconnect_nodes:
+
+        if current_node != i:    
+            child_num = child_nodes[i]
+
+            data_amount = child_num
+
+            if data_amount >= max_value:
+                max_value = data_amount
+                max_node = i
+
+    return max_node
     
 
 def run_NJNP(env, child_num):
