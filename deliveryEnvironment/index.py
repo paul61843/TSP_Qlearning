@@ -19,7 +19,7 @@ class DeliveryEnvironment(object):
         # Environment Config
         self.communication_range = 100 # 節點通訊半徑 (單位 1m)
         self.drift_range = 120 # 節點飄移範圍 (單位 1m)
-        self.run_time = 5000 # 執行時間 (單位s)
+        self.run_time = 10000 # 執行時間 (單位s)
         self.unit_time = 100 # 時間單位 (單位s)
         self.record_time = 100 # 時間單位 (單位s)
         self.current_time = 0 # 目前時間 (單位s)
@@ -27,7 +27,8 @@ class DeliveryEnvironment(object):
         self.generate_data_rate = 2 * 34 * self.unit_time # 事件為觸發前 資料產生量
         self.event_change_time = 1000 # 事件發生變化時間
         self.drift_change_time = 3000 # 節點飄移變化時間
-        self.connect_num = 0 # 隔離節點數量
+        self.connect_nodes = [] # 連通節點
+        self.unconnect_nodes = [] # 不連通節點
         
         # UAV Config
         self.uav_range = 100 # 無人機通訊半徑範圍 (單位 1m)
@@ -62,6 +63,7 @@ class DeliveryEnvironment(object):
         self.current_run_index = 0 # Q learning 使用
         self.next_point = 1 # Q learning 使用
         self.stops = []
+        self.collected_sensors = []
         self.unvisited_stops = []
         self.red_stops = []
         self.drift_cost_list = []
@@ -74,7 +76,6 @@ class DeliveryEnvironment(object):
 
         # 感測器資料量相關
         self.data_amount_list = [] # 感測器儲存的資料量
-        self.sink_amount_list = [] # sink 收到的資料量
         self.uav_data_amount_list = [] # 無人機獲得的感測器資料量資訊
         self.calc_threshold = self.buffer_size * 50 // 100 # 感測器資料量超過 50% 門檻
         self.calc_danger_threshold = self.buffer_size * 75 //100 # 感測器資料量超過 75% 門檻
@@ -129,6 +130,7 @@ class DeliveryEnvironment(object):
             
         # 預設感測器的目前資料量為0
         self.data_amount_list = [{ 'origin': 0, 'calc': 0 } for _ in range(self.n_stops)]
+        self.uav_data_amount_list = self.data_amount_list
         
     def generate_stops_and_remove_drift_point(self):
 
@@ -239,6 +241,10 @@ class DeliveryEnvironment(object):
                 self.uav_data['calc'] = self.uav_data['calc'] + self.data_amount_list[idx]['calc']
                 self.data_amount_list[idx]['origin'] = 0
                 self.data_amount_list[idx]['calc'] = 0
+                self.uav_data_amount_list[idx]['origin'] = 0
+                self.uav_data_amount_list[idx]['calc'] = 0
+                self.collected_sensors.append(idx)
+                self.collected_sensors = list(dict.fromkeys(self.collected_sensors))
 
         drift_distance = np.sqrt(
             (self.x[index] - init_x[index]) ** 2 + 
@@ -250,6 +256,10 @@ class DeliveryEnvironment(object):
             self.uav_data['calc'] = self.uav_data['calc'] + self.data_amount_list[index]['calc']
             self.data_amount_list[index]['origin'] = 0
             self.data_amount_list[index]['calc'] = 0
+
+            self.collected_sensors.append(index)
+            self.collected_sensors = list(dict.fromkeys(self.collected_sensors))
+
 
     def _generate_q_values(self,box_size = 0.2):
         xy = np.column_stack([self.x,self.y])
@@ -393,7 +403,7 @@ class DeliveryEnvironment(object):
         distance = self.q_stops[state,new_state] / self.max_box
         distance_reward = -distance * 10
         
-        sensor_total_data = self.data_amount_list[new_state]['origin'] + self.data_amount_list[new_state]['calc']
+        sensor_total_data = self.uav_data_amount_list[new_state]['origin'] + self.uav_data_amount_list[new_state]['calc']
         
 
         has_calc_danger_threshold = sensor_total_data > self.calc_threshold

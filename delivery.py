@@ -135,6 +135,9 @@ def run_uav(env, init_position, current_time, process_index):
                 env.stops.append(env.first_point)
                 env.current_run_index = 0
                 env.next_point = 1
+                result = [num for num in range(1, env.n_stops) if num not in env.collected_sensors]
+                env.collected_sensors = []
+
                 return env
                             
                 
@@ -192,7 +195,7 @@ def run_uav(env, init_position, current_time, process_index):
         total_data = env.generate_data_total
         lost_data = total_data - (mutihop_data + sensor_data + uav_data)
         run_time = current_time
-        connect_num = env.connect_num
+        connect_num = len(env.connect_nodes)
         
         env.result.append([
             math.ceil(run_time), 
@@ -205,9 +208,9 @@ def run_uav(env, init_position, current_time, process_index):
             math.ceil(uav_data_origin // 8), 
             math.ceil(uav_data // 8), 
             math.ceil(lost_data // 8),
-            math.ceil(env.connect_num),
+            math.ceil(connect_num),
         ])
-        csv_utils.writeDataToCSV(f'./result/csv{process_index}/q_learning.csv', env.result)
+        csv_utils.writeDataToCSV(f'./result/csv/csv{process_index}/q_learning.csv', env.result)
 
     # 產生UAV路徑圖
     if current_time % 500 == 0:
@@ -322,6 +325,7 @@ def runMain(index):
 
                 # =============== Q learning ===============
                 if len(env_Q.stops) == 1:
+                    
                     agent = DeliveryQAgent(
                         states_size=num_points,
                         actions_size=num_points,
@@ -388,6 +392,13 @@ def runMain(index):
                     env_greedy_and_mutihop.generate_data(current_time)
                     env_drift_greedy_and_mutihop.generate_data(current_time)
                     env_Q.generate_data(current_time)
+                    
+                    for node_idx in env.connect_nodes:
+                        env_NJNP.uav_data_amount_list[node_idx] = env.data_amount_list[node_idx]
+                        env_subTree.uav_data_amount_list[node_idx] = env.data_amount_list[node_idx]
+                        env_greedy_and_mutihop.uav_data_amount_list[node_idx] = env.data_amount_list[node_idx]
+                        env_drift_greedy_and_mutihop.uav_data_amount_list[node_idx] = env.data_amount_list[node_idx]
+                        env_Q.uav_data_amount_list[node_idx] = env.data_amount_list[node_idx]
                     
     print(f'run {index} end ========================================')
 

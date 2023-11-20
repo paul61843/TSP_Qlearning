@@ -135,8 +135,7 @@ def run_gpsr_node(env):
 
     arr = generate_gpsr_node(env)
     
-    connect_num = 0
-    connect_nodes = []
+    env.connect_nodes = []
     total_nodes = []
 
     for idx, current_node in enumerate(arr):
@@ -156,8 +155,7 @@ def run_gpsr_node(env):
                 if env.first_point == nearest_sink_node:
                     env.sum_mutihop_data = env.sum_mutihop_data + env.data_amount_list[current_index]['calc']
                     env.data_amount_list[current_index]['calc'] = 0
-                    connect_nodes.append(idx)
-                    connect_num = connect_num + 1
+                    env.connect_nodes.append(idx)
                     break
                 else:
                     env.data_amount_list[nearest_sink_node]['calc'] = env.data_amount_list[nearest_sink_node]['calc'] + env.data_amount_list[current_index]['calc']
@@ -179,7 +177,9 @@ def run_gpsr_node(env):
     # imageio.mimsave(f"./result/GPSR/time{env.current_time}_gpsr_point.gif", [image], fps = 10)
 
     # plt.close('all')
-    unconnect_nodes = [elem for elem in total_nodes if elem not in connect_nodes]
+    # result = [num for num in range(1, env.n_stops) if num not in env.collected_sensors]
 
 
-    return unconnect_nodes
+    env.unconnect_nodes = [elem for elem in total_nodes if elem not in env.connect_nodes]
+
+    return env.unconnect_nodes

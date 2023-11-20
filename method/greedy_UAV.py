@@ -63,7 +63,6 @@ def run_n_NJNP(
         if env.stops[-1] == env.first_point:
             env.stops = []
             env.stops.append(env.first_point)
-            env.uav_data_amount_list = copy.deepcopy(env.data_amount_list)
 
         # 新增下一個節點
         env.unvisited_stops = env.get_unvisited_stops()
@@ -93,7 +92,7 @@ def run_n_NJNP(
         total_data = env.generate_data_total
         lost_data = total_data - (mutihop_data + sensor_data + uav_data)
         run_time = current_time
-        connect_num = env.connect_num
+        connect_num = len(env.connect_nodes)
         
         env.result.append([
             math.ceil(run_time), 
@@ -106,9 +105,9 @@ def run_n_NJNP(
             math.ceil(uav_data_origin // 8), 
             math.ceil(uav_data // 8), 
             math.ceil(lost_data // 8),
-            math.ceil(env.connect_num),
+            math.ceil(connect_num),
         ])
-        csv_utils.writeDataToCSV(f'./result/csv{process_index}/NJNP_and_mutihop.csv', env.result)
+        csv_utils.writeDataToCSV(f'./result/csv/csv{process_index}/NJNP_and_mutihop.csv', env.result)
 
     # 產生UAV路徑圖
     if current_time % 1000 == 0:
@@ -153,11 +152,8 @@ def run_n_subTree(
 
         # 如果抵達 sink，則 reset 環境
         if env.stops[-1] == env.first_point:
-            print(env.stops)
-            
             env.stops = []
             env.stops.append(env.first_point)
-            env.uav_data_amount_list = copy.deepcopy(env.data_amount_list)
 
         # 新增下一個節點
         env.unvisited_stops = env.get_unvisited_stops()
@@ -169,7 +165,6 @@ def run_n_subTree(
         y = env.y[[env.stops[0], env.stops[-1]]]
         to_start_cost = calcDistance(x, y)
         distance = calcDistance(env.x[env.stops], env.y[env.stops]) + to_start_cost
-        print(distance, env.max_move_distance)
         if distance > env.max_move_distance:
             
             env.stops.pop()
@@ -189,7 +184,7 @@ def run_n_subTree(
         total_data = env.generate_data_total
         lost_data = total_data - (mutihop_data + sensor_data + uav_data)
         run_time = current_time
-        connect_num = env.connect_num
+        connect_num = len(env.connect_nodes)
         
         env.result.append([
             math.ceil(run_time), 
@@ -202,9 +197,9 @@ def run_n_subTree(
             math.ceil(uav_data_origin // 8), 
             math.ceil(uav_data // 8), 
             math.ceil(lost_data // 8),
-            math.ceil(env.connect_num),
+            math.ceil(connect_num),
         ])
-        csv_utils.writeDataToCSV(f'./result/csv{process_index}/subTree_and_mutihop.csv', env.result)
+        csv_utils.writeDataToCSV(f'./result/csv/csv{process_index}/subTree_and_mutihop.csv', env.result)
 
     # 產生UAV路徑圖
     if current_time % 1000 == 0:
@@ -252,7 +247,6 @@ def run_n_greedy_mutihop(
         if env.stops[-1] == env.first_point:
             env.stops = []
             env.stops.append(env.first_point)
-            env.uav_data_amount_list = copy.deepcopy(env.data_amount_list)
 
         # 新增下一個節點
         env.unvisited_stops = env.get_unvisited_stops()
@@ -282,7 +276,7 @@ def run_n_greedy_mutihop(
         total_data = env.generate_data_total
         lost_data = total_data - (mutihop_data + sensor_data + uav_data)
         run_time = current_time
-        connect_num = env.connect_num
+        connect_num = len(env.connect_nodes)
         
         env.result.append([
             math.ceil(run_time), 
@@ -295,9 +289,9 @@ def run_n_greedy_mutihop(
             math.ceil(uav_data_origin // 8), 
             math.ceil(uav_data // 8), 
             math.ceil(lost_data // 8),
-            math.ceil(env.connect_num),
+            math.ceil(connect_num),
         ])
-        csv_utils.writeDataToCSV(f'./result/csv{process_index}/greedy_and_mutihop.csv', env.result)
+        csv_utils.writeDataToCSV(f'./result/csv/csv{process_index}/greedy_and_mutihop.csv', env.result)
 
     # 產生UAV路徑圖
     if current_time % 1000 == 0:
@@ -349,7 +343,6 @@ def run_n_greedy_drift(
         if env.stops[-1] == env.first_point:
             env.stops = []
             env.stops.append(env.first_point)
-            env.uav_data_amount_list = copy.deepcopy(env.data_amount_list)
 
         # 新增下一個節點
         env.unvisited_stops = env.get_unvisited_stops()
@@ -379,7 +372,7 @@ def run_n_greedy_drift(
         total_data = env.generate_data_total
         lost_data = total_data - (mutihop_data + sensor_data + uav_data)
         run_time = current_time
-        connect_num = env.connect_num
+        connect_num = len(env.connect_nodes)
         
         env.result.append([
             math.ceil(run_time), 
@@ -392,9 +385,9 @@ def run_n_greedy_drift(
             math.ceil(uav_data_origin // 8), 
             math.ceil(uav_data // 8), 
             math.ceil(lost_data // 8),
-            math.ceil(env.connect_num),
+            math.ceil(connect_num),
         ])
-        csv_utils.writeDataToCSV(f'./result/csv{process_index}/drift_greedy_and_mutihop.csv', env.result)
+        csv_utils.writeDataToCSV(f'./result/csv/csv{process_index}/drift_greedy_and_mutihop.csv', env.result)
 
     # 產生UAV路徑圖
     if current_time % 1000 == 0:
