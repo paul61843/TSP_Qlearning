@@ -64,7 +64,7 @@ sys.path.append("../")
 
 # 設定環境參數
 num_processes = 1 # 同時執行數量 (產生結果數量)
-run_executions_time = 5 # 執行次數
+run_executions_time = 10 # 執行次數
 num_points = 400 # 節點數
 max_box = 2000  # 場景大小 單位 (1m)
 
@@ -313,13 +313,13 @@ def runMain(index):
 
                 
                 # =============== drift greedy and mutihop ===============
-                env_drift_greedy_and_mutihop.current_time = current_time
-                env_drift_greedy_and_mutihop = run_n_greedy_drift(
-                    env_drift_greedy_and_mutihop, 
-                    init_position=init_position,
-                    current_time=current_time,
-                    process_index=process_index,
-                )
+                # env_drift_greedy_and_mutihop.current_time = current_time
+                # env_drift_greedy_and_mutihop = run_n_greedy_drift(
+                #     env_drift_greedy_and_mutihop, 
+                #     init_position=init_position,
+                #     current_time=current_time,
+                #     process_index=process_index,
+                # )
 
                 # =============== drift greedy and mutihop ===============
 
@@ -393,7 +393,7 @@ def runMain(index):
                     env_drift_greedy_and_mutihop.generate_data(current_time)
                     env_Q.generate_data(current_time)
                     
-                    for node_idx in env.connect_nodes:
+                    for node_idx in env_Q.connect_nodes:
                         env_NJNP.uav_data_amount_list[node_idx] = env.data_amount_list[node_idx]
                         env_subTree.uav_data_amount_list[node_idx] = env.data_amount_list[node_idx]
                         env_greedy_and_mutihop.uav_data_amount_list[node_idx] = env.data_amount_list[node_idx]
