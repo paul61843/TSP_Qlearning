@@ -6,41 +6,35 @@ import math
 from utils.calc import *
 import csv_utils
 import imageio
-
-import os
+import copy
+import subprocess
 
 
 def GA_TSP(env):
     result = ''
     
-    arr_index = list(set(env.unconnect_nodes + env.buffer_overflow_nodes + [env.first_point]))
-    
+    arr_index = copy.deepcopy(list(set(env.unconnect_nodes + env.buffer_overflow_nodes + [env.first_point])))
     
     x = ' '.join(str(e) for e in env.x[arr_index])
     y = ' '.join(str(e) for e in env.y[arr_index])
     arr_index = ' '.join(str(e) for e in arr_index)
-    
+
     command = f'node method/TSP.js "{x}" "{y}" "{arr_index}"'
-    with os.popen(command) as nodejs:
-        result = nodejs.read().replace('\n', '')
+    nodejs = subprocess.Popen(command, stdout=subprocess.PIPE)
+    result = nodejs.stdout.read().decode("utf-8").replace('\n', '')
+
+
         
     result = [ int(x) for x in result.split()]
         
-    first_index = result.index(env.first_point) + 1
+    first_index = result.index(env.first_point)
     
-    result = result[first_index:] + result[:first_index]
+    result = result[:first_index] + result[first_index:]
     
     return result
 
 def run_TSP(env, init_position, current_time, process_index):
     
-    # 到達最後的節點 返回sink
-    
-    if len(env.stops) == env.current_run_index + 1:
-        print(current_time)
-        env.stops.append(env.first_point)
-    
-
     env.uav_remain_run_distance = env.uav_remain_run_distance + env.uav_speed * 1 # 每秒新增的距離
     
     # 判斷無人機飛是否抵達下一個節點
@@ -62,12 +56,11 @@ def run_TSP(env, init_position, current_time, process_index):
             env.clear_data_one(init_position, env.stops[env.next_point], False)
         
             # 如果抵達 sink，則 reset 環境
-            if env.current_run_index == len(env.stops):
+            if env.stops[env.next_point] == env.stops[-1]:
                 env.stops = []
                 env.stops.append(env.first_point)
                 env.current_run_index = 0
                 env.next_point = 1
-                result = [num for num in range(1, env.n_stops) if num not in env.collected_sensors]
                 env.collected_sensors = []
 
                 return env
@@ -76,8 +69,6 @@ def run_TSP(env, init_position, current_time, process_index):
             env.current_run_index = env.current_run_index + 1
             env.next_point = env.next_point + 1
             
-            print(env.current_run_index)
-        
         
     # 紀錄資料
     if current_time % env.record_time == 0:
@@ -116,6 +107,6 @@ def run_TSP(env, init_position, current_time, process_index):
     # 產生UAV路徑圖
     if current_time % 500 == 0:
         uav_run_img = env.render(return_img = True)
-        imageio.mimsave(f"./result/Q_learning/{current_time}_time_index{process_index}_UAV_result.gif",[uav_run_img],fps = 10)
+        imageio.mimsave(f"./result/TSP/{current_time}_time_index{process_index}_UAV_result.gif",[uav_run_img],fps = 10)
     
     return env

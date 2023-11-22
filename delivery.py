@@ -238,7 +238,7 @@ def runMain(index):
     ]
     
     for params in parmas_arr:
-        for process_index in range(10, 100, 1):
+        for process_index in range(0, 100, 1):
             print(f'============= run_executions_time {process_index} =============')
             
             total_data = 0
@@ -319,8 +319,8 @@ def runMain(index):
                 # =============== TSP ===============
                 if len(env_TSP.stops) == 1:
                     env_TSP.current_time = current_time
-                    env_TSP.stops = GA_TSP(env)
-                    
+                    env_TSP.stops = GA_TSP(env_TSP)
+
                     uav_run_img = env_TSP.render(return_img = True)
                     imageio.mimsave(f"./result/TSP/{current_time}_time_index{process_index}_UAV_result.gif",[uav_run_img],fps = 10)
                     
@@ -382,12 +382,13 @@ def runMain(index):
 
                 # 減去 mutihop 的資料量 (GPSR)
                 if current_time % env.unit_time == 0:  
-                    env_NJNP.subtract_mutihop_data()
-                    env_subTree.subtract_mutihop_data()
-                    env_greedy_and_mutihop.subtract_mutihop_data()
-                    env_drift_greedy_and_mutihop.subtract_mutihop_data()
+                    # env_NJNP.subtract_mutihop_data()
+                    # env_subTree.subtract_mutihop_data()
+                    # env_greedy_and_mutihop.subtract_mutihop_data()
+                    # env_drift_greedy_and_mutihop.subtract_mutihop_data()
                     env_TSP.subtract_mutihop_data()
-                    env_Q.subtract_mutihop_data()
+
+                    # env_Q.subtract_mutihop_data()
 
                 # 執行節點飄移
                 env.drift_node(init_position, current_time)

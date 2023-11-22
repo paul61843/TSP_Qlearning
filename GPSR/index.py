@@ -181,5 +181,4 @@ def run_gpsr_node(env):
 
 
     env.unconnect_nodes = [elem for elem in total_nodes if elem not in env.connect_nodes]
-
     return env.unconnect_nodes
