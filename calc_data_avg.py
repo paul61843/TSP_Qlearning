@@ -1,6 +1,6 @@
 import csv_utils
 
-csv_num = 5
+csv_num = 10
 
 methods_name = ['greedy_and_mutihop', 'subTree_and_mutihop', 'NJNP_and_mutihop', 'q_learning']
 time_interval = 1000

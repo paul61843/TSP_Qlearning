@@ -25,6 +25,7 @@ from constants.constants import *
 
 from method.greedy_UAV import *
 from method.NJNP import *
+from method.TSP import *
 from method.method2 import *
 
 
@@ -196,6 +197,8 @@ def run_uav(env, init_position, current_time, process_index):
         lost_data = total_data - (mutihop_data + sensor_data + uav_data)
         run_time = current_time
         connect_num = len(env.connect_nodes)
+        buffer_overflow_num = len(env.buffer_overflow_nodes)
+        
         
         env.result.append([
             math.ceil(run_time), 
@@ -209,6 +212,7 @@ def run_uav(env, init_position, current_time, process_index):
             math.ceil(uav_data // 8), 
             math.ceil(lost_data // 8),
             math.ceil(connect_num),
+            math.ceil(buffer_overflow_num),
         ])
         csv_utils.writeDataToCSV(f'./result/csv/csv{process_index}/q_learning.csv', env.result)
 
@@ -234,7 +238,7 @@ def runMain(index):
     ]
     
     for params in parmas_arr:
-        for process_index in range(0, run_executions_time, 1):
+        for process_index in range(10, 100, 1):
             print(f'============= run_executions_time {process_index} =============')
             
             total_data = 0
@@ -255,12 +259,14 @@ def runMain(index):
             env_subTree = copy.deepcopy(env)
             env_greedy_and_mutihop = copy.deepcopy(env)
             env_drift_greedy_and_mutihop = copy.deepcopy(env)
+            env_TSP = copy.deepcopy(env)
             env_Q = copy.deepcopy(env)
             
             env_NJNP.uav_data_amount_list = copy.deepcopy(env_NJNP.data_amount_list)
             env_subTree.uav_data_amount_list = copy.deepcopy(env_subTree.data_amount_list)
             env_greedy_and_mutihop.uav_data_amount_list = copy.deepcopy(env_greedy_and_mutihop.data_amount_list)
             env_drift_greedy_and_mutihop.uav_data_amount_list = copy.deepcopy(env_drift_greedy_and_mutihop.data_amount_list)
+            env_TSP.uav_data_amount_list = copy.deepcopy(env_drift_greedy_and_mutihop.data_amount_list)
             env_Q.uav_data_amount_list = copy.deepcopy(env_Q.data_amount_list)
             
             # NJNP
@@ -279,39 +285,55 @@ def runMain(index):
 
                 # 2. NJNP
                 # =============== env_NJNP ===============
-                env_NJNP.current_time = current_time
-                env_NJNP = run_n_NJNP(
-                    env_NJNP, 
-                    init_position=init_position,
-                    current_time=current_time,
-                    process_index=process_index,
-                    child_nodes=child_nodes,
-                )
+                # env_NJNP.current_time = current_time
+                # env_NJNP = run_n_NJNP(
+                #     env_NJNP, 
+                #     init_position=init_position,
+                #     current_time=current_time,
+                #     process_index=process_index,
+                #     child_nodes=child_nodes,
+                # )
                 # =============== env_NJNP end ===============
                 
                 # 2. subtree
                 # =============== env_subTree ===============
-                env_subTree.current_time = current_time
-                env_subTree = run_n_subTree(
-                    env_subTree, 
-                    init_position=init_position,
-                    current_time=current_time,
-                    process_index=process_index,
-                    child_nodes=child_nodes,
-                )
+                # env_subTree.current_time = current_time
+                # env_subTree = run_n_subTree(
+                #     env_subTree, 
+                #     init_position=init_position,
+                #     current_time=current_time,
+                #     process_index=process_index,
+                #     child_nodes=child_nodes,
+                # )
                 # =============== env_subTree end ===============
 
                 # =============== env_greedy_and_mutihop ===============
-                env_greedy_and_mutihop.current_time = current_time
-                env_greedy_and_mutihop = run_n_greedy_mutihop(
-                    env_greedy_and_mutihop, 
-                    init_position=init_position,
-                    current_time=current_time,
-                    process_index=process_index,
-                )
+                # env_greedy_and_mutihop.current_time = current_time
+                # env_greedy_and_mutihop = run_n_greedy_mutihop(
+                #     env_greedy_and_mutihop, 
+                #     init_position=init_position,
+                #     current_time=current_time,
+                #     process_index=process_index,
+                # )
                 # =============== env_greedy_and_mutihop end ===============
+                # =============== TSP ===============
+                if len(env_TSP.stops) == 1:
+                    env_TSP.current_time = current_time
+                    env_TSP.stops = GA_TSP(env)
+                    
+                    uav_run_img = env_TSP.render(return_img = True)
+                    imageio.mimsave(f"./result/TSP/{current_time}_time_index{process_index}_UAV_result.gif",[uav_run_img],fps = 10)
+                    
+                    x = env_TSP.x[env_TSP.stops]
+                    y = env_TSP.y[env_TSP.stops]
+                    
+                    distance = math.ceil(calcDistance(x, y))
+                    
+                env_TSP.current_time = current_time
+                env_TSP = run_TSP(env_TSP, init_position, current_time, process_index)
+            
 
-                
+                # =============== TSP end ===============
                 # =============== drift greedy and mutihop ===============
                 # env_drift_greedy_and_mutihop.current_time = current_time
                 # env_drift_greedy_and_mutihop = run_n_greedy_drift(
@@ -320,43 +342,42 @@ def runMain(index):
                 #     current_time=current_time,
                 #     process_index=process_index,
                 # )
-
                 # =============== drift greedy and mutihop ===============
 
                 # =============== Q learning ===============
-                if len(env_Q.stops) == 1:
+                # if len(env_Q.stops) == 1:
                     
-                    agent = DeliveryQAgent(
-                        states_size=num_points,
-                        actions_size=num_points,
-                        epsilon = 1.0,
-                        epsilon_min = params["epsilon_min"],
-                        epsilon_decay = 0.9998,
-                        gamma = params["gamma"],
-                        lr = params["lr"]
-                    )
+                #     agent = DeliveryQAgent(
+                #         states_size=num_points,
+                #         actions_size=num_points,
+                #         epsilon = 1.0,
+                #         epsilon_min = params["epsilon_min"],
+                #         epsilon_decay = 0.9998,
+                #         gamma = params["gamma"],
+                #         lr = params["lr"]
+                #     )
 
-                    # 跑 Q learning
-                    env_Q,agent = run_n_episodes(
-                        env_Q, 
-                        agent,
-                        n_episodes=n_episodes,
-                        process_index=process_index,
-                        current_time=current_time,
-                        train_params=params,
-                    )
+                #     # 跑 Q learning
+                #     env_Q,agent = run_n_episodes(
+                #         env_Q, 
+                #         agent,
+                #         n_episodes=n_episodes,
+                #         process_index=process_index,
+                #         current_time=current_time,
+                #         train_params=params,
+                #     )
                     
                     
-                    route,cost = optimal_route(env.stops, env)
-                    startIndex = env.first_point
-                    env.stops = route[startIndex:] + route[:startIndex]
-                    env.stops.append(env.first_point)
+                #     route,cost = optimal_route(env.stops, env)
+                #     startIndex = env.first_point
+                #     env.stops = route[startIndex:] + route[:startIndex]
+                #     env.stops.append(env.first_point)
                     
                 
 
-                # uav 開始飛行
-                env_Q.current_time = current_time
-                env_Q = run_uav(env_Q, init_position, current_time, process_index)
+                # # uav 開始飛行
+                # env_Q.current_time = current_time
+                # env_Q = run_uav(env_Q, init_position, current_time, process_index)
                 # =============== Q learning end ===========
 
                 # 減去 mutihop 的資料量 (GPSR)
@@ -365,6 +386,7 @@ def runMain(index):
                     env_subTree.subtract_mutihop_data()
                     env_greedy_and_mutihop.subtract_mutihop_data()
                     env_drift_greedy_and_mutihop.subtract_mutihop_data()
+                    env_TSP.subtract_mutihop_data()
                     env_Q.subtract_mutihop_data()
 
                 # 執行節點飄移
@@ -381,6 +403,8 @@ def runMain(index):
                 env_greedy_and_mutihop.y = np.array(env.y)
                 env_drift_greedy_and_mutihop.x = np.array(env.x)
                 env_drift_greedy_and_mutihop.y = np.array(env.y)
+                env_TSP.x = np.array(env.x)
+                env_TSP.y = np.array(env.y)
                 env_Q.x = np.array(env.x)
                 env_Q.y = np.array(env.y)
 
@@ -391,6 +415,7 @@ def runMain(index):
                     env_subTree.generate_data(current_time)
                     env_greedy_and_mutihop.generate_data(current_time)
                     env_drift_greedy_and_mutihop.generate_data(current_time)
+                    env_TSP.generate_data(current_time)
                     env_Q.generate_data(current_time)
                     
                     for node_idx in env_Q.connect_nodes:
@@ -398,6 +423,7 @@ def runMain(index):
                         env_subTree.uav_data_amount_list[node_idx] = env.data_amount_list[node_idx]
                         env_greedy_and_mutihop.uav_data_amount_list[node_idx] = env.data_amount_list[node_idx]
                         env_drift_greedy_and_mutihop.uav_data_amount_list[node_idx] = env.data_amount_list[node_idx]
+                        env_TSP.uav_data_amount_list[node_idx] = env.data_amount_list[node_idx]
                         env_Q.uav_data_amount_list[node_idx] = env.data_amount_list[node_idx]
                     
     print(f'run {index} end ========================================')

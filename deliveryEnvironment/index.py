@@ -29,6 +29,7 @@ class DeliveryEnvironment(object):
         self.drift_change_time = 3000 # 節點飄移變化時間
         self.connect_nodes = [] # 連通節點
         self.unconnect_nodes = [] # 不連通節點
+        self.buffer_overflow_nodes = [] # 緩衝區溢位節點
         
         # UAV Config
         self.uav_range = 100 # 無人機通訊半徑範圍 (單位 1m)
@@ -100,8 +101,8 @@ class DeliveryEnvironment(object):
 
         # 隨機生成感測器數量，並確保每個點的通訊範圍內至少有一個點
         if use_fake_data:
-            self.x = sensor_position[ self.env_index ]
-            self.y = sensor_position[ self.env_index + 1]
+            self.x = sensor_position[ self.env_index * 2 ]
+            self.y = sensor_position[ self.env_index * 2 + 1]
             
         else:
             points = []
@@ -187,6 +188,7 @@ class DeliveryEnvironment(object):
         
     # 加上隨機產生感測器的資料量 max = 100
     def generate_data(self, current_time):
+        self.buffer_overflow_nodes = []
         index = current_time // self.event_change_time % len(generate_event_data)
 
         event_data = generate_event_data[index][:self.n_stops]
@@ -198,6 +200,7 @@ class DeliveryEnvironment(object):
             
             if x['origin'] + x['calc'] > self.buffer_size:
                 x['origin'] = self.buffer_size - x['calc']
+                self.buffer_overflow_nodes.append(idx)
                 
     # 減去 muti hop 傳輸的資料
     def subtract_mutihop_data(self):
