@@ -256,6 +256,7 @@ def runMain(index):
 
             env_mutihop = copy.deepcopy(env)
             env_NJNP = copy.deepcopy(env)
+            env_NJNP_Comp = copy.deepcopy(env)
             env_subTree = copy.deepcopy(env)
             env_greedy_and_mutihop = copy.deepcopy(env)
             env_drift_greedy_and_mutihop = copy.deepcopy(env)
@@ -263,6 +264,7 @@ def runMain(index):
             env_Q = copy.deepcopy(env)
             
             env_NJNP.uav_data_amount_list = copy.deepcopy(env_NJNP.data_amount_list)
+            env_NJNP_Comp = copy.deepcopy(env_NJNP.data_amount_list)
             env_subTree.uav_data_amount_list = copy.deepcopy(env_subTree.data_amount_list)
             env_greedy_and_mutihop.uav_data_amount_list = copy.deepcopy(env_greedy_and_mutihop.data_amount_list)
             env_drift_greedy_and_mutihop.uav_data_amount_list = copy.deepcopy(env_drift_greedy_and_mutihop.data_amount_list)
@@ -295,6 +297,18 @@ def runMain(index):
                 # )
                 # =============== env_NJNP end ===============
                 
+                # 2. NJNP Comp
+                # =============== env_NJNP ===============
+                env_NJNP_Comp.current_time = current_time
+                env_NJNP_Comp = run_n_NJNP_Comp(
+                    env_NJNP_Comp, 
+                    init_position=init_position,
+                    current_time=current_time,
+                    process_index=process_index,
+                    child_nodes=child_nodes,
+                )
+                # =============== env_NJNP end ===============
+                
                 # 2. subtree
                 # =============== env_subTree ===============
                 # env_subTree.current_time = current_time
@@ -317,20 +331,20 @@ def runMain(index):
                 # )
                 # =============== env_greedy_and_mutihop end ===============
                 # =============== TSP ===============
-                if len(env_TSP.stops) == 1:
-                    env_TSP.current_time = current_time
-                    env_TSP.stops = GA_TSP(env_TSP)
+                # if len(env_TSP.stops) == 1:
+                #     env_TSP.current_time = current_time
+                #     env_TSP.stops = GA_TSP(env_TSP)
 
-                    uav_run_img = env_TSP.render(return_img = True)
-                    imageio.mimsave(f"./result/TSP/{current_time}_time_index{process_index}_UAV_result.gif",[uav_run_img],fps = 10)
+                #     uav_run_img = env_TSP.render(return_img = True)
+                #     imageio.mimsave(f"./result/TSP/{current_time}_time_index{process_index}_UAV_result.gif",[uav_run_img],fps = 10)
                     
-                    x = env_TSP.x[env_TSP.stops]
-                    y = env_TSP.y[env_TSP.stops]
+                #     x = env_TSP.x[env_TSP.stops]
+                #     y = env_TSP.y[env_TSP.stops]
                     
-                    distance = math.ceil(calcDistance(x, y))
+                #     distance = math.ceil(calcDistance(x, y))
                     
-                env_TSP.current_time = current_time
-                env_TSP = run_TSP(env_TSP, init_position, current_time, process_index)
+                # env_TSP.current_time = current_time
+                # env_TSP = run_TSP(env_TSP, init_position, current_time, process_index)
             
 
                 # =============== TSP end ===============
@@ -383,10 +397,11 @@ def runMain(index):
                 # 減去 mutihop 的資料量 (GPSR)
                 if current_time % env.unit_time == 0:  
                     # env_NJNP.subtract_mutihop_data()
+                    env_NJNP_Comp.subtract_mutihop_data()
                     # env_subTree.subtract_mutihop_data()
                     # env_greedy_and_mutihop.subtract_mutihop_data()
                     # env_drift_greedy_and_mutihop.subtract_mutihop_data()
-                    env_TSP.subtract_mutihop_data()
+                    # env_TSP.subtract_mutihop_data()
 
                     # env_Q.subtract_mutihop_data()
 
@@ -398,6 +413,8 @@ def runMain(index):
                 # env_mutihop.y = np.array(env.y)
                 env_NJNP.x = np.array(env.x)
                 env_NJNP.y = np.array(env.y)
+                env_NJNP_Comp.x = np.array(env.x)
+                env_NJNP_Comp.y = np.array(env.y)
                 env_subTree.x = np.array(env.x)
                 env_subTree.y = np.array(env.y)
                 env_greedy_and_mutihop.x = np.array(env.x)
@@ -413,6 +430,7 @@ def runMain(index):
                 if current_time % env.unit_time == 0:
                     # env_mutihop.generate_data(current_time)
                     env_NJNP.generate_data(current_time)
+                    env_NJNP_Comp.generate_data(current_time)
                     env_subTree.generate_data(current_time)
                     env_greedy_and_mutihop.generate_data(current_time)
                     env_drift_greedy_and_mutihop.generate_data(current_time)
@@ -421,6 +439,7 @@ def runMain(index):
                     
                     for node_idx in env_Q.connect_nodes:
                         env_NJNP.uav_data_amount_list[node_idx] = env.data_amount_list[node_idx]
+                        env_NJNP_Comp.uav_data_amount_list[node_idx] = env.data_amount_list[node_idx]
                         env_subTree.uav_data_amount_list[node_idx] = env.data_amount_list[node_idx]
                         env_greedy_and_mutihop.uav_data_amount_list[node_idx] = env.data_amount_list[node_idx]
                         env_drift_greedy_and_mutihop.uav_data_amount_list[node_idx] = env.data_amount_list[node_idx]
