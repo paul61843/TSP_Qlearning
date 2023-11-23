@@ -1,1 +1,8 @@
-result
+result/drift_greedy_and_mutihop
+result/GPSR
+result/greedy_and_mutihop
+result/mutihop
+result/NJNP
+result/Q_learning
+result/subTree_and_mutihop
+result/TSP
