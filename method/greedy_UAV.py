@@ -68,6 +68,10 @@ def run_n_NJNP(
         env.unvisited_stops = env.get_unvisited_stops()
         a = getNJNPNextPoint(env, child_nodes)
         env.stops.append(a)
+        
+        if a == None:
+            env.stops.pop()
+            env.stops.append(env.first_point)
 
         # 判斷無人機飛行距離是否能返回 sink
         x = env.x[[env.stops[0], env.stops[-1]]]
