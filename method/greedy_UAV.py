@@ -68,12 +68,17 @@ def run_n_NJNP(
         env.unvisited_stops = env.get_unvisited_stops()
         a = getNJNPNextPoint(env, child_nodes)
         env.stops.append(a)
+        
+        if a == None:
+            env.stops.pop()
+            env.stops.append(env.first_point)
 
         # 判斷無人機飛行距離是否能返回 sink
         x = env.x[[env.stops[0], env.stops[-1]]]
         y = env.y[[env.stops[0], env.stops[-1]]]
         to_start_cost = calcDistance(x, y)
         distance = calcDistance(env.x[env.stops], env.y[env.stops]) + to_start_cost
+        print(distance , env.max_move_distance)
         if distance > env.max_move_distance:
             env.stops.pop()
             env.stops.append(env.first_point)
@@ -160,6 +165,10 @@ def run_n_NJNP_Comp(
         env.unvisited_stops = env.get_unvisited_stops()
         a = getNJNPCompNextPoint(env, child_nodes)
         env.stops.append(a)
+        
+        if a == None:
+            env.stops.pop()
+            env.stops.append(env.first_point)
 
         # 判斷無人機飛行距離是否能返回 sink
         x = env.x[[env.stops[0], env.stops[-1]]]
