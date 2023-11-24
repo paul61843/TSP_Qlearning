@@ -23,6 +23,32 @@ def getNJNPNextPoint(env, child_nodes):
 
     return max_node
 
+def getNJNPCompNextPoint(env, child_nodes):
+    max_value = -1
+    max_node = None
+    
+    current_node = env.stops[-1]
+
+    remain_unconnect_nodes = [elem for elem in env.unconnect_nodes if elem not in list(env.stops)]
+
+
+    for i in remain_unconnect_nodes:
+        
+
+        if current_node != i:    
+            
+            data_amount = env.uav_data_amount_list[i]['origin'] + env.uav_data_amount_list[i]['calc'] * env.calc_data_compression_ratio
+
+            distance = ((env.x[i] - env.x[current_node]) ** 2 + (env.y[i] - env.y[current_node])**2) ** 0.5
+
+            data_amount = data_amount / distance
+
+            if data_amount >= max_value:
+                max_value = data_amount
+                max_node = i
+
+    return max_node
+
 def getHeightSubTreeNextPoint(env, child_nodes):
     max_value = -1
     max_node = None
