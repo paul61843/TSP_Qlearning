@@ -426,7 +426,7 @@ class DeliveryEnvironment(object):
         # # 新增 孤立節點獎勵值
 
         is_isolated_node = new_state in self.isolated_node
-        isolated_reward = 1 if is_isolated_node else 0
+        isolated_reward = 50 if is_isolated_node else 0
 
         return distance_reward + isolated_reward + yellow_reward + danger_reward
         
